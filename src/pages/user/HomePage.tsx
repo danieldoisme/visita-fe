@@ -1,9 +1,25 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Calendar, Star, Search, Users } from "lucide-react";
 
+const TRENDING_DESTINATIONS = [
+  "Swiss Alps, Switzerland",
+  "Kyoto, Japan",
+  "Machu Picchu, Peru",
+  "Santorini, Greece",
+  "Reykjavik, Iceland",
+];
+
 export default function HomePage() {
+  const [locationQuery, setLocationQuery] = useState("");
+  const [showDestinations, setShowDestinations] = useState(false);
+
+  const filteredDestinations = TRENDING_DESTINATIONS.filter((dest) =>
+    dest.toLowerCase().includes(locationQuery.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col gap-12 pb-12">
       {/* Hero Section */}
@@ -30,7 +46,48 @@ export default function HomePage() {
                     name="location"
                     placeholder="Where do you want to go?"
                     className="pl-10 h-12 text-base bg-white text-black border-slate-200 focus-visible:ring-primary"
+                    value={locationQuery}
+                    onChange={(e) => setLocationQuery(e.target.value)}
+                    onFocus={() => setShowDestinations(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowDestinations(false), 200)
+                    }
+                    autoComplete="off"
                   />
+                  {showDestinations && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-md shadow-xl border border-slate-100 z-50 overflow-hidden">
+                      <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-slate-50/50">
+                        {locationQuery
+                          ? "Suggestions"
+                          : "Trending Destinations"}
+                      </div>
+                      {filteredDestinations.length > 0 ? (
+                        <ul className="py-1">
+                          {filteredDestinations.map((dest) => (
+                            <li
+                              key={dest}
+                              className="px-4 py-2.5 hover:bg-slate-50 cursor-pointer flex items-center gap-3 text-sm transition-colors"
+                              onClick={() => {
+                                setLocationQuery(dest);
+                                setShowDestinations(false);
+                              }}
+                            >
+                              <div className="bg-primary/10 p-1.5 rounded-full">
+                                <MapPin className="h-3.5 w-3.5 text-primary" />
+                              </div>
+                              <span className="font-medium text-slate-700">
+                                {dest}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="p-4 text-sm text-muted-foreground text-center">
+                          No destinations found
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
