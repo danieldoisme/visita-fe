@@ -27,6 +27,7 @@ export default function HomePage() {
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
+                    name="location"
                     placeholder="Where do you want to go?"
                     className="pl-10 h-12 text-base bg-white text-black border-slate-200 focus-visible:ring-primary"
                   />
@@ -34,6 +35,7 @@ export default function HomePage() {
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
+                    name="date"
                     type="date"
                     className="pl-10 h-12 text-base bg-white text-black border-slate-200 focus-visible:ring-primary"
                   />
@@ -41,6 +43,7 @@ export default function HomePage() {
                 <div className="relative">
                   <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
+                    name="guests"
                     placeholder="Guests"
                     type="number"
                     min={1}
