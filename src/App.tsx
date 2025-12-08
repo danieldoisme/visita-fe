@@ -5,6 +5,8 @@ import HomePage from "@/pages/user/HomePage";
 import ToursPage from "@/pages/user/ToursPage";
 import DashboardPage from "@/pages/admin/DashboardPage";
 import ToursManagementPage from "@/pages/admin/ToursManagementPage";
+import LoginPage from "@/pages/auth/LoginPage";
+import RegisterPage from "@/pages/auth/RegisterPage";
 
 function App() {
   return (
@@ -15,6 +17,10 @@ function App() {
       }}
     >
       <Routes>
+        {/* Auth Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
         {/* User Routes */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />

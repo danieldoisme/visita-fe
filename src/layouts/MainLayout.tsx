@@ -35,9 +35,11 @@ export default function MainLayout() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="hidden md:flex">
-              Sign In
-            </Button>
+            <Link to="/login">
+              <Button variant="ghost" size="sm" className="hidden md:flex">
+                Sign In
+              </Button>
+            </Link>
             <Button size="sm" className="hidden md:flex">
               Book Now
             </Button>
