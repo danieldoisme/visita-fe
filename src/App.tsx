@@ -3,6 +3,7 @@ import MainLayout from "@/layouts/MainLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import HomePage from "@/pages/user/HomePage";
 import ToursPage from "@/pages/user/ToursPage";
+import AboutPage from "@/pages/user/AboutPage";
 import DashboardPage from "@/pages/admin/DashboardPage";
 import ToursManagementPage from "@/pages/admin/ToursManagementPage";
 import LoginPage from "@/pages/auth/LoginPage";
@@ -25,10 +26,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="tours" element={<ToursPage />} />
-          <Route
-            path="about"
-            element={<div className="p-10">About Page Placeholder</div>}
-          />
+          <Route path="about" element={<AboutPage />} />
         </Route>
 
         {/* Admin Routes */}
