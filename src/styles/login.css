@@ -1,0 +1,59 @@
+/* Input Styles */
+.login-input-group {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.login-input {
+  height: 3rem;
+  transition: all 0.2s ease;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.login-input:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+  background: white;
+}
+
+/* Button Gradient & Animation */
+.login-btn-gradient {
+  background-size: 200% auto;
+  background-image: linear-gradient(to right, hsl(var(--primary)) 0%, #3b82f6 51%, hsl(var(--primary)) 100%);
+  transition: 0.5s;
+}
+
+.login-btn-gradient:hover {
+  background-position: right center;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.5);
+}
+
+/* Image Animation on the right side */
+.travel-bg-image {
+  animation: zoomEffect 20s infinite alternate ease-in-out;
+}
+
+@keyframes zoomEffect {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+
+/* Glass Overlay for Text on Image */
+.glass-quote {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* Social Login Buttons */
+.social-btn {
+  transition: all 0.2s;
+}
+.social-btn:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
