@@ -20,7 +20,12 @@
 /* Button Gradient & Animation */
 .login-btn-gradient {
   background-size: 200% auto;
-  background-image: linear-gradient(to right, hsl(var(--primary)) 0%, #3b82f6 51%, hsl(var(--primary)) 100%);
+  background-image: linear-gradient(
+    to right,
+    hsl(var(--primary)) 0%,
+    #3b82f6 51%,
+    hsl(var(--primary)) 100%
+  );
   transition: 0.5s;
 }
 
@@ -36,8 +41,12 @@
 }
 
 @keyframes zoomEffect {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.1); }
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.1);
+  }
 }
 
 /* Glass Overlay for Text on Image */
@@ -46,7 +55,7 @@
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 /* Social Login Buttons */
