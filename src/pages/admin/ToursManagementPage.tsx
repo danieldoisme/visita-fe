@@ -73,7 +73,7 @@ export default function ToursManagementPage() {
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search tours..." className="pl-8" />
+          <Input name="search" placeholder="Search tours..." className="pl-8" />
         </div>
       </div>
 
