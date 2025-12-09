@@ -1,5 +1,5 @@
 import { Outlet, Link } from "react-router-dom";
-import { Compass, User, Menu } from "lucide-react";
+import { Compass, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function MainLayout() {

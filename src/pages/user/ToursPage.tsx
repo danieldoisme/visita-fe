@@ -117,9 +117,10 @@ export default function ToursPage() {
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const filteredTours = TOURS.filter(tour => 
-    tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tour.location.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTours = TOURS.filter(
+    (tour) =>
+      tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tour.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

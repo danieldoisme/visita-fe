@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Users, DollarSign, ShoppingBag, Activity } from "lucide-react";
 
 export default function DashboardPage() {
