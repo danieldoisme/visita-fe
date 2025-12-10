@@ -23,9 +23,9 @@ function Calendar({
       classNames={{
         today: "border border-primary",
         selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
-        range_start: "bg-primary text-primary-foreground rounded-l-md",
-        range_end: "bg-primary text-primary-foreground rounded-r-md",
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        range_start: "bg-primary text-primary-foreground",
+        range_end: "bg-primary text-primary-foreground",
         range_middle: "bg-accent text-accent-foreground",
         outside: "text-muted-foreground opacity-50",
         disabled: "text-muted-foreground opacity-50",
