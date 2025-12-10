@@ -32,7 +32,7 @@ export default function AboutPage() {
             variant="outline"
             className="text-white border-white/50 px-4 py-1 text-sm uppercase tracking-widest backdrop-blur-sm"
           >
-            Since 2023
+            Từ năm 2023
           </Badge>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
             Khám Phá Thế Giới <br />{" "}
@@ -274,25 +274,25 @@ export default function AboutPage() {
             {[
               {
                 name: "Sarah Nguyễn",
-                role: "Founder & CEO",
+                role: "Nhà sáng lập & CEO",
                 image:
                   "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
               },
               {
                 name: "David Trần",
-                role: "Head of Product",
+                role: "Giám đốc sản phẩm",
                 image:
                   "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
               },
               {
                 name: "Emily Lê",
-                role: "Customer Experience",
+                role: "Trải nghiệm khách hàng",
                 image:
                   "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
               },
               {
                 name: "Michael Phạm",
-                role: "Lead Tour Guide",
+                role: "Hướng dẫn viên trưởng",
                 image:
                   "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
               },

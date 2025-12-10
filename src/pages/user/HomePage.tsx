@@ -17,77 +17,77 @@ import {
 } from "lucide-react";
 
 const TRENDING_DESTINATIONS = [
-  "Swiss Alps, Switzerland",
-  "Kyoto, Japan",
-  "Machu Picchu, Peru",
-  "Santorini, Greece",
-  "Reykjavik, Iceland",
-  "Bali, Indonesia",
-  "Paris, France",
-  "Rome, Italy",
+  "Hạ Long, Quảng Ninh",
+  "Đà Nẵng",
+  "Phú Quốc",
+  "Hội An",
+  "Sapa",
+  "Nha Trang",
+  "Đà Lạt",
+  "Huế",
 ];
 
 const FEATURED_TOURS = [
   {
     id: 1,
-    title: "Majestic Swiss Alps Trek",
-    location: "Switzerland",
-    price: 1299,
-    duration: "7 Days",
+    title: "Khám phá Vịnh Hạ Long",
+    location: "Quảng Ninh",
+    price: 3500000,
+    duration: "2 Ngày",
     rating: 4.9,
     reviews: 124,
     image:
       "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    tag: "Best Seller",
+    tag: "Bán chạy",
   },
   {
     id: 2,
-    title: "Kyoto Cultural Immersion",
-    location: "Japan",
-    price: 899,
-    duration: "5 Days",
+    title: "Văn hóa Cố đô Huế",
+    location: "Huế",
+    price: 2500000,
+    duration: "3 Ngày",
     rating: 4.8,
     reviews: 89,
     image:
       "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    tag: "Cultural",
+    tag: "Văn hóa",
   },
   {
     id: 3,
-    title: "Santorini Island Getaway",
-    location: "Greece",
-    price: 1499,
-    duration: "6 Days",
+    title: "Nghỉ dưỡng Phú Quốc",
+    location: "Kiên Giang",
+    price: 5000000,
+    duration: "4 Ngày",
     rating: 4.9,
     reviews: 210,
     image:
       "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?q=80&w=2938&auto=format&fit=crop",
-    tag: "Romantic",
+    tag: "Lãng mạn",
   },
 ];
 
 const POPULAR_DESTINATIONS = [
   {
-    name: "Bali",
-    count: "120+ Tours",
+    name: "Đà Nẵng",
+    count: "120+ Tour",
     image:
       "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80",
   },
   {
-    name: "Paris",
-    count: "85+ Tours",
+    name: "Hà Nội",
+    count: "85+ Tour",
     image:
       "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80",
   },
   {
-    name: "Rome",
-    count: "90+ Tours",
+    name: "Hồ Chí Minh",
+    count: "90+ Tour",
     image:
       "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=600&q=80",
   },
   {
-    name: "Tokyo",
-    count: "75+ Tours",
+    name: "Sapa",
+    count: "75+ Tour",
     image:
       "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=600&q=80",
   },
@@ -121,17 +121,17 @@ export default function HomePage() {
               variant="secondary"
               className="px-4 py-1.5 text-sm font-medium bg-white/20 text-white hover:bg-white/30 border-0 backdrop-blur-sm mb-4"
             >
-              Explore the world with us
+              Khám phá thế giới cùng chúng tôi
             </Badge>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-lg">
-              Your Journey Begins{" "}
+              Hành trình của bạn bắt đầu tại{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">
-                Here
+                đây
               </span>
             </h1>
             <p className="text-lg md:text-xl text-slate-100 max-w-[700px] mx-auto drop-shadow-md font-light">
-              Discover over 5,000+ curated tours and adventures in the world's
-              most beautiful destinations.
+              Khám phá hơn 5.000+ tour du lịch được tuyển chọn và những cuộc
+              phiêu lưu tại những điểm đến đẹp nhất thế giới.
             </p>
           </div>
 
@@ -148,7 +148,7 @@ export default function HomePage() {
                     <div className="relative">
                       <Input
                         name="location"
-                        placeholder="Where are you going?"
+                        placeholder="Bạn muốn đi đâu?"
                         className="pl-12 h-14 text-base border-0 bg-slate-50 hover:bg-slate-100 focus-visible:ring-0 focus-visible:bg-white rounded-xl transition-all shadow-sm"
                         value={locationQuery}
                         onChange={(e) => setLocationQuery(e.target.value)}
@@ -160,9 +160,7 @@ export default function HomePage() {
                       {showDestinations && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                           <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-slate-50">
-                            {locationQuery
-                              ? "Suggestions"
-                              : "Popular Destinations"}
+                            {locationQuery ? "Gợi ý" : "Điểm đến phổ biến"}
                           </div>
                           <ul className="py-2 max-h-[300px] overflow-y-auto">
                             {filteredDestinations.length > 0 ? (
@@ -185,7 +183,7 @@ export default function HomePage() {
                               ))
                             ) : (
                               <div className="p-4 text-sm text-muted-foreground text-center">
-                                No destinations found
+                                Không tìm thấy điểm đến
                               </div>
                             )}
                           </ul>
@@ -213,7 +211,7 @@ export default function HomePage() {
                     </div>
                     <Input
                       name="guests"
-                      placeholder="Guests"
+                      placeholder="Số khách"
                       type="number"
                       min={1}
                       className="pl-12 h-14 text-base border-0 bg-slate-50 hover:bg-slate-100 focus-visible:ring-0 focus-visible:bg-white rounded-xl transition-all shadow-sm"
@@ -225,7 +223,7 @@ export default function HomePage() {
                     size="lg"
                     className="h-14 px-8 text-base font-semibold shadow-lg rounded-xl hover:scale-105 transition-transform duration-200"
                   >
-                    <Search className="mr-2 h-5 w-5" /> Search
+                    <Search className="mr-2 h-5 w-5" /> Tìm kiếm
                   </Button>
                 </div>
               </CardContent>
@@ -242,30 +240,30 @@ export default function HomePage() {
               <div className="h-14 w-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
                 <Globe className="h-7 w-7" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Diverse Destinations</h3>
+              <h3 className="text-xl font-bold mb-2">Điểm đến đa dạng</h3>
               <p className="text-muted-foreground">
-                Access to over 500+ destinations across the globe with expert
-                guides.
+                Tiếp cận hơn 500+ điểm đến trên toàn cầu với hướng dẫn viên
+                chuyên nghiệp.
               </p>
             </div>
             <div className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
               <div className="h-14 w-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
                 <Shield className="h-7 w-7" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Best Price Guarantee</h3>
+              <h3 className="text-xl font-bold mb-2">Đảm bảo giá tốt nhất</h3>
               <p className="text-muted-foreground">
-                We ensure you get the best prices for your tours with no hidden
-                fees.
+                Chúng tôi đảm bảo bạn nhận được mức giá tốt nhất cho các tour du
+                lịch của mình mà không có phí ẩn.
               </p>
             </div>
             <div className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
               <div className="h-14 w-14 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4">
                 <CheckCircle2 className="h-7 w-7" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Easy Booking</h3>
+              <h3 className="text-xl font-bold mb-2">Đặt tour dễ dàng</h3>
               <p className="text-muted-foreground">
-                Seamless booking process with instant confirmation and 24/7
-                support.
+                Quy trình đặt tour liền mạch với xác nhận ngay lập tức và hỗ trợ
+                24/7.
               </p>
             </div>
           </div>
@@ -278,18 +276,17 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
-                Popular Destinations
+                Điểm đến phổ biến
               </h2>
               <p className="text-muted-foreground text-lg">
-                Explore the most visited places this season.
+                Khám phá những địa điểm được ghé thăm nhiều nhất trong mùa này.
               </p>
             </div>
             <Button variant="outline" className="group">
-              View All Destinations{" "}
+              Xem tất cả điểm đến{" "}
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {POPULAR_DESTINATIONS.map((dest, idx) => (
               <div
@@ -317,11 +314,11 @@ export default function HomePage() {
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              Featured Tours
+              Tour nổi bật
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Hand-picked tours that our travelers love the most. Experience the
-              best of the best.
+              Những tour du lịch được du khách yêu thích nhất. Trải nghiệm những
+              điều tuyệt vời nhất.
             </p>
           </div>
 
@@ -365,13 +362,13 @@ export default function HomePage() {
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                     <div>
                       <p className="text-xs text-muted-foreground uppercase font-semibold">
-                        From
+                        Từ
                       </p>
                       <p className="text-2xl font-bold text-primary">
-                        ${tour.price}
+                        {tour.price.toLocaleString("vi-VN")}đ
                       </p>
                     </div>
-                    <Button className="rounded-full px-6">View Details</Button>
+                    <Button className="rounded-full px-6">Xem chi tiết</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -380,7 +377,7 @@ export default function HomePage() {
 
           <div className="mt-12 text-center">
             <Button variant="outline" size="lg" className="rounded-full px-8">
-              View All Tours
+              Xem tất cả tour
             </Button>
           </div>
         </div>
@@ -400,29 +397,30 @@ export default function HomePage() {
         <div className="container relative z-10">
           <div className="max-w-3xl mx-auto text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-              Travel Inspiration, Delivered
+              Cảm hứng du lịch, gửi đến bạn
             </h2>
             <p className="text-lg md:text-xl text-slate-200">
-              Join 50,000+ travelers and get exclusive offers, expert tips, and
-              destination guides sent straight to your inbox.
+              Tham gia cùng 50.000+ du khách và nhận ưu đãi độc quyền, mẹo
+              chuyên gia và hướng dẫn điểm đến được gửi thẳng vào hộp thư đến
+              của bạn.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
               <Input
                 name="email"
                 autoComplete="email"
-                placeholder="Your email address"
+                placeholder="Địa chỉ email của bạn"
                 className="h-14 bg-transparent border-0 text-white placeholder:text-white/60 focus-visible:ring-0 text-base"
               />
               <Button
                 size="lg"
                 className="h-14 px-8 rounded-xl bg-white text-primary hover:bg-slate-100 font-bold text-base"
               >
-                Subscribe Now
+                Đăng ký ngay
               </Button>
             </div>
             <p className="text-sm text-slate-400">
-              No spam, unsubscribe at any time.
+              Không spam, hủy đăng ký bất cứ lúc nào.
             </p>
           </div>
         </div>

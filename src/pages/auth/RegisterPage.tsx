@@ -37,13 +37,14 @@ export default function RegisterPage() {
           <div className="glass-quote rounded-2xl p-8 max-w-lg">
             <blockquote className="space-y-2">
               <p className="text-lg font-medium leading-relaxed">
-                &ldquo;To travel is to live. Join our community of explorers and
-                start writing your own adventure story today.&rdquo;
+                &ldquo;Đi là để sống. Hãy tham gia cộng đồng những người khám
+                phá của chúng tôi và bắt đầu viết nên câu chuyện phiêu lưu của
+                riêng bạn ngay hôm nay.&rdquo;
               </p>
               <footer className="text-sm font-semibold pt-4 border-t border-white/20 mt-4">
                 Hans Christian Andersen
                 <div className="text-xs font-normal opacity-80">
-                  Writer & Traveler
+                  Nhà văn & Người du lịch
                 </div>
               </footer>
             </blockquote>
@@ -60,7 +61,7 @@ export default function RegisterPage() {
               className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
+              Về trang chủ
             </Link>
           </div>
 
@@ -70,10 +71,10 @@ export default function RegisterPage() {
                 <Compass className="h-8 w-8" />
               </div>
               <h1 className="text-3xl font-bold tracking-tight">
-                Create an account
+                Tạo tài khoản
               </h1>
               <p className="text-sm text-muted-foreground">
-                Enter your details to start your journey
+                Nhập thông tin chi tiết để bắt đầu hành trình của bạn
               </p>
             </div>
 
@@ -84,13 +85,13 @@ export default function RegisterPage() {
                     className="text-sm font-medium leading-none"
                     htmlFor="name"
                   >
-                    Full Name
+                    Họ và tên
                   </label>
                   <div className="relative group">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                     <Input
                       id="name"
-                      placeholder="John Doe"
+                      placeholder="Nguyễn Văn A"
                       type="text"
                       autoCapitalize="words"
                       autoComplete="name"
@@ -124,7 +125,7 @@ export default function RegisterPage() {
                     className="text-sm font-medium leading-none"
                     htmlFor="password"
                   >
-                    Password
+                    Mật khẩu
                   </label>
                   <div className="relative group">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
@@ -154,7 +155,7 @@ export default function RegisterPage() {
                     className="text-sm font-medium leading-none"
                     htmlFor="confirmPassword"
                   >
-                    Confirm Password
+                    Xác nhận mật khẩu
                   </label>
                   <div className="relative group">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
@@ -182,7 +183,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 <Button className="login-btn-gradient h-11 font-semibold text-md">
-                  Create Account
+                  Đăng ký
                 </Button>
               </form>
 
@@ -192,7 +193,7 @@ export default function RegisterPage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
+                    Hoặc tiếp tục với
                   </span>
                 </div>
               </div>
@@ -224,12 +225,12 @@ export default function RegisterPage() {
             </div>
 
             <p className="px-8 text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
+              Đã có tài khoản?{" "}
               <Link
                 to="/login"
                 className="underline underline-offset-4 hover:text-primary font-medium"
               >
-                Sign in
+                Đăng nhập
               </Link>
             </p>
           </div>

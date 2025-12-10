@@ -18,30 +18,30 @@ export default function MainLayout() {
               to="/"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
-              Home
+              Trang chủ
             </Link>
             <Link
               to="/tours"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
-              Tours
+              Tour
             </Link>
             <Link
               to="/about"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
-              About
+              Giới thiệu
             </Link>
           </nav>
 
           <div className="flex items-center gap-4">
             <Link to="/login">
               <Button variant="ghost" size="sm" className="hidden md:flex">
-                Sign In
+                Đăng nhập
               </Button>
             </Link>
             <Button size="sm" className="hidden md:flex">
-              Book Now
+              Đặt ngay
             </Button>
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />
@@ -59,7 +59,7 @@ export default function MainLayout() {
       <footer className="border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            © 2024 Visita Inc. All rights reserved.
+            © 2024 Visita Inc. Bảo lưu mọi quyền.
           </p>
         </div>
       </footer>

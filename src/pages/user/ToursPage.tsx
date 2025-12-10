@@ -21,113 +21,113 @@ import {
 const TOURS = [
   {
     id: 1,
-    title: "Majestic Swiss Alps Trekking & Adventure",
-    location: "Interlaken, Switzerland",
-    price: 1299,
-    originalPrice: 1499,
-    duration: "7 Days",
+    title: "Khám phá Vịnh Hạ Long & Hang Sửng Sốt",
+    location: "Hạ Long, Quảng Ninh",
+    price: 3500000,
+    originalPrice: 4000000,
+    duration: "2 Ngày",
     rating: 4.9,
     reviews: 124,
     image:
       "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Adventure",
-    difficulty: "Medium",
-    tags: ["Best Seller", "Free Cancellation"],
-    features: ["Guide included", "Meals included", "Transport"],
+    category: "Phiêu lưu",
+    difficulty: "Trung bình",
+    tags: ["Bán chạy", "Hủy miễn phí"],
+    features: ["Bao gồm hướng dẫn viên", "Bao gồm bữa ăn", "Xe đưa đón"],
   },
   {
     id: 2,
-    title: "Kyoto Cultural Heritage Walk & Tea Ceremony",
-    location: "Kyoto, Japan",
-    price: 899,
-    duration: "5 Days",
+    title: "Văn hóa Cố đô Huế & Thưởng thức Nhã nhạc",
+    location: "Huế",
+    price: 2500000,
+    duration: "3 Ngày",
     rating: 4.8,
     reviews: 89,
     image:
       "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Cultural",
-    difficulty: "Easy",
-    tags: ["Likely to Sell Out"],
-    features: ["Small group", "Entrance fees"],
+    category: "Văn hóa",
+    difficulty: "Dễ",
+    tags: ["Sắp hết chỗ"],
+    features: ["Nhóm nhỏ", "Vé tham quan"],
   },
   {
     id: 3,
-    title: "Kenya Safari: The Great Migration Experience",
-    location: "Masai Mara, Kenya",
-    price: 2499,
-    duration: "10 Days",
+    title: "Khám phá Hang Sơn Đoòng",
+    location: "Quảng Bình",
+    price: 65000000,
+    duration: "4 Ngày",
     rating: 5.0,
     reviews: 45,
     image:
       "https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Wildlife",
-    difficulty: "Hard",
-    tags: ["Luxury"],
-    features: ["Private 4x4", "Luxury Lodges"],
+    category: "Thám hiểm",
+    difficulty: "Khó",
+    tags: ["Cao cấp"],
+    features: ["Trực thăng", "Lều trại cao cấp"],
   },
   {
     id: 4,
-    title: "Paris Highlights: City of Lights Tour",
-    location: "Paris, France",
-    price: 599,
-    originalPrice: 699,
-    duration: "3 Days",
+    title: "Tham quan Phố cổ Hội An",
+    location: "Hội An, Quảng Nam",
+    price: 1200000,
+    originalPrice: 1500000,
+    duration: "1 Ngày",
     rating: 4.7,
     reviews: 210,
     image:
       "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "City",
-    difficulty: "Easy",
-    tags: ["Mobile Voucher"],
-    features: ["Skip the line", "Audio guide"],
+    category: "Thành phố",
+    difficulty: "Dễ",
+    tags: ["Vé điện tử"],
+    features: ["Không xếp hàng", "Hướng dẫn âm thanh"],
   },
   {
     id: 5,
-    title: "Inca Trail to Machu Picchu",
-    location: "Cusco, Peru",
-    price: 1599,
-    duration: "6 Days",
+    title: "Leo núi Fansipan",
+    location: "Sapa, Lào Cai",
+    price: 4500000,
+    duration: "2 Ngày",
     rating: 4.9,
     reviews: 156,
     image:
       "https://images.unsplash.com/photo-1526392060635-9d6019884377?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Adventure",
-    difficulty: "Hard",
-    tags: ["Bucket List"],
-    features: ["Porters", "Camping gear"],
+    category: "Phiêu lưu",
+    difficulty: "Khó",
+    tags: ["Phải thử"],
+    features: ["Người khuân vác", "Dụng cụ cắm trại"],
   },
   {
     id: 6,
-    title: "Santorini Sunset & Wine Tasting",
-    location: "Santorini, Greece",
-    price: 1199,
-    duration: "5 Days",
+    title: "Lặn ngắm san hô Phú Quốc",
+    location: "Phú Quốc, Kiên Giang",
+    price: 1800000,
+    duration: "1 Ngày",
     rating: 4.8,
     reviews: 98,
     image:
       "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?q=80&w=2938&auto=format&fit=crop",
-    category: "Romantic",
-    difficulty: "Easy",
-    tags: ["Couples"],
-    features: ["Wine tasting", "Sunset cruise"],
+    category: "Biển",
+    difficulty: "Dễ",
+    tags: ["Cặp đôi"],
+    features: ["Lặn biển", "Ngắm hoàng hôn"],
   },
 ];
 
 const CATEGORIES = [
-  "Adventure",
-  "Cultural",
-  "Wildlife",
-  "City",
-  "Romantic",
-  "Beach",
+  "Phiêu lưu",
+  "Văn hóa",
+  "Thám hiểm",
+  "Thành phố",
+  "Lãng mạn",
+  "Biển",
 ];
-const DURATIONS = ["1-3 Days", "4-7 Days", "8-14 Days", "15+ Days"];
+const DURATIONS = ["1-3 Ngày", "4-7 Ngày", "8-14 Ngày", "15+ Ngày"];
 const RATINGS = [5, 4, 3];
 
 export default function ToursPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [priceRange, setPriceRange] = useState([0, 100000000]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const filteredTours = TOURS.filter(
@@ -151,17 +151,17 @@ export default function ToursPage() {
         <div className="container relative z-10">
           <div className="flex items-center text-sm text-slate-300 mb-6 font-medium">
             <span className="hover:text-white cursor-pointer transition-colors">
-              Home
+              Trang chủ
             </span>
             <ChevronRight className="h-4 w-4 mx-3 text-slate-500" />
-            <span className="text-white">Tours</span>
+            <span className="text-white">Tour</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-6">
-            Explore the World
+            Khám phá Thế giới
           </h1>
           <p className="text-lg md:text-xl text-slate-200 max-w-2xl leading-relaxed">
-            Discover {TOURS.length}+ unique experiences, from mountain trekking
-            to city walks. Your next adventure starts here.
+            Khám phá {TOURS.length}+ trải nghiệm độc đáo, từ leo núi đến dạo
+            phố. Cuộc phiêu lưu tiếp theo của bạn bắt đầu tại đây.
           </p>
         </div>
       </div>
@@ -174,7 +174,7 @@ export default function ToursPage() {
               onClick={() => setShowMobileFilters(true)}
               className="w-full flex items-center justify-center gap-2"
             >
-              <SlidersHorizontal className="h-4 w-4" /> Filters
+              <SlidersHorizontal className="h-4 w-4" /> Bộ lọc
             </Button>
           </div>
 
@@ -190,7 +190,7 @@ export default function ToursPage() {
           `}
           >
             <div className="flex items-center justify-between lg:hidden mb-6">
-              <h2 className="text-xl font-bold">Filters</h2>
+              <h2 className="text-xl font-bold">Bộ lọc</h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -204,13 +204,13 @@ export default function ToursPage() {
               {/* Search */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
-                  Search
+                  Tìm kiếm
                 </h3>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     name="search"
-                    placeholder="Search tours..."
+                    placeholder="Tìm kiếm tour..."
                     className="pl-9 bg-white border-slate-200 focus-visible:ring-primary"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -221,19 +221,19 @@ export default function ToursPage() {
               {/* Price Range */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
-                  Price Range
+                  Khoảng giá
                 </h3>
                 <div className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center justify-between text-sm font-medium">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
+                    <span>{priceRange[0].toLocaleString("vi-VN")}đ</span>
+                    <span>{priceRange[1].toLocaleString("vi-VN")}đ</span>
                   </div>
                   <input
                     name="priceRange"
                     type="range"
                     min="0"
-                    max="5000"
-                    step="100"
+                    max="100000000"
+                    step="500000"
                     className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
                     onChange={(e) =>
                       setPriceRange([0, parseInt(e.target.value)])
@@ -245,7 +245,7 @@ export default function ToursPage() {
               {/* Categories */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
-                  Categories
+                  Danh mục
                 </h3>
                 <div className="space-y-2">
                   {CATEGORIES.map((cat) => (
@@ -271,7 +271,7 @@ export default function ToursPage() {
               {/* Duration */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
-                  Duration
+                  Thời gian
                 </h3>
                 <div className="space-y-2">
                   {DURATIONS.map((dur) => (
@@ -295,7 +295,7 @@ export default function ToursPage() {
               {/* Rating */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
-                  Rating
+                  Đánh giá
                 </h3>
                 <div className="space-y-2">
                   {RATINGS.map((rating) => (
@@ -320,7 +320,7 @@ export default function ToursPage() {
                           />
                         ))}
                         <span className="text-sm text-slate-600 ml-1">
-                          & Up
+                          trở lên
                         </span>
                       </div>
                     </label>
@@ -338,7 +338,7 @@ export default function ToursPage() {
                 <span className="text-foreground font-bold">
                   {filteredTours.length}
                 </span>{" "}
-                results found
+                kết quả tìm thấy
               </p>
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
@@ -367,14 +367,13 @@ export default function ToursPage() {
                   name="sort"
                   className="h-10 rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer"
                 >
-                  <option>Recommended</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Duration: Short to Long</option>
+                  <option>Đề xuất</option>
+                  <option>Giá: Thấp đến Cao</option>
+                  <option>Giá: Cao đến Thấp</option>
+                  <option>Thời gian: Ngắn đến Dài</option>
                 </select>
               </div>
             </div>
-
             {/* Grid */}
             <div
               className={`grid gap-6 ${
@@ -462,20 +461,20 @@ export default function ToursPage() {
                       <div className="flex flex-col">
                         {tour.originalPrice && (
                           <span className="text-xs text-muted-foreground line-through mb-0.5">
-                            ${tour.originalPrice}
+                            {tour.originalPrice.toLocaleString("vi-VN")}đ
                           </span>
                         )}
                         <div className="flex items-baseline gap-1">
                           <span className="text-xs text-muted-foreground font-medium">
-                            From
+                            Từ
                           </span>
                           <span className="text-xl font-bold text-primary">
-                            ${tour.price}
+                            {tour.price.toLocaleString("vi-VN")}đ
                           </span>
                         </div>
                       </div>
                       <Button className="rounded-xl px-6 font-semibold shadow-none hover:shadow-md transition-all">
-                        View Details
+                        Xem chi tiết
                       </Button>
                     </div>
                   </div>
@@ -487,7 +486,7 @@ export default function ToursPage() {
             <div className="mt-12 flex justify-center">
               <div className="flex items-center gap-2 bg-white p-2 rounded-xl border shadow-sm">
                 <Button variant="ghost" disabled className="rounded-lg">
-                  Previous
+                  Trước
                 </Button>
                 <Button
                   variant="secondary"
@@ -503,7 +502,7 @@ export default function ToursPage() {
                 </Button>
                 <span className="text-muted-foreground px-2">...</span>
                 <Button variant="ghost" className="rounded-lg">
-                  Next
+                  Sau
                 </Button>
               </div>
             </div>
@@ -531,20 +530,22 @@ export default function ToursPage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                   </span>
-                  <span className="text-sm font-medium">24/7 Live Support</span>
+                  <span className="text-sm font-medium">
+                    Hỗ trợ trực tuyến 24/7
+                  </span>
                 </div>
 
                 <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
-                  Ready to plan your <br />
+                  Sẵn sàng lên kế hoạch cho <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-                    dream vacation?
+                    kỳ nghỉ mơ ước?
                   </span>
                 </h2>
 
                 <p className="text-lg text-slate-300 max-w-xl leading-relaxed">
-                  Our expert travel consultants are available round the clock to
-                  help you craft the perfect itinerary. No question is too
-                  small.
+                  Các chuyên gia tư vấn du lịch của chúng tôi luôn sẵn sàng hỗ
+                  trợ bạn lên lịch trình hoàn hảo. Không có câu hỏi nào là quá
+                  nhỏ.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-2">
@@ -552,13 +553,13 @@ export default function ToursPage() {
                     size="lg"
                     className="h-14 px-8 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-base shadow-lg hover:scale-105 transition-all duration-300"
                   >
-                    <span className="mr-2">📞</span> Call +1 (555) 123-4567
+                    <span className="mr-2">📞</span> Gọi 1900 1234
                   </Button>
                   <Button
                     size="lg"
                     className="h-14 px-8 rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 hover:text-white hover:border-white/40 font-medium text-base backdrop-blur-md transition-all"
                   >
-                    Chat with an Expert
+                    Chat với chuyên gia
                   </Button>
                 </div>
               </div>
@@ -567,12 +568,12 @@ export default function ToursPage() {
                 <div className="relative z-10 bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 transform rotate-3 hover:rotate-0 transition-transform duration-500">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
-                      JD
+                      MH
                     </div>
                     <div>
-                      <h4 className="text-white font-bold">John Doe</h4>
+                      <h4 className="text-white font-bold">Minh Hoàng</h4>
                       <p className="text-slate-400 text-sm">
-                        Travel Specialist
+                        Chuyên gia du lịch
                       </p>
                     </div>
                     <div className="ml-auto text-yellow-400 flex">
@@ -582,12 +583,11 @@ export default function ToursPage() {
                     </div>
                   </div>
                   <p className="text-slate-200 italic">
-                    "We had an amazing time in Switzerland! The itinerary was
-                    perfect and the support team was always there when we needed
-                    them. Highly recommended!"
+                    "Chúng tôi đã có một khoảng thời gian tuyệt vời! Lịch trình
+                    hoàn hảo và đội ngũ hỗ trợ luôn có mặt khi chúng tôi cần.
+                    Rất khuyến khích!"
                   </p>
                 </div>
-
                 {/* Decorative elements */}
                 <div className="absolute -top-10 -right-10 h-32 w-32 bg-blue-500/20 rounded-full blur-3xl" />
                 <div className="absolute -bottom-10 -left-10 h-32 w-32 bg-emerald-500/20 rounded-full blur-3xl" />

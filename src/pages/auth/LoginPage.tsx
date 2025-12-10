@@ -26,7 +26,7 @@ export default function LoginPage() {
             className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
+            Về trang chủ
           </Link>
         </div>
 
@@ -35,9 +35,12 @@ export default function LoginPage() {
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
               <Compass className="h-8 w-8" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Chào mừng trở lại
+            </h1>
             <p className="text-sm text-muted-foreground">
-              Enter your credentials to access your travel dashboard
+              Nhập thông tin đăng nhập để truy cập bảng điều khiển du lịch của
+              bạn
             </p>
           </div>
 
@@ -69,13 +72,13 @@ export default function LoginPage() {
                     className="text-sm font-medium leading-none"
                     htmlFor="password"
                   >
-                    Password
+                    Mật khẩu
                   </label>
                   <Link
                     to="/forgot-password"
                     className="text-sm font-medium text-primary hover:underline"
                   >
-                    Forgot password?
+                    Quên mật khẩu?
                   </Link>
                 </div>
                 <div className="relative group">
@@ -102,7 +105,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <Button className="login-btn-gradient h-11 font-semibold text-md">
-                Sign In
+                Đăng nhập
               </Button>
             </form>
 
@@ -112,7 +115,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  Hoặc tiếp tục với
                 </span>
               </div>
             </div>
@@ -144,12 +147,12 @@ export default function LoginPage() {
           </div>
 
           <p className="px-8 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
+            Chưa có tài khoản?{" "}
             <Link
               to="/register"
               className="underline underline-offset-4 hover:text-primary font-medium"
             >
-              Sign up
+              Đăng ký
             </Link>
           </p>
         </div>
@@ -172,8 +175,8 @@ export default function LoginPage() {
           <div className="glass-quote rounded-2xl p-8 max-w-lg">
             <blockquote className="space-y-2">
               <p className="text-lg font-medium leading-relaxed">
-                &ldquo;The world is a book and those who do not travel read only
-                one page.&rdquo;
+                &ldquo;Thế giới là một cuốn sách và những người không đi du lịch
+                chỉ đọc được một trang.&rdquo;
               </p>
               <footer className="text-sm font-semibold pt-4 border-t border-white/20 mt-4">
                 St. Augustine

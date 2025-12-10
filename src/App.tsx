@@ -35,11 +35,11 @@ function App() {
           <Route path="tours" element={<ToursManagementPage />} />
           <Route
             path="users"
-            element={<div className="p-6">Manage Users Placeholder</div>}
+            element={<div className="p-6">Trang quản lý người dùng</div>}
           />
           <Route
             path="settings"
-            element={<div className="p-6">Settings Placeholder</div>}
+            element={<div className="p-6">Trang cài đặt</div>}
           />
         </Route>
 
