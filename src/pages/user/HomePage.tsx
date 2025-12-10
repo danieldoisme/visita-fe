@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,9 @@ import {
   Globe,
   Clock,
   CheckCircle2,
+  X,
+  Minus,
+  Plus,
 } from "lucide-react";
 
 const TRENDING_DESTINATIONS = [
@@ -94,8 +98,25 @@ const POPULAR_DESTINATIONS = [
 ];
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [locationQuery, setLocationQuery] = useState("");
   const [showDestinations, setShowDestinations] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [showGuestSelector, setShowGuestSelector] = useState(false);
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (locationQuery) params.append("location", locationQuery);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    params.append("adults", adults.toString());
+    params.append("children", children.toString());
+
+    navigate(`/tours?${params.toString()}`);
+  };
 
   const filteredDestinations = TRENDING_DESTINATIONS.filter((dest) =>
     dest.toLowerCase().includes(locationQuery.toLowerCase())
@@ -137,97 +158,230 @@ export default function HomePage() {
 
           {/* Search Widget */}
           <div className="w-full max-w-5xl animate-in slide-in-from-bottom-8 duration-1000 delay-200">
-            <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-md rounded-2xl overflow-visible">
-              <CardContent className="p-3 md:p-4">
-                <div className="grid grid-cols-1 md:grid-cols-[1.5fr,1fr,1fr,auto] gap-3">
-                  {/* Location Input */}
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                      <MapPin className="h-5 w-5" />
-                    </div>
-                    <div className="relative">
-                      <Input
-                        name="location"
-                        placeholder="Bạn muốn đi đâu?"
-                        className="pl-12 h-14 text-base border-0 bg-slate-50 hover:bg-slate-100 focus-visible:ring-0 focus-visible:bg-white rounded-xl transition-all shadow-sm"
-                        value={locationQuery}
-                        onChange={(e) => setLocationQuery(e.target.value)}
-                        onFocus={() => setShowDestinations(true)}
-                        onBlur={() =>
-                          setTimeout(() => setShowDestinations(false), 200)
-                        }
-                      />
-                      {showDestinations && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                          <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-slate-50">
-                            {locationQuery ? "Gợi ý" : "Điểm đến phổ biến"}
-                          </div>
-                          <ul className="py-2 max-h-[300px] overflow-y-auto">
-                            {filteredDestinations.length > 0 ? (
-                              filteredDestinations.map((dest) => (
-                                <li
-                                  key={dest}
-                                  className="px-4 py-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 text-sm transition-colors"
-                                  onClick={() => {
-                                    setLocationQuery(dest);
-                                    setShowDestinations(false);
-                                  }}
-                                >
-                                  <div className="bg-primary/10 p-2 rounded-full">
-                                    <MapPin className="h-4 w-4 text-primary" />
-                                  </div>
-                                  <span className="font-medium text-slate-700">
-                                    {dest}
-                                  </span>
-                                </li>
-                              ))
-                            ) : (
-                              <div className="p-4 text-sm text-muted-foreground text-center">
-                                Không tìm thấy điểm đến
+            <div className="bg-white rounded-3xl md:rounded-full shadow-2xl p-2 md:p-3">
+              <div className="grid grid-cols-1 md:grid-cols-[1.5fr,1fr,1fr,1fr,auto] gap-2 md:gap-0 md:divide-x divide-slate-100">
+                {/* Location Input */}
+                <div className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors">
+                  <label
+                    htmlFor="location-input"
+                    className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
+                  >
+                    Địa điểm
+                  </label>
+                  <div className="relative flex items-center">
+                    <MapPin className="h-5 w-5 text-primary mr-2" />
+                    <input
+                      id="location-input"
+                      name="location-input"
+                      type="text"
+                      placeholder="Bạn muốn đi đâu?"
+                      className="w-full bg-transparent border-0 p-0 text-base font-medium placeholder:text-muted-foreground/70 focus:ring-0 focus:outline-none"
+                      value={locationQuery}
+                      onChange={(e) => setLocationQuery(e.target.value)}
+                      onFocus={() => setShowDestinations(true)}
+                      onBlur={() =>
+                        setTimeout(() => setShowDestinations(false), 200)
+                      }
+                    />
+                    {locationQuery && (
+                      <button
+                        onClick={() => setLocationQuery("")}
+                        className="absolute right-0 p-1 hover:bg-slate-200 rounded-full text-muted-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {showDestinations && (
+                    <div className="absolute top-full left-0 right-0 mt-4 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-slate-50">
+                        {locationQuery ? "Gợi ý" : "Điểm đến phổ biến"}
+                      </div>
+                      <ul className="py-2 max-h-[300px] overflow-y-auto">
+                        {filteredDestinations.length > 0 ? (
+                          filteredDestinations.map((dest) => (
+                            <li
+                              key={dest}
+                              className="px-4 py-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 text-sm transition-colors"
+                              onClick={() => {
+                                setLocationQuery(dest);
+                                setShowDestinations(false);
+                              }}
+                            >
+                              <div className="bg-primary/10 p-2 rounded-full">
+                                <MapPin className="h-4 w-4 text-primary" />
                               </div>
-                            )}
-                          </ul>
-                        </div>
-                      )}
+                              <span className="font-medium text-slate-700">
+                                {dest}
+                              </span>
+                            </li>
+                          ))
+                        ) : (
+                          <div className="p-4 text-sm text-muted-foreground text-center">
+                            Không tìm thấy điểm đến
+                          </div>
+                        )}
+                      </ul>
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  {/* Date Input */}
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                      <Calendar className="h-5 w-5" />
-                    </div>
-                    <Input
-                      name="date"
+                {/* Start Date */}
+                <div
+                  className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer"
+                  onClick={() =>
+                    (
+                      document.getElementById("start-date-input") as any
+                    )?.showPicker()
+                  }
+                >
+                  <label
+                    htmlFor="start-date-input"
+                    className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
+                  >
+                    Ngày đi
+                  </label>
+                  <div className="flex items-center">
+                    <Calendar className="h-5 w-5 text-primary mr-2" />
+                    <input
+                      id="start-date-input"
                       type="date"
-                      className="pl-12 h-14 text-base border-0 bg-slate-50 hover:bg-slate-100 focus-visible:ring-0 focus-visible:bg-white rounded-xl transition-all shadow-sm"
+                      className="w-full bg-transparent border-0 p-0 text-base font-medium text-slate-700 focus:ring-0 focus:outline-none cursor-pointer"
+                      value={startDate}
+                      min={new Date().toISOString().split("T")[0]}
+                      onChange={(e) => setStartDate(e.target.value)}
                     />
                   </div>
+                </div>
 
-                  {/* Guests Input */}
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                      <Users className="h-5 w-5" />
-                    </div>
-                    <Input
-                      name="guests"
-                      placeholder="Số khách"
-                      type="number"
-                      min={1}
-                      className="pl-12 h-14 text-base border-0 bg-slate-50 hover:bg-slate-100 focus-visible:ring-0 focus-visible:bg-white rounded-xl transition-all shadow-sm"
+                {/* End Date */}
+                <div
+                  className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer"
+                  onClick={() =>
+                    (
+                      document.getElementById("end-date-input") as any
+                    )?.showPicker()
+                  }
+                >
+                  <label
+                    htmlFor="end-date-input"
+                    className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
+                  >
+                    Ngày về
+                  </label>
+                  <div className="flex items-center">
+                    <Calendar className="h-5 w-5 text-primary mr-2" />
+                    <input
+                      id="end-date-input"
+                      type="date"
+                      className="w-full bg-transparent border-0 p-0 text-base font-medium text-slate-700 focus:ring-0 focus:outline-none cursor-pointer"
+                      value={endDate}
+                      min={startDate || new Date().toISOString().split("T")[0]}
+                      onChange={(e) => setEndDate(e.target.value)}
                     />
                   </div>
+                </div>
 
-                  {/* Search Button */}
+                {/* Guests */}
+                <div className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer">
+                  <label
+                    htmlFor="guest-selector"
+                    className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
+                  >
+                    Khách
+                  </label>
+                  <button
+                    id="guest-selector"
+                    type="button"
+                    className="flex items-center w-full bg-transparent p-0 border-0 focus:outline-none"
+                    onClick={() => setShowGuestSelector(!showGuestSelector)}
+                  >
+                    <Users className="h-5 w-5 text-primary mr-2" />
+                    <span className="text-base font-medium text-slate-700">
+                      {adults + children} Khách
+                    </span>
+                  </button>
+
+                  {showGuestSelector && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowGuestSelector(false)}
+                      />
+                      <div className="absolute top-full right-0 mt-4 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
+                        {/* Adults */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <p className="font-semibold">Người lớn</p>
+                            <p className="text-xs text-muted-foreground">
+                              Từ 12 tuổi
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => setAdults(Math.max(1, adults - 1))}
+                              disabled={adults <= 1}
+                              className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="w-4 text-center font-medium">
+                              {adults}
+                            </span>
+                            <button
+                              onClick={() => setAdults(adults + 1)}
+                              className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        {/* Children */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold">Trẻ em</p>
+                            <p className="text-xs text-muted-foreground">
+                              Dưới 12 tuổi
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() =>
+                                setChildren(Math.max(0, children - 1))
+                              }
+                              disabled={children <= 0}
+                              className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="w-4 text-center font-medium">
+                              {children}
+                            </span>
+                            <button
+                              onClick={() => setChildren(children + 1)}
+                              className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Search Button */}
+                <div className="flex items-center justify-center md:justify-end p-2">
                   <Button
                     size="lg"
-                    className="h-14 px-8 text-base font-semibold shadow-lg rounded-xl hover:scale-105 transition-transform duration-200"
+                    onClick={handleSearch}
+                    className="w-full md:w-auto h-12 md:h-14 px-6 md:px-8 rounded-full bg-primary hover:bg-primary/90 text-base font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
                   >
                     <Search className="mr-2 h-5 w-5" /> Tìm kiếm
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -408,6 +562,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
               <Input
                 name="email"
+                aria-label="Địa chỉ email"
                 autoComplete="email"
                 placeholder="Địa chỉ email của bạn"
                 className="h-14 bg-transparent border-0 text-white placeholder:text-white/60 focus-visible:ring-0 text-base"
