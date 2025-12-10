@@ -97,7 +97,7 @@ export default function ToursPage() {
           {/* Sidebar Filters */}
           <aside
             className={`
-            fixed inset-0 z-50 bg-white p-6 lg:p-0 lg:static lg:bg-transparent lg:w-[280px] lg:block overflow-y-auto transition-transform duration-300 ease-in-out
+            fixed inset-0 z-40 bg-white p-6 lg:p-0 lg:static lg:bg-transparent lg:w-[280px] lg:block overflow-y-auto transition-transform duration-300 ease-in-out
             ${
               showMobileFilters
                 ? "translate-x-0"
@@ -116,7 +116,7 @@ export default function ToursPage() {
               </Button>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-8 px-1">
               {/* Search */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
