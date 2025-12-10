@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useTour } from "@/context/TourContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,102 +19,6 @@ import {
   X,
 } from "lucide-react";
 
-// Mock Data
-const TOURS = [
-  {
-    id: 1,
-    title: "Khám phá Vịnh Hạ Long & Hang Sửng Sốt",
-    location: "Hạ Long, Quảng Ninh",
-    price: 3500000,
-    originalPrice: 4000000,
-    duration: "2 Ngày",
-    rating: 4.9,
-    reviews: 124,
-    image:
-      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Phiêu lưu",
-    difficulty: "Trung bình",
-    tags: ["Bán chạy", "Hủy miễn phí"],
-    features: ["Bao gồm hướng dẫn viên", "Bao gồm bữa ăn", "Xe đưa đón"],
-  },
-  {
-    id: 2,
-    title: "Văn hóa Cố đô Huế & Thưởng thức Nhã nhạc",
-    location: "Huế",
-    price: 2500000,
-    duration: "3 Ngày",
-    rating: 4.8,
-    reviews: 89,
-    image:
-      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Văn hóa",
-    difficulty: "Dễ",
-    tags: ["Sắp hết chỗ"],
-    features: ["Nhóm nhỏ", "Vé tham quan"],
-  },
-  {
-    id: 3,
-    title: "Khám phá Hang Sơn Đoòng",
-    location: "Quảng Bình",
-    price: 65000000,
-    duration: "4 Ngày",
-    rating: 5.0,
-    reviews: 45,
-    image:
-      "https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Thám hiểm",
-    difficulty: "Khó",
-    tags: ["Cao cấp"],
-    features: ["Trực thăng", "Lều trại cao cấp"],
-  },
-  {
-    id: 4,
-    title: "Tham quan Phố cổ Hội An",
-    location: "Hội An, Quảng Nam",
-    price: 1200000,
-    originalPrice: 1500000,
-    duration: "1 Ngày",
-    rating: 4.7,
-    reviews: 210,
-    image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Thành phố",
-    difficulty: "Dễ",
-    tags: ["Vé điện tử"],
-    features: ["Không xếp hàng", "Hướng dẫn âm thanh"],
-  },
-  {
-    id: 5,
-    title: "Leo núi Fansipan",
-    location: "Sapa, Lào Cai",
-    price: 4500000,
-    duration: "2 Ngày",
-    rating: 4.9,
-    reviews: 156,
-    image:
-      "https://images.unsplash.com/photo-1526392060635-9d6019884377?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Phiêu lưu",
-    difficulty: "Khó",
-    tags: ["Phải thử"],
-    features: ["Người khuân vác", "Dụng cụ cắm trại"],
-  },
-  {
-    id: 6,
-    title: "Lặn ngắm san hô Phú Quốc",
-    location: "Phú Quốc, Kiên Giang",
-    price: 1800000,
-    duration: "1 Ngày",
-    rating: 4.8,
-    reviews: 98,
-    image:
-      "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?q=80&w=2938&auto=format&fit=crop",
-    category: "Biển",
-    difficulty: "Dễ",
-    tags: ["Cặp đôi"],
-    features: ["Lặn biển", "Ngắm hoàng hôn"],
-  },
-];
-
 const CATEGORIES = [
   "Phiêu lưu",
   "Văn hóa",
@@ -125,16 +31,26 @@ const DURATIONS = ["1-3 Ngày", "4-7 Ngày", "8-14 Ngày", "15+ Ngày"];
 const RATINGS = [5, 4, 3];
 
 export default function ToursPage() {
+  const { tours, loading } = useTour();
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState([0, 100000000]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const filteredTours = TOURS.filter(
+  const filteredTours = tours.filter(
     (tour) =>
-      tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tour.location.toLowerCase().includes(searchTerm.toLowerCase())
+      tour.status === "Hoạt động" &&
+      (tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tour.location.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-xl">Đang tải danh sách tour...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -160,7 +76,7 @@ export default function ToursPage() {
             Khám phá Thế giới
           </h1>
           <p className="text-lg md:text-xl text-slate-200 max-w-2xl leading-relaxed">
-            Khám phá {TOURS.length}+ trải nghiệm độc đáo, từ leo núi đến dạo
+            Khám phá {tours.length}+ trải nghiệm độc đáo, từ leo núi đến dạo
             phố. Cuộc phiêu lưu tiếp theo của bạn bắt đầu tại đây.
           </p>
         </div>
@@ -473,9 +389,11 @@ export default function ToursPage() {
                           </span>
                         </div>
                       </div>
-                      <Button className="rounded-xl px-6 font-semibold shadow-none hover:shadow-md transition-all">
-                        Xem chi tiết
-                      </Button>
+                      <Link to={`/tours/${tour.id}`}>
+                        <Button className="rounded-xl px-6 font-semibold shadow-none hover:shadow-md transition-all">
+                          Xem chi tiết
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </Card>
