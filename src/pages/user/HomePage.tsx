@@ -1,12 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   MapPin,
-  Calendar,
+  Calendar as CalendarIcon,
   Star,
   Search,
   Users,
@@ -101,8 +110,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [locationQuery, setLocationQuery] = useState("");
   const [showDestinations, setShowDestinations] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [date, setDate] = useState<DateRange | undefined>();
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [showGuestSelector, setShowGuestSelector] = useState(false);
@@ -110,8 +118,8 @@ export default function HomePage() {
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (locationQuery) params.append("location", locationQuery);
-    if (startDate) params.append("startDate", startDate);
-    if (endDate) params.append("endDate", endDate);
+    if (date?.from) params.append("startDate", format(date.from, "yyyy-MM-dd"));
+    if (date?.to) params.append("endDate", format(date.to, "yyyy-MM-dd"));
     params.append("adults", adults.toString());
     params.append("children", children.toString());
 
@@ -226,60 +234,50 @@ export default function HomePage() {
                   )}
                 </div>
 
-                {/* Start Date */}
-                <div
-                  className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer"
-                  onClick={() =>
-                    (
-                      document.getElementById("start-date-input") as any
-                    )?.showPicker()
-                  }
-                >
+                {/* Date Range Picker */}
+                <div className="col-span-2 relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors">
                   <label
-                    htmlFor="start-date-input"
+                    htmlFor="date-range-picker"
                     className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
                   >
-                    Ngày đi
+                    Thời gian
                   </label>
-                  <div className="flex items-center">
-                    <Calendar className="h-5 w-5 text-primary mr-2" />
-                    <input
-                      id="start-date-input"
-                      type="date"
-                      className="w-full bg-transparent border-0 p-0 text-base font-medium text-slate-700 focus:ring-0 focus:outline-none cursor-pointer"
-                      value={startDate}
-                      min={new Date().toISOString().split("T")[0]}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* End Date */}
-                <div
-                  className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer"
-                  onClick={() =>
-                    (
-                      document.getElementById("end-date-input") as any
-                    )?.showPicker()
-                  }
-                >
-                  <label
-                    htmlFor="end-date-input"
-                    className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
-                  >
-                    Ngày về
-                  </label>
-                  <div className="flex items-center">
-                    <Calendar className="h-5 w-5 text-primary mr-2" />
-                    <input
-                      id="end-date-input"
-                      type="date"
-                      className="w-full bg-transparent border-0 p-0 text-base font-medium text-slate-700 focus:ring-0 focus:outline-none cursor-pointer"
-                      value={endDate}
-                      min={startDate || new Date().toISOString().split("T")[0]}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="date-range-picker"
+                        variant={"ghost"}
+                        className={cn(
+                          "w-full justify-start text-left font-medium p-0 h-auto hover:bg-transparent text-base text-slate-700",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-5 w-5 text-primary" />
+                        {date?.from ? (
+                          date.to ? (
+                            <>
+                              {format(date.from, "dd/MM/yyyy")} -{" "}
+                              {format(date.to, "dd/MM/yyyy")}
+                            </>
+                          ) : (
+                            format(date.from, "dd/MM/yyyy")
+                          )
+                        ) : (
+                          <span>Chọn ngày đi - về</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarPicker
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={date}
+                        onSelect={setDate}
+                        numberOfMonths={2}
+                        disabled={{ before: new Date() }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Guests */}
