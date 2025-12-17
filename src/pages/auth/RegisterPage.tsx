@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import {
   ArrowLeft,
   Compass,
@@ -11,12 +12,51 @@ import {
   Eye,
   EyeOff,
   Facebook,
+  AlertCircle,
 } from "lucide-react";
 import "@/styles/login.css";
 
 export default function RegisterPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setError("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      setError("Mật khẩu phải có ít nhất 6 ký tự");
+      return;
+    }
+
+    setIsLoading(true);
+
+    const result = await register(email, password, name);
+
+    if (result.success) {
+      navigate("/", { replace: true });
+    } else {
+      setError(result.error || "Đăng ký thất bại");
+    }
+
+    setIsLoading(false);
+  };
 
   return (
     <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
@@ -79,7 +119,14 @@ export default function RegisterPage() {
             </div>
 
             <div className="grid gap-6">
-              <form className="grid gap-4" onSubmit={(e) => e.preventDefault()}>
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">{error}</span>
+                </div>
+              )}
+
+              <form className="grid gap-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <label
                     className="text-sm font-medium leading-none"
@@ -97,6 +144,9 @@ export default function RegisterPage() {
                       autoComplete="name"
                       autoCorrect="off"
                       className="pl-10 login-input"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
@@ -117,6 +167,9 @@ export default function RegisterPage() {
                       autoComplete="email"
                       autoCorrect="off"
                       className="pl-10 login-input"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
@@ -134,6 +187,9 @@ export default function RegisterPage() {
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       className="pl-10 pr-10 login-input"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
                     />
                     <Button
                       type="button"
@@ -164,6 +220,9 @@ export default function RegisterPage() {
                       type={showConfirmPassword ? "text" : "password"}
                       autoComplete="new-password"
                       className="pl-10 pr-10 login-input"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
                     />
                     <Button
                       type="button"
@@ -182,8 +241,11 @@ export default function RegisterPage() {
                     </Button>
                   </div>
                 </div>
-                <Button className="login-btn-gradient h-11 font-semibold text-md">
-                  Đăng ký
+                <Button
+                  className="login-btn-gradient h-11 font-semibold text-md"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Đang đăng ký..." : "Đăng ký"}
                 </Button>
               </form>
 

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import {
   ArrowLeft,
   Compass,
@@ -10,11 +11,35 @@ import {
   Eye,
   EyeOff,
   Facebook,
+  AlertCircle,
 } from "lucide-react";
 import "@/styles/login.css";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      navigate("/", { replace: true });
+    } else {
+      setError(result.error || "Đăng nhập thất bại");
+    }
+
+    setIsLoading(false);
+  };
 
   return (
     <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
@@ -45,7 +70,14 @@ export default function LoginPage() {
           </div>
 
           <div className="grid gap-6">
-            <form className="grid gap-4" onSubmit={(e) => e.preventDefault()}>
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
+              </div>
+            )}
+
+            <form className="grid gap-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <label
                   className="text-sm font-medium leading-none"
@@ -63,6 +95,9 @@ export default function LoginPage() {
                     autoComplete="email"
                     autoCorrect="off"
                     className="pl-10 login-input"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -88,6 +123,9 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     className="pl-10 pr-10 login-input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
                   <Button
                     type="button"
@@ -104,8 +142,11 @@ export default function LoginPage() {
                   </Button>
                 </div>
               </div>
-              <Button className="login-btn-gradient h-11 font-semibold text-md">
-                Đăng nhập
+              <Button
+                className="login-btn-gradient h-11 font-semibold text-md"
+                disabled={isLoading}
+              >
+                {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
             </form>
 

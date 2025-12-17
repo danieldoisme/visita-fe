@@ -1,6 +1,7 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, Map, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/admin" },
@@ -11,6 +12,13 @@ const sidebarItems = [
 
 export default function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/", { replace: true });
+  };
 
   return (
     <div className="min-h-screen flex bg-muted/40">
@@ -37,7 +45,10 @@ export default function AdminLayout() {
           ))}
         </nav>
         <div className="p-4 border-t">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-primary">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-primary"
+          >
             <LogOut className="h-4 w-4" />
             Đăng xuất
           </button>
@@ -46,8 +57,19 @@ export default function AdminLayout() {
 
       {/* Main Content Area */}
       <div className="flex flex-col sm:pl-64 w-full">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-6">
           <h1 className="font-semibold text-lg">Bảng điều khiển</h1>
+          {user && (
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="text-sm">
+                <p className="font-medium">{user.name}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
+            </div>
+          )}
         </header>
         <main className="flex-1 p-6">
           <Outlet />
