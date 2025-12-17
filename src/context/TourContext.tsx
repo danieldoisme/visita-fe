@@ -113,21 +113,45 @@ const INITIAL_TOURS: Tour[] = [
   },
 ];
 
+const STORAGE_KEY = "visita_tours_data";
+
 export const TourProvider = ({ children }: { children: ReactNode }) => {
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Load tours from localStorage on mount
   useEffect(() => {
-    // Simulate fetching data
-    const fetchTours = async () => {
+    const loadTours = async () => {
       setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
-      setTours(INITIAL_TOURS);
+      await new Promise((resolve) => setTimeout(resolve, 300)); // Simulate network delay
+
+      try {
+        const storedData = localStorage.getItem(STORAGE_KEY);
+        if (storedData) {
+          const parsedTours = JSON.parse(storedData) as Tour[];
+          setTours(parsedTours);
+        } else {
+          // First time: use initial mock data and save to localStorage
+          setTours(INITIAL_TOURS);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_TOURS));
+        }
+      } catch (error) {
+        console.error("Error loading tours from localStorage:", error);
+        setTours(INITIAL_TOURS);
+      }
+
       setLoading(false);
     };
 
-    fetchTours();
+    loadTours();
   }, []);
+
+  // Persist tours to localStorage whenever they change (after initial load)
+  useEffect(() => {
+    if (!loading && tours.length >= 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tours));
+    }
+  }, [tours, loading]);
 
   const getTour = async (id: number) => {
     await new Promise((resolve) => setTimeout(resolve, 300));
