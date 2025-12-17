@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { Compass, Menu, User, Calendar, LogOut, ChevronDown } from "lucide-react";
+import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 
 export default function MainLayout() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
 
   // Get user's initials for avatar
@@ -75,28 +75,50 @@ export default function MainLayout() {
                 </PopoverTrigger>
                 <PopoverContent className="w-56 p-2" align="end">
                   <div className="px-3 py-2 border-b mb-2">
-                    <p className="text-sm font-medium text-slate-900">{user?.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-slate-900">{user?.name}</p>
+                      {isAdmin && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                          <Shield className="w-3 h-3" />
+                          Admin
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-500">{user?.email}</p>
                   </div>
                   <div className="space-y-1">
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
-                    >
-                      <User className="w-4 h-4" />
-                      Trang cá nhân
-                    </Link>
-                    <Link
-                      to="/profile"
-                      onClick={() => {
-                        // Navigate to profile with bookings tab active
-                        // In a real app, you'd use URL params or state
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
-                    >
-                      <Calendar className="w-4 h-4" />
-                      Đặt chỗ của tôi
-                    </Link>
+                    {isAdmin ? (
+                      /* Admin Menu Items */
+                      <Link
+                        to="/admin"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                      >
+                        <Shield className="w-4 h-4" />
+                        Trang quản trị
+                      </Link>
+                    ) : (
+                      /* User Menu Items */
+                      <>
+                        <Link
+                          to="/profile"
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                        >
+                          <User className="w-4 h-4" />
+                          Trang cá nhân
+                        </Link>
+                        <Link
+                          to="/profile"
+                          onClick={() => {
+                            // Navigate to profile with bookings tab active
+                            // In a real app, you'd use URL params or state
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                        >
+                          <Calendar className="w-4 h-4" />
+                          Đặt chỗ của tôi
+                        </Link>
+                      </>
+                    )}
                   </div>
                   <div className="border-t mt-2 pt-2">
                     <button

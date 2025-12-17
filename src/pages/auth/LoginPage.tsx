@@ -33,6 +33,20 @@ export default function LoginPage() {
     const result = await login(email, password);
 
     if (result.success) {
+      // Check if the logged-in user is admin - redirect to admin area
+      const storedUser = localStorage.getItem("visita_auth_user");
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser.role === "admin") {
+            setIsLoading(false);
+            navigate("/admin", { replace: true });
+            return;
+          }
+        } catch {
+          // Continue with normal flow if parse fails
+        }
+      }
       navigate("/", { replace: true });
     } else {
       setError(result.error || "Đăng nhập thất bại");

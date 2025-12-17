@@ -18,6 +18,7 @@ import {
     Minus,
     Check,
     Loader2,
+    Shield,
 } from "lucide-react";
 
 interface BookingModalProps {
@@ -27,7 +28,7 @@ interface BookingModalProps {
 }
 
 export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const { addBooking } = useBooking();
 
     // Form state
@@ -121,6 +122,31 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
         { id: "credit_card" as PaymentMethod, label: "Thẻ tín dụng / Ghi nợ", icon: CreditCard },
         { id: "cash" as PaymentMethod, label: "Thanh toán khi nhận tour", icon: Banknote },
     ];
+
+    // Block admin users from booking
+    if (isAdmin) {
+        return (
+            <Modal isOpen={isOpen} onClose={onClose} title="Đặt tour" className="max-w-md">
+                <div className="text-center py-6">
+                    <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+                        <Shield className="w-8 h-8 text-amber-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">Chức năng dành cho khách hàng</h3>
+                    <p className="text-gray-600 mb-6">
+                        Tài khoản quản trị viên không thể đặt tour. Vui lòng sử dụng tài khoản khách hàng để đặt tour hoặc quay lại trang quản trị.
+                    </p>
+                    <div className="space-y-3">
+                        <Button onClick={onClose} variant="outline" className="w-full">
+                            Đóng
+                        </Button>
+                        <Button onClick={() => window.location.href = "/admin"} className="w-full">
+                            Về trang quản trị
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+        );
+    }
 
     if (isSuccess) {
         return (

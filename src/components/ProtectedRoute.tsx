@@ -3,14 +3,22 @@ import { useAuth, UserRole } from "@/context/AuthContext";
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
+    /** Require a specific role to access this route */
     requiredRole?: UserRole;
+    /** Block specific roles from accessing this route */
+    blockedRoles?: UserRole[];
+    /** Redirect to admin login instead of user login when not authenticated */
     adminLoginRedirect?: boolean;
+    /** Custom redirect destination for blocked/unauthorized users */
+    redirectTo?: string;
 }
 
 export default function ProtectedRoute({
     children,
     requiredRole,
+    blockedRoles,
     adminLoginRedirect = false,
+    redirectTo,
 }: ProtectedRouteProps) {
     const { isAuthenticated, user, loading } = useAuth();
     const location = useLocation();
@@ -30,10 +38,18 @@ export default function ProtectedRoute({
         return <Navigate to={loginPath} state={{ from: location }} replace />;
     }
 
+    // Check if user's role is blocked from this route
+    if (blockedRoles && user?.role && blockedRoles.includes(user.role)) {
+        // Redirect to custom destination or role-appropriate default
+        const destination = redirectTo || (user.role === "admin" ? "/admin" : "/");
+        return <Navigate to={destination} replace />;
+    }
+
     // Check role requirement
     if (requiredRole && user?.role !== requiredRole) {
-        // User doesn't have required role - redirect to home
-        return <Navigate to="/" replace />;
+        // User doesn't have required role - redirect to custom destination or home
+        const destination = redirectTo || "/";
+        return <Navigate to={destination} replace />;
     }
 
     return <>{children}</>;

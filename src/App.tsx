@@ -43,7 +43,7 @@ function App() {
                 <Route
                   path="profile"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute blockedRoles={["admin"]} redirectTo="/admin">
                       <ProfilePage />
                     </ProtectedRoute>
                   }
