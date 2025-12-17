@@ -106,6 +106,7 @@ export default function AdminLoginPage() {
                                 <Input
                                     id="email"
                                     type="email"
+                                    autoComplete="username"
                                     placeholder="admin@visita.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -127,6 +128,7 @@ export default function AdminLoginPage() {
                                 <Input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
+                                    autoComplete="current-password"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
