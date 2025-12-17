@@ -1,8 +1,32 @@
-import { Outlet, Link } from "react-router-dom";
-import { Compass, Menu } from "lucide-react";
+import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Compass, Menu, User, Calendar, LogOut, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function MainLayout() {
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Get user's initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Navbar */}
@@ -35,11 +59,64 @@ export default function MainLayout() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Link to="/login">
-              <Button variant="ghost" size="sm" className="hidden md:flex">
-                Đăng nhập
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              /* Authenticated User Dropdown */
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-slate-100 transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-sm font-semibold">
+                      {getInitials(user?.name || "U")}
+                    </div>
+                    <span className="text-sm font-medium text-slate-700 max-w-[120px] truncate">
+                      {user?.name}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="end">
+                  <div className="px-3 py-2 border-b mb-2">
+                    <p className="text-sm font-medium text-slate-900">{user?.name}</p>
+                    <p className="text-xs text-slate-500">{user?.email}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      Trang cá nhân
+                    </Link>
+                    <Link
+                      to="/profile"
+                      onClick={() => {
+                        // Navigate to profile with bookings tab active
+                        // In a real app, you'd use URL params or state
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Đặt chỗ của tôi
+                    </Link>
+                  </div>
+                  <div className="border-t mt-2 pt-2">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Đăng xuất
+                    </button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              /* Guest Login Button */
+              <Link to="/login">
+                <Button variant="ghost" size="sm" className="hidden md:flex">
+                  Đăng nhập
+                </Button>
+              </Link>
+            )}
             <Button size="sm" className="hidden md:flex">
               Đặt ngay
             </Button>

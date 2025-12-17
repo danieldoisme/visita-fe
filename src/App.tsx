@@ -9,11 +9,13 @@ import HomePage from "@/pages/user/HomePage";
 import ToursPage from "@/pages/user/ToursPage";
 import TourDetailsPage from "@/pages/user/TourDetailsPage";
 import AboutPage from "@/pages/user/AboutPage";
+import ProfilePage from "@/pages/user/ProfilePage";
 import DashboardPage from "@/pages/admin/DashboardPage";
 import ToursManagementPage from "@/pages/admin/ToursManagementPage";
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
+
 
 function App() {
   return (
@@ -38,6 +40,14 @@ function App() {
                 <Route path="tours" element={<ToursPage />} />
                 <Route path="tours/:id" element={<TourDetailsPage />} />
                 <Route path="about" element={<AboutPage />} />
+                <Route
+                  path="profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
               </Route>
 
               {/* Admin Routes - Protected */}
