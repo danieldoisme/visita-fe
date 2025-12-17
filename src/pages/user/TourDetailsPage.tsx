@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTour, Tour } from "@/context/TourContext";
+import { BookingModal } from "@/components/BookingModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Star, ArrowLeft, Calendar, Users } from "lucide-react";
@@ -11,6 +12,7 @@ export default function TourDetailsPage() {
   const { getTour } = useTour();
   const [tour, setTour] = useState<Tour | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -137,13 +139,20 @@ export default function TourDetailsPage() {
               </div>
             </div>
 
-            <Button className="w-full h-12 text-lg">Đặt Tour Ngay</Button>
+            <Button className="w-full h-12 text-lg" onClick={() => setIsBookingModalOpen(true)}>Đặt Tour Ngay</Button>
             <p className="text-xs text-center text-gray-500 mt-4">
               Không tính phí đặt chỗ. Xác nhận ngay lập tức.
             </p>
           </div>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
+        tour={tour}
+      />
     </div>
   );
 }
