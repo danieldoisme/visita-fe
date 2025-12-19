@@ -48,7 +48,7 @@ const INITIAL_TOURS: Tour[] = [
     rating: 4.9,
     reviews: 124,
     image:
-      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
     category: "Phiêu lưu",
     status: "Hoạt động",
     description:
@@ -66,7 +66,7 @@ const INITIAL_TOURS: Tour[] = [
     rating: 4.8,
     reviews: 89,
     image:
-      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop",
     category: "Văn hóa",
     status: "Hoạt động",
     description:
@@ -84,7 +84,7 @@ const INITIAL_TOURS: Tour[] = [
     rating: 5.0,
     reviews: 45,
     image:
-      "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?ixlib=rb-4.0.3&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551524164-687a55dd1126?q=80&w=2070&auto=format&fit=crop",
     category: "Mạo hiểm",
     status: "Hoạt động",
     description:
@@ -102,7 +102,7 @@ const INITIAL_TOURS: Tour[] = [
     rating: 4.7,
     reviews: 210,
     image:
-      "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?q=80&w=2938&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1555921015-5532091f6026?q=80&w=2070&auto=format&fit=crop",
     category: "Nghỉ dưỡng",
     status: "Hoạt động",
     description:

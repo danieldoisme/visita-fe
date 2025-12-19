@@ -80,14 +80,12 @@ export default function RegisterPage() {
           <div className="glass-quote rounded-2xl p-8 max-w-lg">
             <blockquote className="space-y-2">
               <p className="text-lg font-medium leading-relaxed">
-                &ldquo;Đi là để sống. Hãy tham gia cộng đồng những người khám
-                phá của chúng tôi và bắt đầu viết nên câu chuyện phiêu lưu của
-                riêng bạn ngay hôm nay.&rdquo;
+                &ldquo;Hãy cùng Visita khám phá những nẻo đường đất nước, để thêm yêu từng dải đất hình chữ S thân thương.&rdquo;
               </p>
               <footer className="text-sm font-semibold pt-4 border-t border-white/20 mt-4">
-                Hans Christian Andersen
+                Visita TEAM
                 <div className="text-xs font-normal opacity-80">
-                  Nhà văn & Người du lịch
+                  Đồng hành cùng bạn
                 </div>
               </footer>
             </blockquote>

@@ -237,8 +237,8 @@ export default function LoginPage() {
       <div className="relative hidden h-full flex-col bg-muted text-white lg:flex overflow-hidden">
         <div className="absolute inset-0 bg-zinc-900/20 z-10" />
         <img
-          src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=1368&auto=format&fit=crop"
-          alt="Travel Destination"
+          src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=1368&auto=format&fit=crop"
+          alt="Phố cổ Hội An"
           className="absolute inset-0 h-full w-full object-cover travel-bg-image"
         />
         <div className="relative z-20 flex h-full flex-col justify-between p-10">
@@ -250,11 +250,10 @@ export default function LoginPage() {
           <div className="glass-quote rounded-2xl p-8 max-w-lg">
             <blockquote className="space-y-2">
               <p className="text-lg font-medium leading-relaxed">
-                &ldquo;Thế giới là một cuốn sách và những người không đi du lịch
-                chỉ đọc được một trang.&rdquo;
+                &ldquo;Việt Nam - Vẻ đẹp bất tận, nơi mỗi bước chân là một hành trình khám phá và mỗi điểm đến là một câu chuyện để kể.&rdquo;
               </p>
               <footer className="text-sm font-semibold pt-4 border-t border-white/20 mt-4">
-                St. Augustine
+                Visita TEAM
               </footer>
             </blockquote>
           </div>

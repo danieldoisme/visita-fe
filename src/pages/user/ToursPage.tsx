@@ -58,8 +58,8 @@ export default function ToursPage() {
       <div className="relative bg-slate-900 py-16 md:py-24 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=2021&q=80"
-            alt="Header Background"
+            src="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop"
+            alt="Vịnh Hạ Long"
             className="w-full h-full object-cover opacity-30"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-slate-900/90" />
@@ -73,7 +73,7 @@ export default function ToursPage() {
             <span className="text-white">Tour</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white mb-6">
-            Khám phá Thế giới
+            Khám phá Việt Nam
           </h1>
           <p className="text-lg md:text-xl text-slate-200 max-w-2xl leading-relaxed">
             Khám phá {tours.length}+ trải nghiệm độc đáo, từ leo núi đến dạo
@@ -98,11 +98,10 @@ export default function ToursPage() {
           <aside
             className={`
             fixed inset-0 z-40 bg-white p-6 lg:p-0 lg:static lg:bg-transparent lg:w-[280px] lg:block overflow-y-auto transition-transform duration-300 ease-in-out
-            ${
-              showMobileFilters
+            ${showMobileFilters
                 ? "translate-x-0"
                 : "-translate-x-full lg:translate-x-0"
-            }
+              }
           `}
           >
             <div className="flex items-center justify-between lg:hidden mb-6">
@@ -228,11 +227,10 @@ export default function ToursPage() {
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-3.5 w-3.5 ${
-                              i < rating
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "fill-slate-200 text-slate-200"
-                            }`}
+                            className={`h-3.5 w-3.5 ${i < rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "fill-slate-200 text-slate-200"
+                              }`}
                           />
                         ))}
                         <span className="text-sm text-slate-600 ml-1">
@@ -260,21 +258,19 @@ export default function ToursPage() {
                 <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
                   <button
                     onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded-md transition-all ${
-                      viewMode === "grid"
-                        ? "bg-slate-100 text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`p-2 rounded-md transition-all ${viewMode === "grid"
+                      ? "bg-slate-100 text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setViewMode("list")}
-                    className={`p-2 rounded-md transition-all ${
-                      viewMode === "list"
-                        ? "bg-slate-100 text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`p-2 rounded-md transition-all ${viewMode === "list"
+                      ? "bg-slate-100 text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     <List className="h-4 w-4" />
                   </button>
@@ -292,28 +288,25 @@ export default function ToursPage() {
             </div>
             {/* Grid */}
             <div
-              className={`grid gap-6 ${
-                viewMode === "grid"
-                  ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                  : "grid-cols-1"
-              }`}
+              className={`grid gap-6 ${viewMode === "grid"
+                ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+                : "grid-cols-1"
+                }`}
             >
               {filteredTours.map((tour) => (
                 <Card
                   key={tour.id}
-                  className={`group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-white rounded-2xl ${
-                    viewMode === "list"
-                      ? "flex flex-col md:flex-row"
-                      : "flex flex-col"
-                  }`}
+                  className={`group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-white rounded-2xl ${viewMode === "list"
+                    ? "flex flex-col md:flex-row"
+                    : "flex flex-col"
+                    }`}
                 >
                   {/* Image Section */}
                   <div
-                    className={`relative overflow-hidden ${
-                      viewMode === "list"
-                        ? "w-full md:w-[320px] h-[240px] md:h-auto"
-                        : "aspect-[4/3] w-full"
-                    }`}
+                    className={`relative overflow-hidden ${viewMode === "list"
+                      ? "w-full md:w-[320px] h-[240px] md:h-auto"
+                      : "aspect-[4/3] w-full"
+                      }`}
                   >
                     <img
                       src={tour.image}
@@ -434,7 +427,7 @@ export default function ToursPage() {
           <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-800 shadow-2xl">
             <div className="absolute inset-0">
               <img
-                src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+                src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop"
                 alt="Background"
                 className="w-full h-full object-cover opacity-30"
               />

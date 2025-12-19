@@ -50,7 +50,7 @@ const FEATURED_TOURS = [
     rating: 4.9,
     reviews: 124,
     image:
-      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop",
     tag: "Bán chạy",
   },
   {
@@ -62,7 +62,7 @@ const FEATURED_TOURS = [
     rating: 4.8,
     reviews: 89,
     image:
-      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop",
     tag: "Văn hóa",
   },
   {
@@ -84,25 +84,25 @@ const POPULAR_DESTINATIONS = [
     name: "Đà Nẵng",
     count: "120+ Tour",
     image:
-      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2070&auto=format&fit=crop",
   },
   {
     name: "Hà Nội",
     count: "85+ Tour",
     image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1599708153386-62bf3f035c78?q=80&w=2070&auto=format&fit=crop",
   },
   {
     name: "Hồ Chí Minh",
     count: "90+ Tour",
     image:
-      "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop",
   },
   {
     name: "Sapa",
     count: "75+ Tour",
     image:
-      "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1570366583862-f91883984fde?q=80&w=2070&auto=format&fit=crop",
   },
 ];
 
@@ -138,8 +138,8 @@ export default function HomePage() {
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent z-10" />
           <img
-            src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-            alt="Hero Background"
+            src="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop"
+            alt="Vịnh Hạ Long - Di sản Thế giới UNESCO"
             className="w-full h-full object-cover animate-in fade-in duration-1000"
           />
         </div>
@@ -150,7 +150,7 @@ export default function HomePage() {
               variant="secondary"
               className="px-4 py-1.5 text-sm font-medium bg-white/20 text-white hover:bg-white/30 border-0 backdrop-blur-sm mb-4"
             >
-              Khám phá thế giới cùng chúng tôi
+              Khám phá Việt Nam cùng chúng tôi
             </Badge>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-lg">
               Hành trình của bạn bắt đầu tại{" "}
@@ -159,8 +159,8 @@ export default function HomePage() {
               </span>
             </h1>
             <p className="text-lg md:text-xl text-slate-100 max-w-[700px] mx-auto drop-shadow-md font-light">
-              Khám phá hơn 5.000+ tour du lịch được tuyển chọn và những cuộc
-              phiêu lưu tại những điểm đến đẹp nhất thế giới.
+              Khám phá hơn 1.000+ tour du lịch được tuyển chọn và những cuộc
+              phiêu lưu tại những điểm đến đẹp nhất Việt Nam.
             </p>
           </div>
 
@@ -394,7 +394,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold mb-2">Điểm đến đa dạng</h3>
               <p className="text-muted-foreground">
-                Tiếp cận hơn 500+ điểm đến trên toàn cầu với hướng dẫn viên
+                Tiếp cận hơn 63+ tỉnh thành trên toàn quốc với hướng dẫn viên
                 chuyên nghiệp.
               </p>
             </div>
@@ -539,8 +539,8 @@ export default function HomePage() {
       <section className="relative py-24 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?q=80&w=2938&auto=format&fit=crop"
-            alt="Newsletter Background"
+            src="https://images.unsplash.com/photo-1573270689103-d7a4e42b609a?q=80&w=2070&auto=format&fit=crop"
+            alt="Tràng An - Ninh Bình"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/60" />

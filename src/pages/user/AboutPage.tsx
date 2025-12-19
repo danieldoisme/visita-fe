@@ -20,8 +20,8 @@ export default function AboutPage() {
       <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-            alt="Travel Background"
+            src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+            alt="Phố cổ Hội An"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/40" />
@@ -35,9 +35,9 @@ export default function AboutPage() {
             Từ năm 2023
           </Badge>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-            Khám Phá Thế Giới <br />{" "}
+            Khám Phá Việt Nam <br />{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">
-              Theo Cách Của Bạn
+              Vẻ Đẹp Bất Tận
             </span>
           </h1>
           <p className="text-lg md:text-2xl max-w-2xl mx-auto text-slate-200 font-light">
@@ -123,13 +123,13 @@ export default function AboutPage() {
             <div className="relative">
               <div className="grid grid-cols-2 gap-4">
                 <img
-                  src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                  alt="Travel 1"
+                  src="https://images.unsplash.com/photo-1573270689103-d7a4e42b609a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                  alt="Tràng An - Ninh Bình"
                   className="rounded-2xl shadow-2xl w-full h-64 object-cover translate-y-8"
                 />
                 <img
-                  src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                  alt="Travel 2"
+                  src="https://images.unsplash.com/photo-1557750255-c76072a7aad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                  alt="Chợ nổi Miền Tây"
                   className="rounded-2xl shadow-2xl w-full h-64 object-cover"
                 />
               </div>
@@ -152,7 +152,7 @@ export default function AboutPage() {
         <div className="container px-4 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { label: "Quốc Gia", value: "50+", icon: Globe },
+              { label: "Tỉnh Thành", value: "34", icon: MapPin },
               { label: "Chuyến Đi", value: "1,200+", icon: MapPin },
               { label: "Khách Hàng", value: "10k+", icon: Users },
               { label: "Giải Thưởng", value: "15", icon: Award },
@@ -232,11 +232,11 @@ export default function AboutPage() {
       <section className="py-4 overflow-hidden">
         <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
           {[
-            "https://images.unsplash.com/photo-1499678329028-101435549a4e",
-            "https://images.unsplash.com/photo-1504609773096-104ff2c73ba4",
-            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-            "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1",
-            "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9",
+            "https://images.unsplash.com/photo-1528127269322-539801943592",
+            "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b",
+            "https://images.unsplash.com/photo-1557750255-c76072a7aad1",
+            "https://images.unsplash.com/photo-1583417319070-4a69db38a482",
+            "https://images.unsplash.com/photo-1570366583862-f91883984fde",
           ].map((url, i) => (
             <div
               key={i}
@@ -244,7 +244,7 @@ export default function AboutPage() {
             >
               <img
                 src={`${url}?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80`}
-                alt="Gallery"
+                alt="Việt Nam Gallery"
                 className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
               />
             </div>
@@ -325,7 +325,7 @@ export default function AboutPage() {
 
         <div className="container px-4 md:px-6 text-center relative z-10">
           <h2 className="text-4xl md:text-6xl font-bold tracking-tighter mb-8">
-            Đừng Chỉ Nghe Kể, <br /> Hãy Tự Mình Trải Nghiệm
+            Khám Phá Vẻ Đẹp <br /> Việt Nam Cùng Visita
           </h2>
           <p className="text-primary-foreground/80 text-xl max-w-2xl mx-auto mb-10">
             Đăng ký ngay hôm nay để nhận ưu đãi 15% cho chuyến đi đầu tiên của
