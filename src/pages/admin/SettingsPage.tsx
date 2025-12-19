@@ -120,6 +120,7 @@ export default function SettingsPage() {
                         <Input
                             id="contactEmail"
                             type="email"
+                            autoComplete="email"
                             value={settings.contactEmail}
                             onChange={(e) => updateSetting("contactEmail", e.target.value)}
                             placeholder="email@example.com"
@@ -131,6 +132,7 @@ export default function SettingsPage() {
                         </label>
                         <Input
                             id="phone"
+                            autoComplete="tel"
                             value={settings.phone}
                             onChange={(e) => updateSetting("phone", e.target.value)}
                             placeholder="+84 xxx xxx xxx"
