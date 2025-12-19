@@ -275,10 +275,12 @@ export default function ToursManagementPage() {
               />
             </div>
             <div className="col-span-2 space-y-2">
-              <label htmlFor="description" className="text-sm font-medium">
+              <span className="text-sm font-medium">
                 Mô tả
-              </label>
+              </span>
               <RichTextEditor
+                id="description"
+                name="description"
                 value={formData.description || ""}
                 onChange={(value) =>
                   setFormData({ ...formData, description: value })
