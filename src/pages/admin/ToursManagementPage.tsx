@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Table,
   TableBody,
@@ -122,8 +123,8 @@ export default function ToursManagementPage() {
                       tour.status === "Hoạt động"
                         ? "default"
                         : tour.status === "Nháp"
-                        ? "secondary"
-                        : "outline"
+                          ? "secondary"
+                          : "outline"
                     }
                   >
                     {tour.status}
@@ -277,13 +278,10 @@ export default function ToursManagementPage() {
               <label htmlFor="description" className="text-sm font-medium">
                 Mô tả
               </label>
-              <textarea
-                id="description"
-                name="description"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              <RichTextEditor
                 value={formData.description || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                onChange={(value) =>
+                  setFormData({ ...formData, description: value })
                 }
                 placeholder="Mô tả chi tiết về tour..."
               />
