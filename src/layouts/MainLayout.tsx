@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import {
 export default function MainLayout() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // Get user's initials for avatar
   const getInitials = (name: string) => {
@@ -61,7 +63,7 @@ export default function MainLayout() {
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
               /* Authenticated User Dropdown */
-              <Popover>
+              <Popover open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
                 <PopoverTrigger asChild>
                   <button className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-slate-100 transition-colors">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-sm font-semibold">
@@ -91,6 +93,7 @@ export default function MainLayout() {
                       /* Admin Menu Items */
                       <Link
                         to="/admin"
+                        onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
                       >
                         <Shield className="w-4 h-4" />
@@ -101,6 +104,8 @@ export default function MainLayout() {
                       <>
                         <Link
                           to="/profile"
+                          state={{ tab: "personal" }}
+                          onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4" />
@@ -108,10 +113,8 @@ export default function MainLayout() {
                         </Link>
                         <Link
                           to="/profile"
-                          onClick={() => {
-                            // Navigate to profile with bookings tab active
-                            // In a real app, you'd use URL params or state
-                          }}
+                          state={{ tab: "bookings" }}
+                          onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
                         >
                           <Calendar className="w-4 h-4" />
@@ -122,7 +125,10 @@ export default function MainLayout() {
                   </div>
                   <div className="border-t mt-2 pt-2">
                     <button
-                      onClick={handleLogout}
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        handleLogout();
+                      }}
                       className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
                     >
                       <LogOut className="w-4 h-4" />

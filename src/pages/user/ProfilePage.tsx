@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useBooking, Booking } from "@/context/BookingContext";
@@ -23,7 +24,20 @@ type TabType = "personal" | "bookings";
 export default function ProfilePage() {
     const { user } = useAuth();
     const { bookings } = useBooking();
-    const [activeTab, setActiveTab] = useState<TabType>("personal");
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        // Initialize from location state if available
+        const state = location.state as { tab?: TabType } | null;
+        return state?.tab || "personal";
+    });
+
+    // Update tab when navigating with state
+    useEffect(() => {
+        const state = location.state as { tab?: TabType } | null;
+        if (state?.tab) {
+            setActiveTab(state.tab);
+        }
+    }, [location.state]);
 
     // Personal info form state
     const [name, setName] = useState(user?.name || "");
