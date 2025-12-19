@@ -13,6 +13,7 @@ import ProfilePage from "@/pages/user/ProfilePage";
 import DashboardPage from "@/pages/admin/DashboardPage";
 import ToursManagementPage from "@/pages/admin/ToursManagementPage";
 import UsersPage from "@/pages/admin/UsersPage";
+import SettingsPage from "@/pages/admin/SettingsPage";
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
@@ -63,10 +64,7 @@ function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="tours" element={<ToursManagementPage />} />
                 <Route path="users" element={<UsersPage />} />
-                <Route
-                  path="settings"
-                  element={<div className="p-6">Trang cài đặt</div>}
-                />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
 
               {/* 404 */}
