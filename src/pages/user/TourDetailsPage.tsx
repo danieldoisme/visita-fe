@@ -4,6 +4,7 @@ import { useTour, Tour } from "@/context/TourContext";
 import { BookingModal } from "@/components/BookingModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Clock, Star, ArrowLeft, Calendar, Users } from "lucide-react";
 
 export default function TourDetailsPage() {
@@ -27,8 +28,50 @@ export default function TourDetailsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-12 text-center">
-        <div className="animate-pulse">Đang tải thông tin tour...</div>
+      <div className="container mx-auto py-8 px-4">
+        <Skeleton className="h-9 w-28 mb-6" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content Skeleton */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Image Skeleton */}
+            <Skeleton className="h-[400px] w-full rounded-xl" />
+
+            {/* Title and Meta Skeleton */}
+            <div>
+              <Skeleton className="h-9 w-3/4 mb-4" />
+              <div className="flex items-center gap-4 mb-4">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-28" />
+              </div>
+            </div>
+
+            {/* Description Skeleton */}
+            <div className="space-y-3">
+              <Skeleton className="h-7 w-20" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
+
+          {/* Sidebar Skeleton */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-6">
+              <div>
+                <Skeleton className="h-4 w-16 mb-2" />
+                <Skeleton className="h-9 w-36" />
+              </div>
+              <div className="space-y-4">
+                <Skeleton className="h-16 w-full rounded-lg" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+              </div>
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-4 w-48 mx-auto" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

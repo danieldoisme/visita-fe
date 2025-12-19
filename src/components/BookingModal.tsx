@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { toast } from "sonner";
 import { Calendar } from "@/components/ui/calendar";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -110,8 +111,10 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
             });
 
             setIsSuccess(true);
+            toast.success("Đặt tour thành công!");
         } catch (error) {
             console.error("Booking failed:", error);
+            toast.error("Đặt tour thất bại. Vui lòng thử lại.");
         } finally {
             setIsSubmitting(false);
         }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useBooking, Booking } from "@/context/BookingContext";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,6 @@ export default function ProfilePage() {
     const [name, setName] = useState(user?.name || "");
     const [email, setEmail] = useState(user?.email || "");
     const [isSaving, setIsSaving] = useState(false);
-    const [saveSuccess, setSaveSuccess] = useState(false);
 
     // Get user's initials for avatar
     const getInitials = (name: string) => {
@@ -43,12 +43,10 @@ export default function ProfilePage() {
     // Handle save (mock)
     const handleSave = async () => {
         setIsSaving(true);
-        setSaveSuccess(false);
         // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 800));
         setIsSaving(false);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        toast.success("Đã lưu thông tin thành công!");
     };
 
     // Get status badge styling
@@ -221,11 +219,6 @@ export default function ProfilePage() {
                                             </>
                                         )}
                                     </Button>
-                                    {saveSuccess && (
-                                        <span className="text-sm text-green-600 font-medium">
-                                            ✓ Đã lưu thành công!
-                                        </span>
-                                    )}
                                 </div>
                             </CardContent>
                         </Card>

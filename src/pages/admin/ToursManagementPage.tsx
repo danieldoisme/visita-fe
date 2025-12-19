@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { useTour, Tour } from "@/context/TourContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,8 +52,10 @@ export default function ToursManagementPage() {
     e.preventDefault();
     if (editingTour) {
       await updateTour(editingTour.id, formData);
+      toast.success("Đã cập nhật tour thành công!");
     } else {
       await addTour(formData as Tour);
+      toast.success("Đã thêm tour mới thành công!");
     }
     handleCloseModal();
   };
@@ -60,6 +63,7 @@ export default function ToursManagementPage() {
   const handleDelete = async (id: number) => {
     if (confirm("Bạn có chắc chắn muốn xóa tour này không?")) {
       await deleteTour(id);
+      toast.success("Đã xóa tour thành công!");
     }
   };
 

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
 import { TourProvider } from "@/context/TourContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { BookingProvider } from "@/context/BookingContext";
@@ -24,6 +25,7 @@ function App() {
     <AuthProvider>
       <BookingProvider>
         <TourProvider>
+          <Toaster position="top-right" richColors />
           <BrowserRouter
             future={{
               v7_startTransition: true,
