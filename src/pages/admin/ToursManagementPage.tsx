@@ -1,11 +1,22 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useTour, Tour } from "@/context/TourContext";
+import { tourSchema, TourFormData } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Table,
   TableBody,
@@ -20,22 +31,44 @@ export default function ToursManagementPage() {
   const { tours, loading, addTour, updateTour, deleteTour } = useTour();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
-  const [formData, setFormData] = useState<Partial<Tour>>({});
+
+  const form = useForm<TourFormData>({
+    resolver: zodResolver(tourSchema),
+    defaultValues: {
+      title: "",
+      location: "",
+      price: 0,
+      duration: "",
+      category: "",
+      status: "Nháp",
+      image: "",
+      description: "",
+    },
+  });
 
   const handleOpenModal = (tour?: Tour) => {
     if (tour) {
       setEditingTour(tour);
-      setFormData(tour);
+      form.reset({
+        title: tour.title,
+        location: tour.location,
+        price: tour.price,
+        duration: tour.duration,
+        category: tour.category || "",
+        status: tour.status,
+        image: tour.image || "",
+        description: tour.description || "",
+      });
     } else {
       setEditingTour(null);
-      setFormData({
+      form.reset({
         title: "",
         location: "",
         price: 0,
         duration: "",
-        image: "",
         category: "",
         status: "Nháp",
+        image: "",
         description: "",
       });
     }
@@ -45,16 +78,15 @@ export default function ToursManagementPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingTour(null);
-    setFormData({});
+    form.reset();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: TourFormData) => {
     if (editingTour) {
-      await updateTour(editingTour.id, formData);
+      await updateTour(editingTour.id, data);
       toast.success("Đã cập nhật tour thành công!");
     } else {
-      await addTour(formData as Tour);
+      await addTour(data as Tour);
       toast.success("Đã thêm tour mới thành công!");
     }
     handleCloseModal();
@@ -166,142 +198,146 @@ export default function ToursManagementPage() {
         title={editingTour ? "Chỉnh sửa Tour" : "Thêm Tour mới"}
         className="max-w-2xl"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="title" className="text-sm font-medium">
-                Tên Tour
-              </label>
-              <Input
-                id="title"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="title"
-                required
-                value={formData.title || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="Nhập tên tour"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tên Tour</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập tên tour" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="location" className="text-sm font-medium">
-                Địa điểm
-              </label>
-              <Input
-                id="location"
+              <FormField
+                control={form.control}
                 name="location"
-                required
-                value={formData.location || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                placeholder="Nhập địa điểm"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Địa điểm</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập địa điểm" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="price" className="text-sm font-medium">
-                Giá (VNĐ)
-              </label>
-              <Input
-                id="price"
+              <FormField
+                control={form.control}
                 name="price"
-                required
-                type="number"
-                value={formData.price || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: Number(e.target.value) })
-                }
-                placeholder="Nhập giá"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Giá (VNĐ)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Nhập giá"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="duration" className="text-sm font-medium">
-                Thời lượng
-              </label>
-              <Input
-                id="duration"
+              <FormField
+                control={form.control}
                 name="duration"
-                required
-                value={formData.duration || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, duration: e.target.value })
-                }
-                placeholder="Ví dụ: 3 Ngày 2 Đêm"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Thời lượng</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ví dụ: 3 Ngày 2 Đêm" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="category" className="text-sm font-medium">
-                Danh mục
-              </label>
-              <Input
-                id="category"
+              <FormField
+                control={form.control}
                 name="category"
-                value={formData.category || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                placeholder="Ví dụ: Biển, Núi, Văn hóa"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Danh mục</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ví dụ: Biển, Núi, Văn hóa" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="status" className="text-sm font-medium">
-                Trạng thái
-              </label>
-              <select
-                id="status"
+              <FormField
+                control={form.control}
                 name="status"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={formData.status || "Nháp"}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    status: e.target.value as any,
-                  })
-                }
-              >
-                <option value="Hoạt động">Hoạt động</option>
-                <option value="Nháp">Nháp</option>
-                <option value="Đã đóng">Đã đóng</option>
-              </select>
-            </div>
-            <div className="col-span-2 space-y-2">
-              <label htmlFor="image" className="text-sm font-medium">
-                Hình ảnh (URL)
-              </label>
-              <Input
-                id="image"
-                name="image"
-                value={formData.image || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, image: e.target.value })
-                }
-                placeholder="https://example.com/image.jpg"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Trạng thái</FormLabel>
+                    <FormControl>
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                      >
+                        <option value="Hoạt động">Hoạt động</option>
+                        <option value="Nháp">Nháp</option>
+                        <option value="Đã đóng">Đã đóng</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
+              <div className="col-span-2">
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hình ảnh (URL)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://example.com/image.jpg" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="col-span-2">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mô tả</FormLabel>
+                      <FormControl>
+                        <RichTextEditor
+                          id="description"
+                          name="description"
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="Mô tả chi tiết về tour..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-            <div className="col-span-2 space-y-2">
-              <span className="text-sm font-medium">
-                Mô tả
-              </span>
-              <RichTextEditor
-                id="description"
-                name="description"
-                value={formData.description || ""}
-                onChange={(value) =>
-                  setFormData({ ...formData, description: value })
-                }
-                placeholder="Mô tả chi tiết về tour..."
-              />
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={handleCloseModal}>
+                Hủy
+              </Button>
+              <Button type="submit">
+                {editingTour ? "Lưu thay đổi" : "Tạo Tour"}
+              </Button>
             </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={handleCloseModal}>
-              Hủy
-            </Button>
-            <Button type="submit">
-              {editingTour ? "Lưu thay đổi" : "Tạo Tour"}
-            </Button>
-          </div>
-        </form>
+          </form>
+        </Form>
       </Modal>
     </div>
   );

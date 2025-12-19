@@ -1,12 +1,23 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useBooking, Booking } from "@/context/BookingContext";
+import { profileSchema, ProfileFormData } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
 import {
     User,
     Calendar,
@@ -39,10 +50,26 @@ export default function ProfilePage() {
         }
     }, [location.state]);
 
-    // Personal info form state
-    const [name, setName] = useState(user?.name || "");
-    const [email, setEmail] = useState(user?.email || "");
+    // Form setup with react-hook-form
     const [isSaving, setIsSaving] = useState(false);
+
+    const form = useForm<ProfileFormData>({
+        resolver: zodResolver(profileSchema),
+        defaultValues: {
+            name: user?.name || "",
+            email: user?.email || "",
+        },
+    });
+
+    // Update form when user data changes
+    useEffect(() => {
+        if (user) {
+            form.reset({
+                name: user.name,
+                email: user.email,
+            });
+        }
+    }, [user, form]);
 
     // Get user's initials for avatar
     const getInitials = (name: string) => {
@@ -54,13 +81,14 @@ export default function ProfilePage() {
             .slice(0, 2);
     };
 
-    // Handle save (mock)
-    const handleSave = async () => {
+    // Handle save
+    const onSubmit = async (data: ProfileFormData) => {
         setIsSaving(true);
         // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 800));
         setIsSaving(false);
         toast.success("Đã lưu thông tin thành công!");
+        console.log("Profile data:", data);
     };
 
     // Get status badge styling
@@ -172,7 +200,7 @@ export default function ProfilePage() {
                                 {/* Avatar Section */}
                                 <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
                                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-xl font-semibold">
-                                        {getInitials(name || user?.name || "U")}
+                                        {getInitials(form.watch("name") || user?.name || "U")}
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-sm font-medium text-slate-900">
@@ -189,51 +217,62 @@ export default function ProfilePage() {
                                 </div>
 
                                 {/* Form Fields */}
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label htmlFor="full-name" className="text-sm font-medium text-slate-700">
-                                            Họ và tên
-                                        </label>
-                                        <Input
-                                            id="full-name"
-                                            name="full-name"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            placeholder="Nhập họ và tên"
+                                <Form {...form}>
+                                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Họ và tên</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Nhập họ và tên"
+                                                            autoComplete="name"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
                                         />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="email" className="text-sm font-medium text-slate-700">
-                                            Email
-                                        </label>
-                                        <Input
-                                            id="email"
+                                        <FormField
+                                            control={form.control}
                                             name="email"
-                                            type="email"
-                                            autoComplete="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="Nhập email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Email</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="email"
+                                                            placeholder="Nhập email"
+                                                            autoComplete="email"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
                                         />
-                                    </div>
-                                </div>
 
-                                {/* Save Button */}
-                                <div className="flex items-center gap-4 pt-4 border-t">
-                                    <Button onClick={handleSave} disabled={isSaving}>
-                                        {isSaving ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                                Đang lưu...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save className="w-4 h-4 mr-2" />
-                                                Lưu thay đổi
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
+                                        {/* Save Button */}
+                                        <div className="flex items-center gap-4 pt-4 border-t">
+                                            <Button type="submit" disabled={isSaving}>
+                                                {isSaving ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                                        Đang lưu...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Save className="w-4 h-4 mr-2" />
+                                                        Lưu thay đổi
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </Form>
                             </CardContent>
                         </Card>
                     </div>

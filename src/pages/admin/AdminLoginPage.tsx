@@ -1,19 +1,36 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
+import { loginSchema, LoginFormData } from "@/lib/validation";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
 import { Shield, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 export default function AdminLoginPage() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const { login, isAuthenticated, isAdmin } = useAuth();
     const navigate = useNavigate();
+
+    const form = useForm<LoginFormData>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+        },
+    });
 
     // Redirect if already logged in as admin
     useEffect(() => {
@@ -22,12 +39,11 @@ export default function AdminLoginPage() {
         }
     }, [isAuthenticated, isAdmin, navigate]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (data: LoginFormData) => {
         setError("");
         setIsLoading(true);
 
-        const result = await login(email, password);
+        const result = await login(data.email, data.password);
 
         if (result.success) {
             // Check if user is admin
@@ -95,79 +111,83 @@ export default function AdminLoginPage() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="space-y-2">
-                            <label
-                                className="text-sm font-medium text-zinc-300"
-                                htmlFor="email"
-                            >
-                                Email
-                            </label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    autoComplete="username"
-                                    placeholder="admin@visita.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="pl-11 h-12 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-primary focus:ring-primary"
-                                    required
-                                />
-                            </div>
-                        </div>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-zinc-300">Email</FormLabel>
+                                        <div className="relative">
+                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+                                            <FormControl>
+                                                <Input
+                                                    type="email"
+                                                    autoComplete="email"
+                                                    placeholder="admin@visita.com"
+                                                    className="pl-11 h-12 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-primary focus:ring-primary"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                        <div className="space-y-2">
-                            <label
-                                className="text-sm font-medium text-zinc-300"
-                                htmlFor="password"
-                            >
-                                Mật khẩu
-                            </label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
-                                <Input
-                                    id="password"
-                                    type={showPassword ? "text" : "password"}
-                                    autoComplete="current-password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="pl-11 pr-11 h-12 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-primary focus:ring-primary"
-                                    required
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-zinc-500 hover:text-zinc-300"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                >
-                                    {showPassword ? (
-                                        <EyeOff className="h-5 w-5" />
-                                    ) : (
-                                        <Eye className="h-5 w-5" />
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-zinc-300">Mật khẩu</FormLabel>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+                                            <FormControl>
+                                                <Input
+                                                    type={showPassword ? "text" : "password"}
+                                                    autoComplete="current-password"
+                                                    placeholder="••••••••"
+                                                    className="pl-11 pr-11 h-12 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-primary focus:ring-primary"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-zinc-500 hover:text-zinc-300"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            >
+                                                {showPassword ? (
+                                                    <EyeOff className="h-5 w-5" />
+                                                ) : (
+                                                    <Eye className="h-5 w-5" />
+                                                )}
+                                            </Button>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                        <Button
-                            type="submit"
-                            className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Đang đăng nhập...
-                                </div>
-                            ) : (
-                                "Đăng nhập"
-                            )}
-                        </Button>
-                    </form>
+                            <Button
+                                type="submit"
+                                className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Đang đăng nhập...
+                                    </div>
+                                ) : (
+                                    "Đăng nhập"
+                                )}
+                            </Button>
+                        </form>
+                    </Form>
 
                     <div className="text-center pt-4 border-t border-zinc-800">
                         <Link

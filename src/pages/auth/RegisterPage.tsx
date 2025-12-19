@@ -1,8 +1,19 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { registerSchema, RegisterFormData } from "@/lib/validation";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   ArrowLeft,
   Compass,
@@ -17,10 +28,6 @@ import {
 import "@/styles/login.css";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
@@ -29,25 +36,21 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (data: RegisterFormData) => {
     setError("");
-
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp");
-      return;
-    }
-
-    // Validate password length
-    if (password.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự");
-      return;
-    }
-
     setIsLoading(true);
 
-    const result = await register(email, password, name);
+    const result = await register(data.email, data.password, data.name);
 
     if (result.success) {
       navigate("/", { replace: true });
@@ -126,128 +129,134 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              <form className="grid gap-4" onSubmit={handleSubmit}>
-                <div className="space-y-2">
-                  <label
-                    className="text-sm font-medium leading-none"
-                    htmlFor="name"
+              <Form {...form}>
+                <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Họ và tên</FormLabel>
+                        <div className="relative group">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                          <FormControl>
+                            <Input
+                              placeholder="Nguyễn Văn A"
+                              type="text"
+                              autoCapitalize="words"
+                              autoComplete="name"
+                              autoCorrect="off"
+                              className="pl-10 login-input"
+                              {...field}
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <div className="relative group">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                          <FormControl>
+                            <Input
+                              placeholder="name@example.com"
+                              type="email"
+                              autoCapitalize="none"
+                              autoComplete="email"
+                              autoCorrect="off"
+                              className="pl-10 login-input"
+                              {...field}
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mật khẩu</FormLabel>
+                        <div className="relative group">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                          <FormControl>
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              autoComplete="new-password"
+                              className="pl-10 pr-10 login-input"
+                              {...field}
+                            />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Xác nhận mật khẩu</FormLabel>
+                        <div className="relative group">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                          <FormControl>
+                            <Input
+                              type={showConfirmPassword ? "text" : "password"}
+                              autoComplete="new-password"
+                              className="pl-10 pr-10 login-input"
+                              {...field}
+                            />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    className="login-btn-gradient h-11 font-semibold text-md"
+                    disabled={isLoading}
                   >
-                    Họ và tên
-                  </label>
-                  <div className="relative group">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                    <Input
-                      id="name"
-                      placeholder="Nguyễn Văn A"
-                      type="text"
-                      autoCapitalize="words"
-                      autoComplete="name"
-                      autoCorrect="off"
-                      className="pl-10 login-input"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label
-                    className="text-sm font-medium leading-none"
-                    htmlFor="email"
-                  >
-                    Email
-                  </label>
-                  <div className="relative group">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                    <Input
-                      id="email"
-                      placeholder="name@example.com"
-                      type="email"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      autoCorrect="off"
-                      className="pl-10 login-input"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label
-                    className="text-sm font-medium leading-none"
-                    htmlFor="password"
-                  >
-                    Mật khẩu
-                  </label>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      className="pl-10 pr-10 login-input"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label
-                    className="text-sm font-medium leading-none"
-                    htmlFor="confirmPassword"
-                  >
-                    Xác nhận mật khẩu
-                  </label>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      className="pl-10 pr-10 login-input"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                <Button
-                  className="login-btn-gradient h-11 font-semibold text-md"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Đang đăng ký..." : "Đăng ký"}
-                </Button>
-              </form>
+                    {isLoading ? "Đang đăng ký..." : "Đăng ký"}
+                  </Button>
+                </form>
+              </Form>
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">

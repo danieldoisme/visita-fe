@@ -1,8 +1,19 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { loginSchema, LoginFormData } from "@/lib/validation";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   ArrowLeft,
   Compass,
@@ -16,8 +27,6 @@ import {
 import "@/styles/login.css";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -25,12 +34,19 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setError("");
     setIsLoading(true);
 
-    const result = await login(email, password);
+    const result = await login(data.email, data.password);
 
     if (result.success) {
       // Check if the logged-in user is admin - redirect to admin area
@@ -91,78 +107,82 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form className="grid gap-4" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <label
-                  className="text-sm font-medium leading-none"
-                  htmlFor="email"
+            <Form {...form}>
+              <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <div className="relative group">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                        <FormControl>
+                          <Input
+                            placeholder="name@example.com"
+                            type="email"
+                            autoCapitalize="none"
+                            autoComplete="email"
+                            autoCorrect="off"
+                            className="pl-10 login-input"
+                            {...field}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Mật khẩu</FormLabel>
+                        <Link
+                          to="/forgot-password"
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Quên mật khẩu?
+                        </Link>
+                      </div>
+                      <div className="relative group">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            autoComplete="current-password"
+                            className="pl-10 pr-10 login-input"
+                            {...field}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  className="login-btn-gradient h-11 font-semibold text-md"
+                  disabled={isLoading}
                 >
-                  Email
-                </label>
-                <div className="relative group">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                  <Input
-                    id="email"
-                    placeholder="name@example.com"
-                    type="email"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    autoCorrect="off"
-                    className="pl-10 login-input"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label
-                    className="text-sm font-medium leading-none"
-                    htmlFor="password"
-                  >
-                    Mật khẩu
-                  </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    Quên mật khẩu?
-                  </Link>
-                </div>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    className="pl-10 pr-10 login-input"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              <Button
-                className="login-btn-gradient h-11 font-semibold text-md"
-                disabled={isLoading}
-              >
-                {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
-              </Button>
-            </form>
+                  {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+                </Button>
+              </form>
+            </Form>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
