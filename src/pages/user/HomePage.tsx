@@ -50,7 +50,7 @@ const FEATURED_TOURS = [
     rating: 4.9,
     reviews: 124,
     image:
-      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
     tag: "Bán chạy",
   },
   {
@@ -62,7 +62,7 @@ const FEATURED_TOURS = [
     rating: 4.8,
     reviews: 89,
     image:
-      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2070&auto=format&fit=crop",
     tag: "Văn hóa",
   },
   {
@@ -74,7 +74,7 @@ const FEATURED_TOURS = [
     rating: 4.9,
     reviews: 210,
     image:
-      "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?q=80&w=2938&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1573270689103-d7a4e42b609a?q=80&w=2938&auto=format&fit=crop",
     tag: "Lãng mạn",
   },
 ];
