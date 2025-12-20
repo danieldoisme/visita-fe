@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
@@ -62,7 +63,7 @@ const FEATURED_TOURS = [
     rating: 4.8,
     reviews: 89,
     image:
-      "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2070&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop",
     tag: "Văn hóa",
   },
   {
@@ -74,7 +75,7 @@ const FEATURED_TOURS = [
     rating: 4.9,
     reviews: 210,
     image:
-      "https://images.unsplash.com/photo-1573270689103-d7a4e42b609a?q=80&w=2938&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1730714103959-5d5a30acf547?q=80&w=2938&auto=format&fit=crop",
     tag: "Lãng mạn",
   },
 ];
@@ -90,7 +91,7 @@ const POPULAR_DESTINATIONS = [
     name: "Hà Nội",
     count: "85+ Tour",
     image:
-      "https://images.unsplash.com/photo-1599708153386-62bf3f035c78?q=80&w=2070&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576513500959-4f29b3fed28f?q=80&w=2070&auto=format&fit=crop",
   },
   {
     name: "Hồ Chí Minh",
@@ -106,8 +107,49 @@ const POPULAR_DESTINATIONS = [
   },
 ];
 
+// Mock AI-recommended tours based on user history (thesis: Recommendation System)
+const AI_RECOMMENDED_TOURS = [
+  {
+    id: 101,
+    title: "Khám phá Hang Sơn Đoòng",
+    location: "Quảng Bình",
+    price: 8500000,
+    duration: "4 Ngày",
+    rating: 4.9,
+    reviews: 56,
+    image:
+      "https://images.unsplash.com/photo-1638793772999-8df79f0ef0b8?q=80&w=2070&auto=format&fit=crop",
+    tag: "Phiêu lưu",
+  },
+  {
+    id: 102,
+    title: "Trekking Hà Giang Loop",
+    location: "Hà Giang",
+    price: 4200000,
+    duration: "3 Ngày",
+    rating: 4.8,
+    reviews: 92,
+    image:
+      "https://images.unsplash.com/photo-1686755660203-55781dbc2f24?q=80&w=2070&auto=format&fit=crop",
+    tag: "Trekking",
+  },
+  {
+    id: 103,
+    title: "Thiên đường biển Côn Đảo",
+    location: "Bà Rịa - Vũng Tàu",
+    price: 6800000,
+    duration: "3 Ngày",
+    rating: 4.9,
+    reviews: 78,
+    image:
+      "https://images.unsplash.com/photo-1725433734976-9be2e772d0bc?q=80&w=2070&auto=format&fit=crop",
+    tag: "Biển đảo",
+  },
+];
+
 export default function HomePage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [locationQuery, setLocationQuery] = useState("");
   const [showDestinations, setShowDestinations] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>();
@@ -383,6 +425,90 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* AI Recommendations Section - Only shown when authenticated */}
+      {isAuthenticated && (
+        <section className="py-20 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50">
+          <div className="container">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+              <div>
+                <Badge
+                  variant="secondary"
+                  className="mb-4 bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0"
+                >
+                  ✨ AI Recommendation
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+                  Gợi ý dành riêng cho bạn
+                </h2>
+                <p className="text-muted-foreground text-lg">
+                  Dựa trên lịch sử tìm kiếm và sở thích của bạn, AI của chúng tôi
+                  đề xuất những hành trình phù hợp nhất.
+                </p>
+              </div>
+              <Button variant="outline" className="group">
+                Xem thêm gợi ý{" "}
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {AI_RECOMMENDED_TOURS.map((tour) => (
+                <Card
+                  key={tour.id}
+                  className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden rounded-2xl bg-white/80 backdrop-blur-sm"
+                >
+                  <div className="relative h-[240px] overflow-hidden">
+                    <img
+                      src={tour.image}
+                      alt={tour.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <Badge className="absolute top-4 right-4 bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 font-semibold shadow-sm border-0">
+                      {tour.tag}
+                    </Badge>
+                    <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                      <MapPin className="h-3 w-3 mr-1" /> {tour.location}
+                    </div>
+                  </div>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="font-bold text-xl line-clamp-1 group-hover:text-purple-600 transition-colors">
+                        {tour.title}
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1.5 text-purple-500" />
+                        {tour.duration}
+                      </div>
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 mr-1.5 text-yellow-500 fill-yellow-500" />
+                        {tour.rating} ({tour.reviews})
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-semibold">
+                          Từ
+                        </p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {tour.price.toLocaleString("vi-VN")}đ
+                        </p>
+                      </div>
+                      <Button className="rounded-full px-6 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600">
+                        Xem chi tiết
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className="py-16 bg-slate-50">
