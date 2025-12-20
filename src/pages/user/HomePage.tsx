@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -498,9 +499,11 @@ export default function HomePage() {
                           {tour.price.toLocaleString("vi-VN")}đ
                         </p>
                       </div>
-                      <Button className="rounded-full px-6 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600">
-                        Xem chi tiết
-                      </Button>
+                      <Link to={`/tours/${tour.id}`}>
+                        <Button className="rounded-full px-6 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600">
+                          Xem chi tiết
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>
@@ -560,10 +563,12 @@ export default function HomePage() {
                 Khám phá những địa điểm được ghé thăm nhiều nhất trong mùa này.
               </p>
             </div>
-            <Button variant="outline" className="group">
-              Xem tất cả điểm đến{" "}
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            <Link to="/tours">
+              <Button variant="outline" className="group">
+                Xem tất cả điểm đến{" "}
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {POPULAR_DESTINATIONS.map((dest, idx) => (
@@ -646,7 +651,9 @@ export default function HomePage() {
                         {tour.price.toLocaleString("vi-VN")}đ
                       </p>
                     </div>
-                    <Button className="rounded-full px-6">Xem chi tiết</Button>
+                    <Link to={`/tours/${tour.id}`}>
+                      <Button className="rounded-full px-6">Xem chi tiết</Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -654,9 +661,11 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 text-center">
-            <Button variant="outline" size="lg" className="rounded-full px-8">
-              Xem tất cả tour
-            </Button>
+            <Link to="/tours">
+              <Button variant="outline" size="lg" className="rounded-full px-8">
+                Xem tất cả tour
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -683,7 +692,13 @@ export default function HomePage() {
               của bạn.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                toast.success("Cảm ơn bạn đã đăng ký!");
+              }}
+              className="flex flex-col sm:flex-row gap-4 p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20"
+            >
               <Input
                 name="email"
                 aria-label="Địa chỉ email"
@@ -692,12 +707,13 @@ export default function HomePage() {
                 className="h-14 bg-transparent border-0 text-white placeholder:text-white/60 focus-visible:ring-0 text-base"
               />
               <Button
+                type="submit"
                 size="lg"
                 className="h-14 px-8 rounded-xl bg-white text-primary hover:bg-slate-100 font-bold text-base"
               >
                 Đăng ký ngay
               </Button>
-            </div>
+            </form>
             <p className="text-sm text-slate-400">
               Không spam, hủy đăng ký bất cứ lúc nào.
             </p>
