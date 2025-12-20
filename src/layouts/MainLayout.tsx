@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X } from "lucide-react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ export default function MainLayout() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Get user's initials for avatar
   const getInitials = (name: string) => {
@@ -164,11 +166,97 @@ export default function MainLayout() {
             <Button id="book-now-button" name="book-now" size="sm" className="hidden md:flex">
               Đặt ngay
             </Button>
-            <Button id="mobile-menu-button" name="mobile-menu" variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
+            <Button
+              id="mobile-menu-button"
+              name="mobile-menu"
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t bg-background">
+            <nav className="container py-4 flex flex-col space-y-1">
+              <Link
+                to="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Trang chủ
+              </Link>
+              <Link
+                to="/tours"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Tour
+              </Link>
+              <Link
+                to="/about"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Giới thiệu
+              </Link>
+              <div className="border-t my-2"></div>
+              {isAuthenticated ? (
+                <>
+                  {isAdmin ? (
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                    >
+                      Trang quản trị
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        to="/profile"
+                        state={{ tab: "personal" }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                      >
+                        Trang cá nhân
+                      </Link>
+                      <Link
+                        to="/profile"
+                        state={{ tab: "bookings" }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                      >
+                        Đặt chỗ của tôi
+                      </Link>
+                    </>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="px-4 py-3 rounded-lg text-sm font-medium text-red-600 transition-colors hover:bg-red-50 text-left"
+                  >
+                    Đăng xuất
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                >
+                  Đăng nhập
+                </Link>
+              )}
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}

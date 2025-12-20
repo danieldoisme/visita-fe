@@ -56,7 +56,7 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex bg-zinc-950">
+        <div className="min-h-screen flex bg-zinc-950 overflow-hidden">
             {/* Left Side: Admin Branding */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900" />

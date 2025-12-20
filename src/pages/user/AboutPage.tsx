@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function AboutPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background overflow-x-hidden">
       {/* Hero Section - More Immersive */}
       <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">

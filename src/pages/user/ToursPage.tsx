@@ -53,7 +53,7 @@ export default function ToursPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 overflow-x-hidden">
       {/* Breadcrumb & Header */}
       <div className="relative bg-slate-900 py-16 md:py-24 overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -94,13 +94,22 @@ export default function ToursPage() {
             </Button>
           </div>
 
+          {/* Mobile Filter Overlay */}
+          {showMobileFilters && (
+            <div
+              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+              onClick={() => setShowMobileFilters(false)}
+            />
+          )}
+
           {/* Sidebar Filters */}
           <aside
             className={`
-            fixed inset-0 z-40 bg-white p-6 lg:p-0 lg:static lg:bg-transparent lg:w-[280px] lg:block overflow-y-auto transition-transform duration-300 ease-in-out
+            fixed top-16 bottom-0 left-0 right-0 z-50 bg-white p-6 overflow-y-auto transition-transform duration-300 ease-in-out
+            lg:static lg:p-0 lg:bg-transparent lg:w-[280px] lg:block lg:translate-x-0 lg:z-auto
             ${showMobileFilters
                 ? "translate-x-0"
-                : "-translate-x-full lg:translate-x-0"
+                : "-translate-x-full"
               }
           `}
           >

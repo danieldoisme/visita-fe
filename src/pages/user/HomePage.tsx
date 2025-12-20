@@ -173,7 +173,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen overflow-x-hidden">
       {/* Hero Section */}
       <section className="relative h-[85vh] min-h-[600px] flex items-center justify-center">
         {/* Background Image with Overlay */}
