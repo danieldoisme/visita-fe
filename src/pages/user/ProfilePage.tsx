@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -35,7 +35,8 @@ type TabType = "personal" | "bookings" | "security";
 
 export default function ProfilePage() {
     const { user } = useAuth();
-    const { bookings } = useBooking();
+    const { bookings, cancelBooking } = useBooking();
+    const navigate = useNavigate();
     const location = useLocation();
     const [activeTab, setActiveTab] = useState<TabType>(() => {
         // Initialize from location state if available
@@ -144,6 +145,17 @@ export default function ProfilePage() {
     // Filter user's bookings (in real app, would filter by user ID)
     const userBookings = bookings;
 
+    // Handle change photo button click
+    const handleChangePhoto = () => {
+        toast.info("Tính năng sẽ sớm ra mắt!");
+    };
+
+    // Handle cancel booking
+    const handleCancelBooking = async (bookingId: number) => {
+        await cancelBooking(bookingId);
+        toast.success("Đã hủy đặt chỗ thành công!");
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             {/* Header Section */}
@@ -155,7 +167,10 @@ export default function ProfilePage() {
                             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-3xl font-semibold shadow-lg">
                                 {getInitials(user?.name || "U")}
                             </div>
-                            <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md hover:bg-slate-50 transition-colors">
+                            <button
+                                onClick={handleChangePhoto}
+                                className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md hover:bg-slate-50 transition-colors"
+                            >
                                 <Camera className="w-4 h-4 text-slate-600" />
                             </button>
                         </div>
@@ -247,7 +262,7 @@ export default function ProfilePage() {
                                         <p className="text-xs text-slate-500 mb-2">
                                             JPG, GIF hoặc PNG. Tối đa 2MB.
                                         </p>
-                                        <Button variant="outline" size="sm">
+                                        <Button variant="outline" size="sm" onClick={handleChangePhoto}>
                                             <Camera className="w-4 h-4 mr-2" />
                                             Thay đổi ảnh
                                         </Button>
@@ -403,7 +418,11 @@ export default function ProfilePage() {
                                                         </p>
                                                     </div>
                                                     <div className="flex gap-2">
-                                                        <Button variant="outline" size="sm">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => navigate(`/tours/${booking.tourId}`)}
+                                                        >
                                                             <MapPin className="w-4 h-4 mr-1" />
                                                             Chi tiết
                                                         </Button>
@@ -412,6 +431,7 @@ export default function ProfilePage() {
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                onClick={() => handleCancelBooking(booking.id)}
                                                             >
                                                                 Hủy đặt chỗ
                                                             </Button>
