@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useBooking, Booking } from "@/context/BookingContext";
-import { profileSchema, ProfileFormData } from "@/lib/validation";
+import { profileSchema, ProfileFormData, changePasswordSchema, ChangePasswordFormData } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,11 +26,12 @@ import {
     Save,
     MapPin,
     Clock,
+    Lock,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
-type TabType = "personal" | "bookings";
+type TabType = "personal" | "bookings" | "security";
 
 export default function ProfilePage() {
     const { user } = useAuth();
@@ -52,12 +53,23 @@ export default function ProfilePage() {
 
     // Form setup with react-hook-form
     const [isSaving, setIsSaving] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     const form = useForm<ProfileFormData>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
             name: user?.name || "",
             email: user?.email || "",
+        },
+    });
+
+    // Security form setup
+    const securityForm = useForm<ChangePasswordFormData>({
+        resolver: zodResolver(changePasswordSchema),
+        defaultValues: {
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
         },
     });
 
@@ -89,6 +101,20 @@ export default function ProfilePage() {
         setIsSaving(false);
         toast.success("Đã lưu thông tin thành công!");
         console.log("Profile data:", data);
+    };
+
+    // Handle password change
+    const onPasswordChange = async (data: ChangePasswordFormData) => {
+        setIsChangingPassword(true);
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setIsChangingPassword(false);
+
+        // Reset form
+        securityForm.reset();
+
+        toast.success("Đổi mật khẩu thành công");
+        console.log("Password change data:", data);
     };
 
     // Get status badge styling
@@ -178,6 +204,18 @@ export default function ProfilePage() {
                                         {userBookings.length}
                                     </Badge>
                                 )}
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("security")}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "security"
+                                ? "border-primary text-primary"
+                                : "border-transparent text-slate-500 hover:text-slate-700"
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Lock className="w-4 h-4" />
+                                Bảo mật
                             </div>
                         </button>
                     </nav>
@@ -386,6 +424,105 @@ export default function ProfilePage() {
                                 ))}
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Security Tab */}
+                {activeTab === "security" && (
+                    <div className="max-w-2xl">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-xl">
+                                    <Lock className="w-5 h-5" />
+                                    Đổi mật khẩu
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Form {...securityForm}>
+                                    <form onSubmit={securityForm.handleSubmit(onPasswordChange)} className="space-y-4">
+                                        {/* Hidden username field for accessibility/password managers (uses email as identifier) */}
+                                        <input
+                                            type="text"
+                                            name="email"
+                                            defaultValue={user?.email}
+                                            autoComplete="username"
+                                            className="sr-only"
+                                            tabIndex={-1}
+                                            aria-hidden="true"
+                                        />
+                                        <FormField
+                                            control={securityForm.control}
+                                            name="currentPassword"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Mật khẩu hiện tại</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="password"
+                                                            placeholder="Nhập mật khẩu hiện tại"
+                                                            autoComplete="current-password"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={securityForm.control}
+                                            name="newPassword"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Mật khẩu mới</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="password"
+                                                            placeholder="Nhập mật khẩu mới"
+                                                            autoComplete="new-password"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={securityForm.control}
+                                            name="confirmPassword"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Xác nhận mật khẩu mới</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="password"
+                                                            placeholder="Nhập lại mật khẩu mới"
+                                                            autoComplete="new-password"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <div className="pt-4 border-t">
+                                            <Button type="submit" disabled={isChangingPassword}>
+                                                {isChangingPassword ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                                        Đang xử lý...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Lock className="w-4 h-4 mr-2" />
+                                                        Đổi mật khẩu
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </Form>
+                            </CardContent>
+                        </Card>
                     </div>
                 )}
             </div>

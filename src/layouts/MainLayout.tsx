@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield } from "lucide-react";
+import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -66,7 +66,7 @@ export default function MainLayout() {
               /* Authenticated User Dropdown */
               <Popover open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
                 <PopoverTrigger asChild>
-                  <button 
+                  <button
                     id="user-menu-trigger"
                     name="user-menu"
                     className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-slate-100 transition-colors"
@@ -124,6 +124,15 @@ export default function MainLayout() {
                         >
                           <Calendar className="w-4 h-4" />
                           Đặt chỗ của tôi
+                        </Link>
+                        <Link
+                          to="/profile"
+                          state={{ tab: "security" }}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                        >
+                          <Lock className="w-4 h-4" />
+                          Bảo mật
                         </Link>
                       </>
                     )}
