@@ -9,6 +9,8 @@ import {
   Star,
   CheckCircle2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,12 +47,14 @@ export default function AboutPage() {
             và lưu giữ những khoảnh khắc vô giá.
           </p>
           <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 rounded-full"
-            >
-              Bắt Đầu Hành Trình
-            </Button>
+            <Link to="/tours">
+              <Button
+                size="lg"
+                className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-8 h-14 rounded-full"
+              >
+                Bắt Đầu Hành Trình
+              </Button>
+            </Link>
             <Button
               size="lg"
               variant="outline"
@@ -331,7 +335,13 @@ export default function AboutPage() {
             Đăng ký ngay hôm nay để nhận ưu đãi 15% cho chuyến đi đầu tiên của
             bạn cùng Visita.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+          <form
+            className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto"
+            onSubmit={(e) => {
+              e.preventDefault();
+              toast.success("Cảm ơn bạn đã đăng ký!");
+            }}
+          >
             <input
               id="newsletter-email"
               name="email"
@@ -341,13 +351,14 @@ export default function AboutPage() {
               className="flex h-12 w-full rounded-full border border-input bg-background px-6 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
             />
             <Button
+              type="submit"
               size="lg"
               variant="secondary"
               className="rounded-full h-12 px-8 font-bold"
             >
               Đăng Ký
             </Button>
-          </div>
+          </form>
         </div>
       </section>
     </div>

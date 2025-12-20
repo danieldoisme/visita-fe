@@ -43,6 +43,16 @@ export default function ToursManagementPage() {
   const { tours, loading, addTour, updateTour, deleteTour } = useTour();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Filter tours based on search term (case-insensitive match on title or location)
+  const filteredTours = tours.filter((tour) => {
+    const search = searchTerm.toLowerCase();
+    return (
+      tour.title.toLowerCase().includes(search) ||
+      tour.location.toLowerCase().includes(search)
+    );
+  });
 
   const form = useForm<TourFormData>({
     resolver: zodResolver(tourSchema),
@@ -147,6 +157,8 @@ export default function ToursManagementPage() {
             placeholder="Tìm kiếm tour..."
             className="pl-8"
             aria-label="Tìm kiếm tour"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
@@ -164,7 +176,7 @@ export default function ToursManagementPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tours.map((tour) => (
+            {filteredTours.map((tour) => (
               <TableRow key={tour.id}>
                 <TableCell className="font-medium">{tour.title}</TableCell>
                 <TableCell>{tour.location}</TableCell>

@@ -163,9 +163,11 @@ export default function MainLayout() {
                 </Button>
               </Link>
             )}
-            <Button id="book-now-button" name="book-now" size="sm" className="hidden md:flex">
-              Đặt ngay
-            </Button>
+            <Link to="/tours">
+              <Button id="book-now-button" name="book-now" size="sm" className="hidden md:flex">
+                Đặt ngay
+              </Button>
+            </Link>
             <Button
               id="mobile-menu-button"
               name="mobile-menu"
