@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { registerSchema, RegisterFormData } from "@/lib/validation";
+import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -67,7 +68,7 @@ export default function RegisterPage() {
       <div className="relative hidden h-full flex-col bg-muted text-white lg:flex overflow-hidden">
         <div className="absolute inset-0 bg-zinc-900/20 z-10" />
         <img
-          src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1606801954050-be6b29588460?q=80&w=2070&auto=format&fit=crop"
           alt="Travel Adventure"
           className="absolute inset-0 h-full w-full object-cover travel-bg-image"
         />
@@ -268,7 +269,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="social-btn">
+                <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng ký với Google chưa được triển khai")}>
                   <svg
                     className="mr-2 h-4 w-4"
                     aria-hidden="true"
@@ -286,7 +287,7 @@ export default function RegisterPage() {
                   </svg>
                   Google
                 </Button>
-                <Button variant="outline" className="social-btn">
+                <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng ký với Facebook chưa được triển khai")}>
                   <Facebook className="mr-2 h-4 w-4 text-blue-600" />
                   Facebook
                 </Button>

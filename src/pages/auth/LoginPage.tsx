@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { loginSchema, LoginFormData } from "@/lib/validation";
+import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -140,12 +141,13 @@ export default function LoginPage() {
                     <FormItem>
                       <div className="flex items-center justify-between">
                         <FormLabel>Mật khẩu</FormLabel>
-                        <Link
-                          to="/forgot-password"
+                        <button
+                          type="button"
+                          onClick={() => toast.info("Tính năng quên mật khẩu chưa được triển khai")}
                           className="text-sm font-medium text-primary hover:underline"
                         >
                           Quên mật khẩu?
-                        </Link>
+                        </button>
                       </div>
                       <div className="relative group">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
@@ -196,7 +198,7 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="social-btn">
+              <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng nhập với Google chưa được triển khai")}>
                 <svg
                   className="mr-2 h-4 w-4"
                   aria-hidden="true"
@@ -214,7 +216,7 @@ export default function LoginPage() {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" className="social-btn">
+              <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng nhập với Facebook chưa được triển khai")}>
                 <Facebook className="mr-2 h-4 w-4 text-blue-600" />
                 Facebook
               </Button>
@@ -237,7 +239,7 @@ export default function LoginPage() {
       <div className="relative hidden h-full flex-col bg-muted text-white lg:flex overflow-hidden">
         <div className="absolute inset-0 bg-zinc-900/20 z-10" />
         <img
-          src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=1368&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1603852452378-a4e8d84324a2?q=80&w=1368&auto=format&fit=crop"
           alt="Phố cổ Hội An"
           className="absolute inset-0 h-full w-full object-cover travel-bg-image"
         />
