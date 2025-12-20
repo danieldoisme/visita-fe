@@ -99,7 +99,7 @@ export default function TourDetailsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 min-w-0 bg-white lg:pr-4">
           <div className="relative h-[400px] rounded-xl overflow-hidden">
             <img
               src={tour.image}
@@ -133,9 +133,16 @@ export default function TourDetailsPage() {
 
           <div className="prose max-w-none">
             <h3 className="text-xl font-semibold mb-2">Mô tả</h3>
-            <p className="text-gray-600 leading-relaxed mb-6">
-              {tour.description || "Chưa có mô tả chi tiết cho tour này."}
-            </p>
+            {tour.description ? (
+              <div
+                className="text-gray-600 leading-relaxed mb-6"
+                dangerouslySetInnerHTML={{ __html: tour.description.replace(/&nbsp;/g, ' ') }}
+              />
+            ) : (
+              <p className="text-gray-600 leading-relaxed mb-6">
+                Chưa có mô tả chi tiết cho tour này.
+              </p>
+            )}
 
             {tour.features && tour.features.length > 0 && (
               <>
@@ -147,6 +154,125 @@ export default function TourDetailsPage() {
                 </ul>
               </>
             )}
+          </div>
+
+          {/* Customer Reviews Section */}
+          <div className="bg-slate-50 rounded-xl p-6 mt-8">
+            <h3 className="text-xl font-semibold mb-4">
+              Đánh giá từ khách hàng ({tour.reviews} đánh giá)
+            </h3>
+
+            {/* Rating Summary Banner */}
+            <div className="bg-white rounded-lg p-4 mb-6 flex items-center gap-4 shadow-sm">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary">{tour.rating}</div>
+                <div className="text-sm text-gray-500">/5</div>
+              </div>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`h-6 w-6 ${star <= Math.round(tour.rating)
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "fill-gray-200 text-gray-200"
+                      }`}
+                  />
+                ))}
+              </div>
+              <div className="text-sm text-gray-600">
+                Dựa trên {tour.reviews} đánh giá
+              </div>
+            </div>
+
+            {/* Mock Reviews List */}
+            <div className="space-y-4">
+              {/* Review 1 */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                    PB
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">Phạm Văn B</span>
+                      <span className="text-sm text-gray-500">12/10/2023</span>
+                    </div>
+                    <div className="flex items-center gap-1 mb-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-4 w-4 ${star <= 5
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "fill-gray-200 text-gray-200"
+                            }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 text-sm">
+                      Tour rất tuyệt vời! Hướng dẫn viên nhiệt tình và am hiểu. Cảnh đẹp, dịch vụ tốt. Rất đáng để trải nghiệm!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Review 2 */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-semibold">
+                    NT
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">Nguyễn Thị C</span>
+                      <span className="text-sm text-gray-500">28/09/2023</span>
+                    </div>
+                    <div className="flex items-center gap-1 mb-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-4 w-4 ${star <= 4
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "fill-gray-200 text-gray-200"
+                            }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 text-sm">
+                      Chuyến đi rất ấn tượng, đồ ăn ngon, khách sạn sạch sẽ. Chỉ tiếc là thời gian hơi ngắn, ước gì có thêm 1 ngày nữa.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Review 3 */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-semibold">
+                    TH
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">Trần Hoàng D</span>
+                      <span className="text-sm text-gray-500">15/08/2023</span>
+                    </div>
+                    <div className="flex items-center gap-1 mb-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-4 w-4 ${star <= 5
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "fill-gray-200 text-gray-200"
+                            }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 text-sm">
+                      Đây là lần thứ 2 mình đi tour này và vẫn thấy rất hài lòng. Giá cả hợp lý, chất lượng dịch vụ ổn định. Sẽ giới thiệu cho bạn bè!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
