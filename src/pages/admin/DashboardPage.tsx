@@ -1,4 +1,42 @@
 import { Users, DollarSign, ShoppingBag, Activity } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+
+// Mock revenue data for the last 6 months (Jan to June)
+const revenueData = [
+  { month: "Tháng 1", revenue: 180000000 },
+  { month: "Tháng 2", revenue: 220000000 },
+  { month: "Tháng 3", revenue: 195000000 },
+  { month: "Tháng 4", revenue: 280000000 },
+  { month: "Tháng 5", revenue: 310000000 },
+  { month: "Tháng 6", revenue: 250000000 },
+];
+
+// Custom tooltip formatter for VND currency
+const formatVND = (value: number) => {
+  return value.toLocaleString("vi-VN") + "đ";
+};
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border rounded-lg shadow-lg p-3">
+        <p className="font-medium text-sm">{label}</p>
+        <p className="text-primary font-semibold">
+          {formatVND(payload[0].value)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function DashboardPage() {
   return (
@@ -35,8 +73,32 @@ export default function DashboardPage() {
           <h3 className="font-semibold leading-none tracking-tight mb-4">
             Tổng quan
           </h3>
-          <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-md border border-dashed">
-            Biểu đồ doanh thu
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                  className="text-muted-foreground"
+                />
+                <YAxis
+                  tickFormatter={(value) => `${(value / 1000000)}M`}
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                  className="text-muted-foreground"
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                <Bar
+                  dataKey="revenue"
+                  fill="#3b82f6"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
         <div className="col-span-3 rounded-xl border bg-card text-card-foreground shadow-sm p-6">
