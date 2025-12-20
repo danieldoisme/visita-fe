@@ -12,7 +12,7 @@ export interface ContactInfo {
   phone: string;
 }
 
-export type PaymentMethod = "bank_transfer" | "credit_card" | "cash";
+export type PaymentMethod = "bank_transfer" | "credit_card" | "momo" | "paypal" | "cash";
 
 export interface Booking {
   id: number;

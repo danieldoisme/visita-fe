@@ -62,7 +62,7 @@ export const bookingSchema = z.object({
     .string()
     .min(1, "Vui lòng nhập số điện thoại")
     .regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ (10-11 số)"),
-  paymentMethod: z.enum(["bank_transfer", "credit_card", "cash"]),
+  paymentMethod: z.enum(["bank_transfer", "credit_card", "momo", "paypal", "cash"]),
 });
 
 export type BookingFormData = z.infer<typeof bookingSchema>;

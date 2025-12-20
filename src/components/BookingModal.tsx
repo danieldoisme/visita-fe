@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -88,6 +88,13 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
 
     const onSubmit = async (data: BookingFormData) => {
         try {
+            // Simulate payment gateway handshake for MoMo and PayPal
+            if (data.paymentMethod === "momo" || data.paymentMethod === "paypal") {
+                setGatewayLoading(true);
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+                setGatewayLoading(false);
+            }
+
             await addBooking({
                 tourId: tour.id,
                 tourTitle: tour.title,
@@ -108,14 +115,24 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
         } catch (error) {
             console.error("Booking failed:", error);
             toast.error("Đặt tour thất bại. Vui lòng thử lại.");
+            setGatewayLoading(false);
         }
     };
 
-    const paymentMethods = [
-        { id: "bank_transfer" as PaymentMethod, label: "Chuyển khoản ngân hàng", icon: Building2 },
-        { id: "credit_card" as PaymentMethod, label: "Thẻ tín dụng / Ghi nợ", icon: CreditCard },
-        { id: "cash" as PaymentMethod, label: "Thanh toán khi nhận tour", icon: Banknote },
-    ];
+    const [gatewayLoading, setGatewayLoading] = useState(false);
+
+    const paymentMethods: {
+        id: PaymentMethod;
+        label: string;
+        icon?: typeof Building2;
+        imageUrl?: string;
+    }[] = [
+            { id: "bank_transfer" as PaymentMethod, label: "Chuyển khoản ngân hàng", icon: Building2 },
+            { id: "credit_card" as PaymentMethod, label: "Thẻ tín dụng / Ghi nợ", icon: CreditCard },
+            { id: "momo" as PaymentMethod, label: "Ví MoMo", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/a/a0/MoMo_Logo_App.svg" },
+            { id: "paypal" as PaymentMethod, label: "PayPal", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" },
+            { id: "cash" as PaymentMethod, label: "Thanh toán khi nhận tour", icon: Banknote },
+        ];
 
     // Block admin users from booking
     if (isAdmin) {
@@ -361,7 +378,11 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                                                 : "border-gray-200 hover:border-gray-300"
                                                 }`}
                                         >
-                                            <method.icon className={`w-5 h-5 ${field.value === method.id ? "text-primary" : "text-gray-500"}`} />
+                                            {method.icon ? (
+                                                <method.icon className={`w-5 h-5 ${field.value === method.id ? "text-primary" : "text-gray-500"}`} />
+                                            ) : method.imageUrl ? (
+                                                <img src={method.imageUrl} alt={method.label} className="w-8 h-8 object-contain" />
+                                            ) : null}
                                             <span className={field.value === method.id ? "font-medium" : ""}>{method.label}</span>
                                             {field.value === method.id && (
                                                 <Check className="w-4 h-4 text-primary ml-auto" />
@@ -400,10 +421,10 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                         disabled={isSubmitting}
                         className="w-full h-12 text-lg"
                     >
-                        {isSubmitting ? (
+                        {isSubmitting || gatewayLoading ? (
                             <>
                                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                Đang xử lý...
+                                {gatewayLoading ? "Đang kết nối tới cổng thanh toán..." : "Đang xử lý..."}
                             </>
                         ) : (
                             "Xác nhận đặt tour"
