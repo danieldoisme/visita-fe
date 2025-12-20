@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import ChatWidget from "@/components/ChatWidget";
 
 export default function MainLayout() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
@@ -65,7 +66,11 @@ export default function MainLayout() {
               /* Authenticated User Dropdown */
               <Popover open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
                 <PopoverTrigger asChild>
-                  <button className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-slate-100 transition-colors">
+                  <button 
+                    id="user-menu-trigger"
+                    name="user-menu"
+                    className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-slate-100 transition-colors"
+                  >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-sm font-semibold">
                       {getInitials(user?.name || "U")}
                     </div>
@@ -125,6 +130,8 @@ export default function MainLayout() {
                   </div>
                   <div className="border-t mt-2 pt-2">
                     <button
+                      id="logout-button"
+                      name="logout"
                       onClick={() => {
                         setIsUserMenuOpen(false);
                         handleLogout();
@@ -140,15 +147,15 @@ export default function MainLayout() {
             ) : (
               /* Guest Login Button */
               <Link to="/login">
-                <Button variant="ghost" size="sm" className="hidden md:flex">
+                <Button id="login-button" name="login" variant="ghost" size="sm" className="hidden md:flex">
                   Đăng nhập
                 </Button>
               </Link>
             )}
-            <Button size="sm" className="hidden md:flex">
+            <Button id="book-now-button" name="book-now" size="sm" className="hidden md:flex">
               Đặt ngay
             </Button>
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button id="mobile-menu-button" name="mobile-menu" variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />
             </Button>
           </div>
@@ -168,6 +175,9 @@ export default function MainLayout() {
           </p>
         </div>
       </footer>
+
+      {/* AI Chat Widget */}
+      <ChatWidget />
     </div>
   );
 }
