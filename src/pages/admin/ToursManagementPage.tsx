@@ -27,6 +27,18 @@ import {
 } from "@/components/ui/table";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 
+// Helper function to render status badge with appropriate styling
+const getStatusBadge = (status: string) => {
+  const variant =
+    status === "Hoạt động"
+      ? "default"
+      : status === "Nháp"
+        ? "secondary"
+        : "outline";
+
+  return <Badge variant={variant}>{status}</Badge>;
+};
+
 export default function ToursManagementPage() {
   const { tours, loading, addTour, updateTour, deleteTour } = useTour();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,14 +94,23 @@ export default function ToursManagementPage() {
   };
 
   const onSubmit = async (data: TourFormData) => {
-    if (editingTour) {
-      await updateTour(editingTour.id, data);
-      toast.success("Đã cập nhật tour thành công!");
-    } else {
-      await addTour(data as Tour);
-      toast.success("Đã thêm tour mới thành công!");
+    try {
+      if (editingTour) {
+        await updateTour(editingTour.id, data);
+        toast.success("Đã cập nhật tour thành công!");
+      } else {
+        await addTour(data as Tour);
+        toast.success("Đã thêm tour mới thành công!");
+      }
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error saving tour:", error);
+      toast.error(
+        editingTour
+          ? "Không thể cập nhật tour. Vui lòng thử lại."
+          : "Không thể thêm tour mới. Vui lòng thử lại."
+      );
     }
-    handleCloseModal();
   };
 
   const handleDelete = async (id: number) => {
@@ -153,19 +174,7 @@ export default function ToursManagementPage() {
                     currency: "VND",
                   }).format(tour.price)}
                 </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      tour.status === "Hoạt động"
-                        ? "default"
-                        : tour.status === "Nháp"
-                          ? "secondary"
-                          : "outline"
-                    }
-                  >
-                    {tour.status}
-                  </Badge>
-                </TableCell>
+                <TableCell>{getStatusBadge(tour.status)}</TableCell>
                 <TableCell>{tour.bookings || 0}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
@@ -312,16 +321,16 @@ export default function ToursManagementPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mô tả</FormLabel>
-                      <FormControl>
-                        <RichTextEditor
-                          id="description"
-                          name="description"
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                          placeholder="Mô tả chi tiết về tour..."
-                        />
-                      </FormControl>
+                      <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Mô tả
+                      </span>
+                      <RichTextEditor
+                        id="tour-description-editor"
+                        name="description"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder="Mô tả chi tiết về tour..."
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
