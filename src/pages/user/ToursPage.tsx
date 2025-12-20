@@ -36,13 +36,61 @@ export default function ToursPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState([0, 100000000]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedDurations, setSelectedDurations] = useState<string[]>([]);
+  const [minRating, setMinRating] = useState<number>(0);
+  const [sortOption, setSortOption] = useState<string>("Đề xuất");
 
-  const filteredTours = tours.filter(
-    (tour) =>
-      tour.status === "Hoạt động" &&
-      (tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tour.location.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Helper function to parse duration string to days
+  const parseDurationToDays = (duration: string): number => {
+    const match = duration.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+  };
+
+  // Helper function to check if tour duration matches selected duration filters
+  const matchesDuration = (tourDuration: string): boolean => {
+    if (selectedDurations.length === 0) return true;
+    const days = parseDurationToDays(tourDuration);
+    return selectedDurations.some((dur) => {
+      if (dur === "1-3 Ngày") return days >= 1 && days <= 3;
+      if (dur === "4-7 Ngày") return days >= 4 && days <= 7;
+      if (dur === "8-14 Ngày") return days >= 8 && days <= 14;
+      if (dur === "15+ Ngày") return days >= 15;
+      return false;
+    });
+  };
+
+  // Helper function to check if tour matches selected categories
+  const matchesCategory = (tourTags: string[] | undefined): boolean => {
+    if (selectedCategories.length === 0) return true;
+    if (!tourTags) return false;
+    return selectedCategories.some((cat) => tourTags.includes(cat));
+  };
+
+  const filteredTours = tours
+    .filter(
+      (tour) =>
+        tour.status === "Hoạt động" &&
+        (tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tour.location.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        matchesCategory(tour.tags) &&
+        matchesDuration(tour.duration) &&
+        tour.rating >= minRating &&
+        tour.price >= priceRange[0] &&
+        tour.price <= priceRange[1]
+    )
+    .sort((a, b) => {
+      switch (sortOption) {
+        case "Giá: Thấp đến Cao":
+          return a.price - b.price;
+        case "Giá: Cao đến Thấp":
+          return b.price - a.price;
+        case "Thời gian: Ngắn đến Dài":
+          return parseDurationToDays(a.duration) - parseDurationToDays(b.duration);
+        default:
+          return 0; // "Đề xuất" - keep original order
+      }
+    });
 
   if (loading) {
     return (
@@ -181,6 +229,14 @@ export default function ToursPage() {
                         <input
                           name="category"
                           type="checkbox"
+                          checked={selectedCategories.includes(cat)}
+                          onChange={() => {
+                            setSelectedCategories((prev) =>
+                              prev.includes(cat)
+                                ? prev.filter((c) => c !== cat)
+                                : [...prev, cat]
+                            );
+                          }}
                           className="peer h-4 w-4 border-slate-300 rounded text-primary focus:ring-primary"
                         />
                       </div>
@@ -206,6 +262,14 @@ export default function ToursPage() {
                       <input
                         name="duration"
                         type="checkbox"
+                        checked={selectedDurations.includes(dur)}
+                        onChange={() => {
+                          setSelectedDurations((prev) =>
+                            prev.includes(dur)
+                              ? prev.filter((d) => d !== dur)
+                              : [...prev, dur]
+                          );
+                        }}
                         className="h-4 w-4 border-slate-300 rounded text-primary focus:ring-primary"
                       />
                       <span className="text-sm text-slate-600 group-hover:text-slate-900 font-medium">
@@ -229,7 +293,9 @@ export default function ToursPage() {
                     >
                       <input
                         name="rating"
-                        type="checkbox"
+                        type="radio"
+                        checked={minRating === rating}
+                        onChange={() => setMinRating(minRating === rating ? 0 : rating)}
                         className="h-4 w-4 border-slate-300 rounded text-primary focus:ring-primary"
                       />
                       <div className="flex items-center gap-1">
@@ -286,6 +352,8 @@ export default function ToursPage() {
                 </div>
                 <select
                   name="sort"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
                   className="h-10 rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer"
                 >
                   <option>Đề xuất</option>
