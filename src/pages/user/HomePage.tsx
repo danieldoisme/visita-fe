@@ -563,7 +563,7 @@ export default function HomePage() {
                 Khám phá những địa điểm được ghé thăm nhiều nhất trong mùa này.
               </p>
             </div>
-            <Link to="/tours">
+            <Link to="/destinations">
               <Button variant="outline" className="group">
                 Xem tất cả điểm đến{" "}
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -572,7 +572,8 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {POPULAR_DESTINATIONS.map((dest, idx) => (
-              <div
+              <Link
+                to={`/tours?location=${encodeURIComponent(dest.name)}`}
                 key={idx}
                 className="group relative h-[300px] rounded-2xl overflow-hidden cursor-pointer"
               >
@@ -586,7 +587,7 @@ export default function HomePage() {
                   <h3 className="text-2xl font-bold mb-1">{dest.name}</h3>
                   <p className="text-sm font-medium opacity-90">{dest.count}</p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

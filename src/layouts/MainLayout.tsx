@@ -50,6 +50,12 @@ export default function MainLayout() {
               Trang chủ
             </Link>
             <Link
+              to="/destinations"
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              Điểm đến
+            </Link>
+            <Link
               to="/tours"
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
@@ -191,6 +197,13 @@ export default function MainLayout() {
                 className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
               >
                 Trang chủ
+              </Link>
+              <Link
+                to="/destinations"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Điểm đến
               </Link>
               <Link
                 to="/tours"

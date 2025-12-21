@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useTour } from "@/context/TourContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ const DURATIONS = ["1-3 Ngày", "4-7 Ngày", "8-14 Ngày", "15+ Ngày"];
 const RATINGS = [5, 4, 3];
 
 export default function ToursPage() {
+  const [searchParams] = useSearchParams();
   const { tours, loading } = useTour();
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -40,6 +41,14 @@ export default function ToursPage() {
   const [selectedDurations, setSelectedDurations] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [sortOption, setSortOption] = useState<string>("Đề xuất");
+
+  // Read location from URL query params on mount
+  useEffect(() => {
+    const locationParam = searchParams.get("location");
+    if (locationParam) {
+      setSearchTerm(locationParam);
+    }
+  }, [searchParams]);
 
   // Helper function to parse duration string to days
   const parseDurationToDays = (duration: string): number => {
