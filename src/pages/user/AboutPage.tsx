@@ -34,7 +34,7 @@ export default function AboutPage() {
             variant="outline"
             className="text-white border-white/50 px-4 py-1 text-sm uppercase tracking-widest backdrop-blur-sm"
           >
-            Từ năm 2023
+            Từ năm 2025
           </Badge>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
             Khám Phá Việt Nam <br />{" "}
@@ -59,6 +59,9 @@ export default function AboutPage() {
               size="lg"
               variant="outline"
               className="bg-transparent border-white text-white hover:bg-white/10 hover:text-white text-lg px-8 h-14 rounded-full backdrop-blur-sm"
+              onClick={() => {
+                document.getElementById('story-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
             >
               Tìm Hiểu Thêm
             </Button>
@@ -67,7 +70,7 @@ export default function AboutPage() {
       </section>
 
       {/* Story Section - Asymmetrical Layout */}
-      <section className="py-24 bg-background">
+      <section id="story-section" className="py-24 bg-background">
         <div className="container px-4 md:px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
@@ -262,43 +265,31 @@ export default function AboutPage() {
           <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
             <div className="max-w-2xl">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl mb-4">
-                Gặp Gỡ Đội Ngũ
+                Gặp Gỡ Đội Ngũ Phát Triển
               </h2>
               <p className="text-muted-foreground text-lg">
-                Những chuyên gia du lịch đầy đam mê đang làm việc không ngừng
-                nghỉ để hiện thực hóa giấc mơ của bạn.
+                Những lập trình viên tài năng đứng sau nền tảng Visita, mang đến
+                trải nghiệm du lịch số tuyệt vời cho bạn.
               </p>
             </div>
-            <Button variant="outline" className="hidden md:flex">
-              Xem Toàn Bộ Team <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto">
             {[
               {
-                name: "Sarah Nguyễn",
-                role: "Nhà sáng lập & CEO",
-                image:
-                  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                name: "Thắng",
+                role: "Backend Developer",
+                image: "https://i.pravatar.cc/400?img=11",
               },
               {
-                name: "David Trần",
-                role: "Giám đốc sản phẩm",
-                image:
-                  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                name: "Thành",
+                role: "Frontend Developer",
+                image: "https://i.pravatar.cc/400?img=12",
               },
               {
-                name: "Emily Lê",
-                role: "Trải nghiệm khách hàng",
-                image:
-                  "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-              },
-              {
-                name: "Michael Phạm",
-                role: "Hướng dẫn viên trưởng",
-                image:
-                  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                name: "Văn",
+                role: "Kiến trúc sư hệ thống",
+                image: "https://i.pravatar.cc/400?img=13",
               },
             ].map((member, index) => (
               <div key={index} className="group">
