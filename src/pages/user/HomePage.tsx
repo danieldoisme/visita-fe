@@ -183,12 +183,12 @@ export default function HomePage() {
           <img
             src="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop"
             alt="Vịnh Hạ Long - Di sản Thế giới UNESCO"
-            className="w-full h-full object-cover animate-in fade-in duration-1000"
+            className="w-full h-full object-cover animate-in fade-in zoom-in-105 duration-1000 fill-mode-both"
           />
         </div>
 
         <div className="relative z-20 container px-4 md:px-6 flex flex-col items-center text-center space-y-8 pt-20">
-          <div className="space-y-4 max-w-3xl animate-in slide-in-from-bottom-8 duration-1000 delay-100">
+          <div className="space-y-4 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
             <Badge
               variant="secondary"
               className="px-4 py-1.5 text-sm font-medium bg-white/20 text-white hover:bg-white/30 border-0 backdrop-blur-sm mb-4"
@@ -208,7 +208,7 @@ export default function HomePage() {
           </div>
 
           {/* Search Widget */}
-          <div className="w-full max-w-5xl animate-in slide-in-from-bottom-8 duration-1000 delay-200">
+          <div className="w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200 fill-mode-both">
             <div className="bg-white rounded-3xl md:rounded-full shadow-2xl p-2 md:p-3">
               <div className="grid grid-cols-1 md:grid-cols-[1.5fr,1fr,1fr,1fr,auto] gap-2 md:gap-0 md:divide-x divide-slate-100">
                 {/* Location Input */}
