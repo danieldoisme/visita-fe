@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useBooking } from "@/context/BookingContext";
 import { registerSchema, RegisterFormData } from "@/lib/validation";
 import { toast } from "sonner";
 import {
@@ -35,6 +36,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { register } = useAuth();
+  const { claimGuestBookings } = useBooking();
   const navigate = useNavigate();
 
   const form = useForm<RegisterFormData>({
@@ -54,6 +56,14 @@ export default function RegisterPage() {
     const result = await register(data.email, data.password, data.name);
 
     if (result.success) {
+      // Claim any guest bookings made with this email
+      setTimeout(() => {
+        const storedUser = localStorage.getItem("visita_auth_user");
+        if (storedUser) {
+          const newUser = JSON.parse(storedUser);
+          claimGuestBookings(data.email, newUser.id);
+        }
+      }, 100);
       navigate("/", { replace: true });
     } else {
       setError(result.error || "Đăng ký thất bại");

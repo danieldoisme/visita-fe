@@ -142,8 +142,8 @@ export default function ProfilePage() {
         }
     };
 
-    // Filter user's bookings (in real app, would filter by user ID)
-    const userBookings = bookings;
+    // Filter user's bookings by current user ID
+    const userBookings = bookings.filter((b) => b.userId === user?.id);
 
     // Handle change photo button click
     const handleChangePhoto = () => {

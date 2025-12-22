@@ -16,6 +16,8 @@ export type PaymentMethod = "bank_transfer" | "credit_card" | "momo" | "paypal" 
 
 export interface Booking {
   id: number;
+  userId?: number;        // Set when user is logged in
+  guestEmail?: string;    // For guest bookings, used to claim later
   tourId: number;
   tourTitle: string;
   tourPrice: number;
@@ -35,6 +37,8 @@ interface BookingContextType {
     booking: Omit<Booking, "id" | "status" | "createdAt">
   ) => Promise<Booking>;
   getBookings: () => Booking[];
+  getUserBookings: (userId: number) => Booking[];
+  claimGuestBookings: (email: string, userId: number) => void;
   cancelBooking: (id: number) => Promise<void>;
 }
 
@@ -92,6 +96,22 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     return bookings;
   };
 
+  // Get bookings for a specific user
+  const getUserBookings = (userId: number): Booking[] => {
+    return bookings.filter((b) => b.userId === userId);
+  };
+
+  // Claim guest bookings when user registers with same email
+  const claimGuestBookings = (email: string, userId: number) => {
+    setBookings((prev) =>
+      prev.map((booking) =>
+        booking.guestEmail?.toLowerCase() === email.toLowerCase() && !booking.userId
+          ? { ...booking, userId, guestEmail: undefined }
+          : booking
+      )
+    );
+  };
+
   const cancelBooking = async (id: number) => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     setBookings((prev) =>
@@ -103,7 +123,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <BookingContext.Provider
-      value={{ bookings, addBooking, getBookings, cancelBooking }}
+      value={{ bookings, addBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking }}
     >
       {children}
     </BookingContext.Provider>

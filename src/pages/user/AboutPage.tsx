@@ -5,7 +5,6 @@ import {
   Heart,
   MapPin,
   ShieldCheck,
-  ArrowRight,
   Star,
   CheckCircle2,
 } from "lucide-react";

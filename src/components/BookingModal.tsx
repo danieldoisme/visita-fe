@@ -30,6 +30,7 @@ import {
     Check,
     Loader2,
     Shield,
+    UserPlus,
 } from "lucide-react";
 
 interface BookingModalProps {
@@ -39,8 +40,16 @@ interface BookingModalProps {
 }
 
 export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
-    const { user, isAdmin } = useAuth();
-    const { addBooking } = useBooking();
+    const { user, isAdmin, register } = useAuth();
+    const { addBooking, claimGuestBookings } = useBooking();
+
+    // State for post-booking account creation
+    const [showAccountCreation, setShowAccountCreation] = useState(false);
+    const [accountName, setAccountName] = useState("");
+    const [accountPassword, setAccountPassword] = useState("");
+    const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+    const [accountCreated, setAccountCreated] = useState(false);
+    const [bookedEmail, setBookedEmail] = useState("");
 
     const form = useForm<BookingFormData>({
         resolver: zodResolver(bookingSchema),
@@ -81,6 +90,13 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 phone: "",
                 paymentMethod: "bank_transfer",
             });
+            // Reset account creation state
+            setShowAccountCreation(false);
+            setAccountName("");
+            setAccountPassword("");
+            setIsCreatingAccount(false);
+            setAccountCreated(false);
+            setBookedEmail("");
         }
     }, [isOpen, user, form]);
 
@@ -109,14 +125,56 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 },
                 paymentMethod: data.paymentMethod,
                 totalPrice,
+                // Link to user if logged in, otherwise save as guest booking
+                ...(user ? { userId: user.id } : { guestEmail: data.email }),
             });
 
+            // Save email for potential account creation
+            setBookedEmail(data.email);
+            setAccountName(data.fullName);
+
             toast.success("Đặt tour thành công!");
+
+            // If guest, show account creation prompt
+            if (!user) {
+                setShowAccountCreation(true);
+            }
         } catch (error) {
             console.error("Booking failed:", error);
             toast.error("Đặt tour thất bại. Vui lòng thử lại.");
             setGatewayLoading(false);
         }
+    };
+
+    // Handle account creation after booking
+    const handleCreateAccount = async () => {
+        if (!accountPassword || accountPassword.length < 6) {
+            toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+            return;
+        }
+
+        setIsCreatingAccount(true);
+        const result = await register(bookedEmail, accountPassword, accountName);
+
+        if (result.success) {
+            // Claim any guest bookings with this email
+            // We need to get the new user ID, but since register logs in the user,
+            // we can get it from the auth context after a brief delay
+            setTimeout(() => {
+                // The user context will have been updated by now
+                const storedUser = localStorage.getItem("visita_auth_user");
+                if (storedUser) {
+                    const newUser = JSON.parse(storedUser);
+                    claimGuestBookings(bookedEmail, newUser.id);
+                }
+            }, 100);
+
+            setAccountCreated(true);
+            toast.success("Tạo tài khoản thành công!");
+        } else {
+            toast.error(result.error || "Không thể tạo tài khoản");
+        }
+        setIsCreatingAccount(false);
     };
 
     const [gatewayLoading, setGatewayLoading] = useState(false);
@@ -160,29 +218,155 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
     }
 
     if (isSuccess) {
+        // For logged-in users, show simple success message
+        if (user && !showAccountCreation) {
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Đặt tour thành công!" className="max-w-md">
+                    <div className="text-center py-6">
+                        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <Check className="w-8 h-8 text-green-600" />
+                        </div>
+                        <h3 className="text-xl font-semibold mb-2">Cảm ơn bạn đã đặt tour!</h3>
+                        <p className="text-gray-600 mb-4">
+                            Chúng tôi đã nhận được yêu cầu đặt tour của bạn. Thông tin chi tiết sẽ được gửi đến email{" "}
+                            <span className="font-medium">{watch("email")}</span>.
+                        </p>
+                        <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
+                            <p className="text-sm text-gray-600 mb-1">Tour: <span className="font-medium text-gray-900">{tour.title}</span></p>
+                            <p className="text-sm text-gray-600 mb-1">
+                                Ngày khởi hành: <span className="font-medium text-gray-900">{selectedDate && format(selectedDate, "dd/MM/yyyy", { locale: vi })}</span>
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                Tổng tiền: <span className="font-medium text-primary">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalPrice)}</span>
+                            </p>
+                        </div>
+                        <Button onClick={onClose} className="w-full">
+                            Đóng
+                        </Button>
+                    </div>
+                </Modal>
+            );
+        }
+
+        // For guest users, show account creation prompt
         return (
-            <Modal isOpen={isOpen} onClose={onClose} title="Đặt tour thành công!" className="max-w-md">
+            <Modal isOpen={isOpen} onClose={onClose} title={accountCreated ? "Tài khoản đã được tạo!" : "Đặt tour thành công!"} className="max-w-md">
                 <div className="text-center py-6">
-                    <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                        <Check className="w-8 h-8 text-green-600" />
+                    <div className={`mx-auto w-16 h-16 ${accountCreated ? "bg-blue-100" : "bg-green-100"} rounded-full flex items-center justify-center mb-4`}>
+                        {accountCreated ? (
+                            <UserPlus className="w-8 h-8 text-blue-600" />
+                        ) : (
+                            <Check className="w-8 h-8 text-green-600" />
+                        )}
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Cảm ơn bạn đã đặt tour!</h3>
-                    <p className="text-gray-600 mb-4">
-                        Chúng tôi đã nhận được yêu cầu đặt tour của bạn. Thông tin chi tiết sẽ được gửi đến email{" "}
-                        <span className="font-medium">{watch("email")}</span>.
-                    </p>
-                    <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
-                        <p className="text-sm text-gray-600 mb-1">Tour: <span className="font-medium text-gray-900">{tour.title}</span></p>
-                        <p className="text-sm text-gray-600 mb-1">
-                            Ngày khởi hành: <span className="font-medium text-gray-900">{selectedDate && format(selectedDate, "dd/MM/yyyy", { locale: vi })}</span>
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            Tổng tiền: <span className="font-medium text-primary">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalPrice)}</span>
-                        </p>
-                    </div>
-                    <Button onClick={onClose} className="w-full">
-                        Đóng
-                    </Button>
+
+                    {accountCreated ? (
+                        // Account successfully created
+                        <>
+                            <h3 className="text-xl font-semibold mb-2">Chào mừng bạn đến với Visita!</h3>
+                            <p className="text-gray-600 mb-4">
+                                Tài khoản của bạn đã được tạo thành công. Bạn có thể theo dõi đặt chỗ trong trang cá nhân.
+                            </p>
+                            <Button onClick={onClose} className="w-full">
+                                Xem đặt chỗ của tôi
+                            </Button>
+                        </>
+                    ) : (
+                        // Show booking summary and account creation form
+                        <>
+                            <h3 className="text-xl font-semibold mb-2">Cảm ơn bạn đã đặt tour!</h3>
+                            <p className="text-gray-600 mb-4">
+                                Thông tin chi tiết sẽ được gửi đến email <span className="font-medium">{bookedEmail}</span>.
+                            </p>
+
+                            {/* Booking summary */}
+                            <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
+                                <p className="text-sm text-gray-600 mb-1">Tour: <span className="font-medium text-gray-900">{tour.title}</span></p>
+                                <p className="text-sm text-gray-600 mb-1">
+                                    Ngày khởi hành: <span className="font-medium text-gray-900">{selectedDate && format(selectedDate, "dd/MM/yyyy", { locale: vi })}</span>
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    Tổng tiền: <span className="font-medium text-primary">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalPrice)}</span>
+                                </p>
+                            </div>
+
+                            {/* Account creation section */}
+                            <div className="border-t pt-6 mt-2">
+                                <div className="flex items-center justify-center gap-2 mb-3">
+                                    <UserPlus className="w-5 h-5 text-primary" />
+                                    <span className="font-medium text-gray-900">Tạo tài khoản để quản lý đặt chỗ</span>
+                                </div>
+                                <p className="text-sm text-gray-500 mb-4">
+                                    Tạo tài khoản để dễ dàng theo dõi và quản lý các đặt chỗ của bạn.
+                                </p>
+
+                                <form onSubmit={(e) => { e.preventDefault(); handleCreateAccount(); }} className="space-y-3 text-left">
+                                    <div>
+                                        <label htmlFor="account-name" className="text-sm font-medium text-gray-700 block mb-1">Họ tên</label>
+                                        <Input
+                                            id="account-name"
+                                            name="name"
+                                            value={accountName}
+                                            onChange={(e) => setAccountName(e.target.value)}
+                                            placeholder="Nhập họ tên"
+                                            disabled={isCreatingAccount}
+                                            autoComplete="name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="account-email" className="text-sm font-medium text-gray-700 block mb-1">Email</label>
+                                        <Input
+                                            id="account-email"
+                                            name="email"
+                                            value={bookedEmail}
+                                            disabled
+                                            className="bg-gray-100"
+                                            autoComplete="email"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="account-password" className="text-sm font-medium text-gray-700 block mb-1">Mật khẩu</label>
+                                        <Input
+                                            id="account-password"
+                                            name="password"
+                                            type="password"
+                                            value={accountPassword}
+                                            onChange={(e) => setAccountPassword(e.target.value)}
+                                            placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                                            disabled={isCreatingAccount}
+                                            autoComplete="new-password"
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-3 mt-6">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={onClose}
+                                            className="flex-1"
+                                            disabled={isCreatingAccount}
+                                        >
+                                            Bỏ qua
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            className="flex-1"
+                                            disabled={isCreatingAccount}
+                                        >
+                                            {isCreatingAccount ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    Đang tạo...
+                                                </>
+                                            ) : (
+                                                "Tạo tài khoản"
+                                            )}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </div>
+                        </>
+                    )}
                 </div>
             </Modal>
         );

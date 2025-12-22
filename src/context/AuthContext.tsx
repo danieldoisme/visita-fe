@@ -100,8 +100,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Create new user (in real app, this would be an API call)
+    // Use Date.now() for unique ID since MOCK_USERS isn't persisted and resets on refresh
     const newUser: User = {
-      id: MOCK_USERS.length + 1,
+      id: Date.now(),
       email,
       name,
       role: "user", // New registrations are always users
