@@ -4,6 +4,7 @@ import { TourProvider } from "@/context/TourContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { BookingProvider } from "@/context/BookingContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ScrollToTop from "@/components/ScrollToTop";
 import MainLayout from "@/layouts/MainLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import HomePage from "@/pages/user/HomePage";
@@ -33,6 +34,7 @@ function App() {
               v7_relativeSplatPath: true,
             }}
           >
+            <ScrollToTop />
             <Routes>
               {/* Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
