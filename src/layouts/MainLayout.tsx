@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -14,8 +14,17 @@ import ChatWidget from "@/components/ChatWidget";
 export default function MainLayout() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Check if a path is currently active
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(path);
+  };
 
   // Get user's initials for avatar
   const getInitials = (name: string) => {
@@ -45,25 +54,37 @@ export default function MainLayout() {
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
             <Link
               to="/"
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
+              className={`transition-colors hover:text-foreground/80 ${isActive("/")
+                ? "text-primary font-semibold"
+                : "text-foreground/60"
+                }`}
             >
               Trang chủ
             </Link>
             <Link
               to="/destinations"
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
+              className={`transition-colors hover:text-foreground/80 ${isActive("/destinations")
+                ? "text-primary font-semibold"
+                : "text-foreground/60"
+                }`}
             >
               Điểm đến
             </Link>
             <Link
               to="/tours"
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
+              className={`transition-colors hover:text-foreground/80 ${isActive("/tours")
+                ? "text-primary font-semibold"
+                : "text-foreground/60"
+                }`}
             >
               Tour
             </Link>
             <Link
               to="/about"
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
+              className={`transition-colors hover:text-foreground/80 ${isActive("/about")
+                ? "text-primary font-semibold"
+                : "text-foreground/60"
+                }`}
             >
               Giới thiệu
             </Link>
@@ -194,28 +215,32 @@ export default function MainLayout() {
               <Link
                 to="/"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/") ? "bg-primary/10 text-primary" : ""
+                  }`}
               >
                 Trang chủ
               </Link>
               <Link
                 to="/destinations"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/destinations") ? "bg-primary/10 text-primary" : ""
+                  }`}
               >
                 Điểm đến
               </Link>
               <Link
                 to="/tours"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/tours") ? "bg-primary/10 text-primary" : ""
+                  }`}
               >
                 Tour
               </Link>
               <Link
                 to="/about"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/about") ? "bg-primary/10 text-primary" : ""
+                  }`}
               >
                 Giới thiệu
               </Link>
