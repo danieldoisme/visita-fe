@@ -98,10 +98,10 @@ export default function AdminLayout() {
           {user && (
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                {user.name.charAt(0).toUpperCase()}
+                {user.fullName.charAt(0).toUpperCase()}
               </div>
               <div className="text-sm hidden sm:block">
-                <p className="font-medium">{user.name}</p>
+                <p className="font-medium">{user.fullName}</p>
                 <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
             </div>

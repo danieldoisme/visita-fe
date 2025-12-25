@@ -59,7 +59,7 @@ export default function ProfilePage() {
     const form = useForm<ProfileFormData>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
-            name: user?.name || "",
+            name: user?.fullName || "",
             email: user?.email || "",
         },
     });
@@ -78,7 +78,7 @@ export default function ProfilePage() {
     useEffect(() => {
         if (user) {
             form.reset({
-                name: user.name,
+                name: user.fullName,
                 email: user.email,
             });
         }
@@ -143,7 +143,7 @@ export default function ProfilePage() {
     };
 
     // Filter user's bookings by current user ID
-    const userBookings = bookings.filter((b) => b.userId === user?.id);
+    const userBookings = bookings.filter((b) => b.userId === user?.userId);
 
     // Handle change photo button click
     const handleChangePhoto = () => {
@@ -165,7 +165,7 @@ export default function ProfilePage() {
                         {/* Avatar */}
                         <div className="relative">
                             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-3xl font-semibold shadow-lg">
-                                {getInitials(user?.name || "U")}
+                                {getInitials(user?.fullName || "U")}
                             </div>
                             <button
                                 onClick={handleChangePhoto}
@@ -177,7 +177,7 @@ export default function ProfilePage() {
                         {/* User Info */}
                         <div>
                             <h1 className="text-3xl font-bold text-slate-900">
-                                {user?.name}
+                                {user?.fullName}
                             </h1>
                             <p className="text-slate-600">{user?.email}</p>
                             <Badge variant="secondary" className="mt-2">
@@ -253,7 +253,7 @@ export default function ProfilePage() {
                                 {/* Avatar Section */}
                                 <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
                                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-xl font-semibold">
-                                        {getInitials(form.watch("name") || user?.name || "U")}
+                                        {getInitials(form.watch("name") || user?.fullName || "U")}
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-sm font-medium text-slate-900">

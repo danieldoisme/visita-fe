@@ -16,7 +16,7 @@ export type PaymentMethod = "bank_transfer" | "credit_card" | "momo" | "paypal" 
 
 export interface Booking {
   id: number;
-  userId?: number;        // Set when user is logged in
+  userId?: string;        // Set when user is logged in
   guestEmail?: string;    // For guest bookings, used to claim later
   tourId: number;
   tourTitle: string;
@@ -37,8 +37,8 @@ interface BookingContextType {
     booking: Omit<Booking, "id" | "status" | "createdAt">
   ) => Promise<Booking>;
   getBookings: () => Booking[];
-  getUserBookings: (userId: number) => Booking[];
-  claimGuestBookings: (email: string, userId: number) => void;
+  getUserBookings: (userId: string) => Booking[];
+  claimGuestBookings: (email: string, userId: string) => void;
   cancelBooking: (id: number) => Promise<void>;
 }
 
@@ -97,12 +97,12 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Get bookings for a specific user
-  const getUserBookings = (userId: number): Booking[] => {
+  const getUserBookings = (userId: string): Booking[] => {
     return bookings.filter((b) => b.userId === userId);
   };
 
   // Claim guest bookings when user registers with same email
-  const claimGuestBookings = (email: string, userId: number) => {
+  const claimGuestBookings = (email: string, userId: string) => {
     setBookings((prev) =>
       prev.map((booking) =>
         booking.guestEmail?.toLowerCase() === email.toLowerCase() && !booking.userId

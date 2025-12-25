@@ -73,7 +73,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
     // Pre-fill contact info if logged in
     useEffect(() => {
         if (user) {
-            form.setValue("fullName", user.name);
+            form.setValue("fullName", user.fullName);
             form.setValue("email", user.email);
         }
     }, [user, form]);
@@ -85,7 +85,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 selectedDate: undefined,
                 adults: 1,
                 children: 0,
-                fullName: user?.name || "",
+                fullName: user?.fullName || "",
                 email: user?.email || "",
                 phone: "",
                 paymentMethod: "bank_transfer",
@@ -126,7 +126,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 paymentMethod: data.paymentMethod,
                 totalPrice,
                 // Link to user if logged in, otherwise save as guest booking
-                ...(user ? { userId: user.id } : { guestEmail: data.email }),
+                ...(user ? { userId: user.userId } : { guestEmail: data.email }),
             });
 
             // Save email for potential account creation
@@ -165,7 +165,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 const storedUser = localStorage.getItem("visita_auth_user");
                 if (storedUser) {
                     const newUser = JSON.parse(storedUser);
-                    claimGuestBookings(bookedEmail, newUser.id);
+                    claimGuestBookings(bookedEmail, newUser.userId);
                 }
             }, 100);
 

@@ -101,10 +101,10 @@ export default function MainLayout() {
                     className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-slate-100 transition-colors"
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-sm font-semibold">
-                      {getInitials(user?.name || "U")}
+                      {getInitials(user?.fullName || "U")}
                     </div>
                     <span className="text-sm font-medium text-slate-700 max-w-[120px] truncate">
-                      {user?.name}
+                      {user?.fullName}
                     </span>
                     <ChevronDown className="w-4 h-4 text-slate-400" />
                   </button>
@@ -112,7 +112,7 @@ export default function MainLayout() {
                 <PopoverContent className="w-56 p-2" align="end">
                   <div className="px-3 py-2 border-b mb-2">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-slate-900">{user?.name}</p>
+                      <p className="text-sm font-medium text-slate-900">{user?.fullName}</p>
                       {isAdmin && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
                           <Shield className="w-3 h-3" />

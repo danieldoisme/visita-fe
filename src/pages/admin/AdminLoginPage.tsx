@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
         setError("");
         setIsLoading(true);
 
-        const result = await login(data.email, data.password);
+        const result = await login(data.email, data.password, true); // isAdmin=true
 
         if (result.success) {
             // Check if user is admin
