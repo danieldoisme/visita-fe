@@ -19,6 +19,7 @@ import UsersPage from "@/pages/admin/UsersPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import BookingsManagementPage from "@/pages/admin/BookingsManagementPage";
 import InteractionManagementPage from "@/pages/admin/InteractionManagementPage";
+import PromotionsPage from "@/pages/admin/PromotionsPage";
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
@@ -74,6 +75,7 @@ function App() {
                 <Route path="users" element={<UsersPage />} />
                 <Route path="bookings" element={<BookingsManagementPage />} />
                 <Route path="interactions" element={<InteractionManagementPage />} />
+                <Route path="promotions" element={<PromotionsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
 
