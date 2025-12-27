@@ -6,7 +6,7 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, StatusBadge, promotionStatusConfig, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, StatusBadge, promotionStatusConfig, PaginationControls, ITEMS_PER_PAGE, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
@@ -167,6 +167,7 @@ export default function PromotionsPage() {
     const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [loading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Sorting state
     const { sort, toggleSort, sortData } = useSorting<Promotion>({
@@ -233,10 +234,17 @@ export default function PromotionsPage() {
         return sortData(filtered);
     }, [promotions, searchTerm, sortData]);
 
-    // Get IDs of filtered promotions
-    const filteredPromotionIds = useMemo(
-        () => filteredPromotions.map((p) => p.id),
-        [filteredPromotions]
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredPromotions.length / ITEMS_PER_PAGE);
+    const paginatedPromotions = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredPromotions.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredPromotions, currentPage]);
+
+    // Get IDs of paginated promotions
+    const paginatedPromotionIds = useMemo(
+        () => paginatedPromotions.map((p) => p.id),
+        [paginatedPromotions]
     );
 
     // Get selected promotions that can be activated/deactivated
@@ -447,6 +455,7 @@ export default function PromotionsPage() {
     // Clear search filter
     const handleClearFilters = () => {
         setSearchTerm("");
+        setCurrentPage(1);
     };
 
     // Bulk actions configuration
@@ -523,7 +532,10 @@ export default function PromotionsPage() {
                         className="pl-8"
                         aria-label="Tìm kiếm mã khuyến mãi"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
                     />
                 </div>
                 {hasSelection && (
@@ -545,123 +557,126 @@ export default function PromotionsPage() {
                         onClearFilters={handleClearFilters}
                     />
                 ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-12">
-                                    <input
-                                        id="select-all-promotions"
-                                        name="select-all-promotions"
-                                        type="checkbox"
-                                        checked={isAllSelected(filteredPromotionIds)}
-                                        ref={(el) => {
-                                            if (el) el.indeterminate = isSomeSelected(filteredPromotionIds);
-                                        }}
-                                        onChange={() => toggleAll(filteredPromotionIds)}
-                                        className="h-4 w-4 rounded border-gray-300"
-                                        aria-label="Chọn tất cả khuyến mãi"
-                                    />
-                                </TableHead>
-                                <TableHead>Mã khuyến mãi</TableHead>
-                                <TableHead>Mô tả</TableHead>
-                                <SortableHeader sortKey="discountValue" currentSort={sort} onSort={toggleSort}>
-                                    Giảm giá
-                                </SortableHeader>
-                                <SortableHeader sortKey="startDate" currentSort={sort} onSort={toggleSort}>
-                                    Thời gian
-                                </SortableHeader>
-                                <SortableHeader sortKey="usedCount" currentSort={sort} onSort={toggleSort}>
-                                    Sử dụng
-                                </SortableHeader>
-                                <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
-                                    Trạng thái
-                                </SortableHeader>
-                                <TableHead className="text-right">Hành động</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredPromotions.map((promo) => (
-                                <TableRow key={promo.id} className={isSelected(promo.id) ? "bg-muted/50" : ""}>
-                                    <TableCell>
+                    <>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-12">
                                         <input
-                                            id={`promotion-checkbox-${promo.id}`}
-                                            name={`promotion-checkbox-${promo.id}`}
+                                            id="select-all-promotions"
+                                            name="select-all-promotions"
                                             type="checkbox"
-                                            checked={isSelected(promo.id)}
-                                            onChange={() => toggleSelection(promo.id)}
+                                            checked={isAllSelected(paginatedPromotionIds)}
+                                            ref={(el) => {
+                                                if (el) el.indeterminate = isSomeSelected(paginatedPromotionIds);
+                                            }}
+                                            onChange={() => toggleAll(paginatedPromotionIds)}
                                             className="h-4 w-4 rounded border-gray-300"
-                                            aria-label={`Chọn ${promo.code}`}
+                                            aria-label="Chọn tất cả khuyến mãi"
                                         />
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="font-mono font-semibold text-primary">
-                                            {promo.code}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="max-w-[200px] truncate">
-                                        {promo.description}
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="inline-flex items-center gap-1 font-medium">
-                                            {promo.discountType === "percent" ? (
-                                                <Percent className="h-3 w-3 text-blue-600" />
-                                            ) : (
-                                                <Banknote className="h-3 w-3 text-green-600" />
-                                            )}
-                                            {formatDiscount(promo.discountType, promo.discountValue)}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="text-sm text-muted-foreground">
-                                            {formatDateRange(promo.startDate, promo.endDate)}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="text-sm">
-                                            {promo.usedCount}/{promo.usageLimit}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <StatusBadge status={promo.status} config={promotionStatusConfig} />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleOpenModal(promo)}
-                                                title="Chỉnh sửa"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleToggleStatus(promo.id)}
-                                                title={promo.isManuallyDisabled ? "Kích hoạt" : "Vô hiệu hóa"}
-                                                className={cn(
-                                                    promo.isManuallyDisabled
-                                                        ? "text-green-600 hover:text-green-700"
-                                                        : "text-orange-600 hover:text-orange-700"
-                                                )}
-                                            >
-                                                <Ticket className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive hover:text-destructive"
-                                                onClick={() => handleDeleteClick(promo.id)}
-                                                title="Xóa"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
+                                    </TableHead>
+                                    <TableHead>Mã khuyến mãi</TableHead>
+                                    <TableHead>Mô tả</TableHead>
+                                    <SortableHeader sortKey="discountValue" currentSort={sort} onSort={toggleSort}>
+                                        Giảm giá
+                                    </SortableHeader>
+                                    <SortableHeader sortKey="startDate" currentSort={sort} onSort={toggleSort}>
+                                        Thời gian
+                                    </SortableHeader>
+                                    <SortableHeader sortKey="usedCount" currentSort={sort} onSort={toggleSort}>
+                                        Sử dụng
+                                    </SortableHeader>
+                                    <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                                        Trạng thái
+                                    </SortableHeader>
+                                    <TableHead className="text-right">Hành động</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedPromotions.map((promo) => (
+                                    <TableRow key={promo.id} className={isSelected(promo.id) ? "bg-muted/50" : ""}>
+                                        <TableCell>
+                                            <input
+                                                id={`promotion-checkbox-${promo.id}`}
+                                                name={`promotion-checkbox-${promo.id}`}
+                                                type="checkbox"
+                                                checked={isSelected(promo.id)}
+                                                onChange={() => toggleSelection(promo.id)}
+                                                className="h-4 w-4 rounded border-gray-300"
+                                                aria-label={`Chọn ${promo.code}`}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="font-mono font-semibold text-primary">
+                                                {promo.code}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="max-w-[200px] truncate">
+                                            {promo.description}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="inline-flex items-center gap-1 font-medium">
+                                                {promo.discountType === "percent" ? (
+                                                    <Percent className="h-3 w-3 text-blue-600" />
+                                                ) : (
+                                                    <Banknote className="h-3 w-3 text-green-600" />
+                                                )}
+                                                {formatDiscount(promo.discountType, promo.discountValue)}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-sm text-muted-foreground">
+                                                {formatDateRange(promo.startDate, promo.endDate)}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-sm">
+                                                {promo.usedCount}/{promo.usageLimit}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <StatusBadge status={promo.status} config={promotionStatusConfig} />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleOpenModal(promo)}
+                                                    title="Chỉnh sửa"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleToggleStatus(promo.id)}
+                                                    title={promo.isManuallyDisabled ? "Kích hoạt" : "Vô hiệu hóa"}
+                                                    className={cn(
+                                                        promo.isManuallyDisabled
+                                                            ? "text-green-600 hover:text-green-700"
+                                                            : "text-orange-600 hover:text-orange-700"
+                                                    )}
+                                                >
+                                                    <Ticket className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive hover:text-destructive"
+                                                    onClick={() => handleDeleteClick(promo.id)}
+                                                    title="Xóa"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                    </>
                 )}
             </div>
 

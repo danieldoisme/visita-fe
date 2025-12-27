@@ -6,7 +6,7 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, StatusBadge, bookingStatusConfig, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, StatusBadge, bookingStatusConfig, PaginationControls, ITEMS_PER_PAGE, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +33,7 @@ export default function BookingsManagementPage() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [loading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Sorting state
     const { sort, toggleSort, sortData } = useSorting<Booking>({
@@ -80,10 +81,17 @@ export default function BookingsManagementPage() {
         return sortData(filtered);
     }, [bookings, searchTerm, sortData]);
 
-    // Get IDs of filtered bookings
-    const filteredBookingIds = useMemo(
-        () => filteredBookings.map((b) => b.id),
-        [filteredBookings]
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE);
+    const paginatedBookings = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredBookings.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredBookings, currentPage]);
+
+    // Get IDs of paginated bookings
+    const paginatedBookingIds = useMemo(
+        () => paginatedBookings.map((b) => b.id),
+        [paginatedBookings]
     );
 
     // Get pending bookings in selection (for bulk confirm)
@@ -251,6 +259,7 @@ export default function BookingsManagementPage() {
     // Clear search filter
     const handleClearFilters = () => {
         setSearchTerm("");
+        setCurrentPage(1);
     };
 
     // Bulk actions configuration
@@ -310,7 +319,10 @@ export default function BookingsManagementPage() {
                         className="pl-8"
                         aria-label="Tìm kiếm booking"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
                     />
                 </div>
                 {hasSelection && (
@@ -331,116 +343,119 @@ export default function BookingsManagementPage() {
                         onClearFilters={handleClearFilters}
                     />
                 ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-12">
-                                    <input
-                                        id="select-all-bookings"
-                                        name="select-all-bookings"
-                                        type="checkbox"
-                                        checked={isAllSelected(filteredBookingIds)}
-                                        ref={(el) => {
-                                            if (el) el.indeterminate = isSomeSelected(filteredBookingIds);
-                                        }}
-                                        onChange={() => toggleAll(filteredBookingIds)}
-                                        className="h-4 w-4 rounded border-gray-300"
-                                        aria-label="Chọn tất cả booking"
-                                    />
-                                </TableHead>
-                                <TableHead>ID</TableHead>
-                                <TableHead>Khách hàng</TableHead>
-                                <TableHead>Tour</TableHead>
-                                <SortableHeader sortKey="selectedDate" currentSort={sort} onSort={toggleSort}>
-                                    Ngày khởi hành
-                                </SortableHeader>
-                                <SortableHeader sortKey="totalPrice" currentSort={sort} onSort={toggleSort}>
-                                    Tổng tiền
-                                </SortableHeader>
-                                <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
-                                    Trạng thái
-                                </SortableHeader>
-                                <TableHead className="text-right">Hành động</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredBookings.map((booking) => (
-                                <TableRow key={booking.id} className={isSelected(booking.id) ? "bg-muted/50" : ""}>
-                                    <TableCell>
+                    <>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-12">
                                         <input
-                                            id={`booking-checkbox-${booking.id}`}
-                                            name={`booking-checkbox-${booking.id}`}
+                                            id="select-all-bookings"
+                                            name="select-all-bookings"
                                             type="checkbox"
-                                            checked={isSelected(booking.id)}
-                                            onChange={() => toggleSelection(booking.id)}
+                                            checked={isAllSelected(paginatedBookingIds)}
+                                            ref={(el) => {
+                                                if (el) el.indeterminate = isSomeSelected(paginatedBookingIds);
+                                            }}
+                                            onChange={() => toggleAll(paginatedBookingIds)}
                                             className="h-4 w-4 rounded border-gray-300"
-                                            aria-label={`Chọn ${formatBookingId(booking.id)}`}
+                                            aria-label="Chọn tất cả booking"
                                         />
-                                    </TableCell>
-                                    <TableCell className="font-medium">
-                                        {formatBookingId(booking.id)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div>
-                                            <p className="font-medium">{booking.contactInfo.fullName}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {booking.contactInfo.email}
-                                            </p>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="max-w-[200px] truncate">
-                                        {booking.tourTitle}
-                                    </TableCell>
-                                    <TableCell>
-                                        {formatDate(booking.selectedDate)}
-                                    </TableCell>
-                                    <TableCell>{formatCurrency(booking.totalPrice)}</TableCell>
-                                    <TableCell>
-                                        <StatusBadge status={booking.status} config={bookingStatusConfig} />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-1">
-                                            {/* View Details */}
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                title="Xem chi tiết"
-                                                onClick={() => handleViewDetails(booking)}
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-
-                                            {/* Confirm - only for pending */}
-                                            {booking.status === "pending" && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                    title="Xác nhận"
-                                                    onClick={() => handleConfirmClick(booking.id)}
-                                                >
-                                                    <Check className="h-4 w-4" />
-                                                </Button>
-                                            )}
-
-                                            {/* Cancel - for pending and confirmed only */}
-                                            {(booking.status === "pending" || booking.status === "confirmed") && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    title="Hủy"
-                                                    onClick={() => handleCancelClick(booking.id)}
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </TableCell>
+                                    </TableHead>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Khách hàng</TableHead>
+                                    <TableHead>Tour</TableHead>
+                                    <SortableHeader sortKey="selectedDate" currentSort={sort} onSort={toggleSort}>
+                                        Ngày khởi hành
+                                    </SortableHeader>
+                                    <SortableHeader sortKey="totalPrice" currentSort={sort} onSort={toggleSort}>
+                                        Tổng tiền
+                                    </SortableHeader>
+                                    <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                                        Trạng thái
+                                    </SortableHeader>
+                                    <TableHead className="text-right">Hành động</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedBookings.map((booking) => (
+                                    <TableRow key={booking.id} className={isSelected(booking.id) ? "bg-muted/50" : ""}>
+                                        <TableCell>
+                                            <input
+                                                id={`booking-checkbox-${booking.id}`}
+                                                name={`booking-checkbox-${booking.id}`}
+                                                type="checkbox"
+                                                checked={isSelected(booking.id)}
+                                                onChange={() => toggleSelection(booking.id)}
+                                                className="h-4 w-4 rounded border-gray-300"
+                                                aria-label={`Chọn ${formatBookingId(booking.id)}`}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="font-medium">
+                                            {formatBookingId(booking.id)}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div>
+                                                <p className="font-medium">{booking.contactInfo.fullName}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {booking.contactInfo.email}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="max-w-[200px] truncate">
+                                            {booking.tourTitle}
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatDate(booking.selectedDate)}
+                                        </TableCell>
+                                        <TableCell>{formatCurrency(booking.totalPrice)}</TableCell>
+                                        <TableCell>
+                                            <StatusBadge status={booking.status} config={bookingStatusConfig} />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-1">
+                                                {/* View Details */}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Xem chi tiết"
+                                                    onClick={() => handleViewDetails(booking)}
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+
+                                                {/* Confirm - only for pending */}
+                                                {booking.status === "pending" && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        title="Xác nhận"
+                                                        onClick={() => handleConfirmClick(booking.id)}
+                                                    >
+                                                        <Check className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+
+                                                {/* Cancel - for pending and confirmed only */}
+                                                {(booking.status === "pending" || booking.status === "confirmed") && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        title="Hủy"
+                                                        onClick={() => handleCancelClick(booking.id)}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                    </>
                 )}
             </div>
 

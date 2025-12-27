@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { BulkActionBar, EmptyState, StatusBadge, SortableHeader, reviewStatusConfig, contactStatusConfig, type BulkAction, type SortState } from "@/components/admin";
+import { BulkActionBar, EmptyState, StatusBadge, SortableHeader, reviewStatusConfig, contactStatusConfig, PaginationControls, ITEMS_PER_PAGE, type BulkAction, type SortState } from "@/components/admin";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,6 @@ import {
     MessageSquare,
     Mail,
     Search,
-    ChevronLeft,
-    ChevronRight,
     Send,
     Eye,
     ArrowLeft,
@@ -213,9 +211,6 @@ const DELETE_REVIEW_KEY = "delete_review";
 const DELETE_CONTACT_KEY = "delete_contact";
 const BULK_DELETE_REVIEW_KEY = "bulk_delete_review";
 const BULK_DELETE_CONTACT_KEY = "bulk_delete_contact";
-
-// ============== Pagination Constants ==============
-const ITEMS_PER_PAGE = 5;
 
 export default function InteractionManagementPage() {
     // Tab state
@@ -615,45 +610,6 @@ export default function InteractionManagementPage() {
             bulk_delete_contact: BULK_DELETE_CONTACT_KEY,
         };
         setDontShowAgain(keyMap[confirmDialog.type]);
-    };
-
-    // ============== Pagination Controls ==============
-    const PaginationControls = ({
-        currentPage,
-        totalPages,
-        onPageChange,
-    }: {
-        currentPage: number;
-        totalPages: number;
-        onPageChange: (page: number) => void;
-    }) => {
-        if (totalPages <= 1) return null;
-
-        return (
-            <div className="flex items-center justify-between px-4 py-3 border-t">
-                <p className="text-sm text-muted-foreground">
-                    Trang {currentPage} / {totalPages}
-                </p>
-                <div className="flex gap-1">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onPageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => onPageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
-        );
     };
 
 

@@ -4,7 +4,7 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +82,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
   const loading = false; // Simulated loading state for skeleton demo
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Sorting state
   const { sort, toggleSort, sortData } = useSorting<UserData>({
@@ -127,10 +128,17 @@ export default function UsersPage() {
     return sortData(filtered);
   }, [users, searchTerm, sortData]);
 
-  // Get IDs of selectable users (non-admin only)
-  const selectableUserIds = useMemo(
-    () => filteredUsers.filter((u) => u.role !== "admin").map((u) => u.id),
-    [filteredUsers]
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  // Get IDs of paginated selectable users
+  const paginatedSelectableUserIds = useMemo(
+    () => paginatedUsers.filter((u) => u.role !== "admin").map((u) => u.id),
+    [paginatedUsers]
   );
 
   // Count selected users by status for disabling bulk actions
@@ -350,6 +358,7 @@ export default function UsersPage() {
   // Clear search filter
   const handleClearFilters = () => {
     setSearchTerm("");
+    setCurrentPage(1);
   };
 
   // Bulk actions configuration
@@ -414,7 +423,10 @@ export default function UsersPage() {
             className="pl-8"
             aria-label="Tìm kiếm người dùng"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
         {hasSelection && (
@@ -435,120 +447,123 @@ export default function UsersPage() {
             onClearFilters={handleClearFilters}
           />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <input
-                    id="select-all-users"
-                    name="select-all-users"
-                    type="checkbox"
-                    checked={isAllSelected(selectableUserIds)}
-                    ref={(el) => {
-                      if (el) el.indeterminate = isSomeSelected(selectableUserIds);
-                    }}
-                    onChange={() => toggleAll(selectableUserIds)}
-                    className="h-4 w-4 rounded border-gray-300"
-                    aria-label="Chọn tất cả người dùng"
-                  />
-                </TableHead>
-                <TableHead>Người dùng</TableHead>
-                <TableHead>Email</TableHead>
-                <SortableHeader sortKey="role" currentSort={sort} onSort={toggleSort}>
-                  Vai trò
-                </SortableHeader>
-                <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
-                  Trạng thái
-                </SortableHeader>
-                <TableHead className="text-right">Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id} className={isSelected(user.id) ? "bg-muted/50" : ""}>
-                  <TableCell>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
                     <input
-                      id={`user-checkbox-${user.id}`}
-                      name={`user-checkbox-${user.id}`}
+                      id="select-all-users"
+                      name="select-all-users"
                       type="checkbox"
-                      checked={isSelected(user.id)}
-                      onChange={() => toggleSelection(user.id)}
-                      disabled={user.role === "admin"}
-                      className="h-4 w-4 rounded border-gray-300 disabled:opacity-50"
-                      aria-label={`Chọn ${user.name}`}
+                      checked={isAllSelected(paginatedSelectableUserIds)}
+                      ref={(el) => {
+                        if (el) el.indeterminate = isSomeSelected(paginatedSelectableUserIds);
+                      }}
+                      onChange={() => toggleAll(paginatedSelectableUserIds)}
+                      className="h-4 w-4 rounded border-gray-300"
+                      aria-label="Chọn tất cả người dùng"
                     />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-medium">{user.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                      {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={user.status === "active" ? "outline" : "destructive"}
-                      className={
-                        user.status === "active" ? "border-green-500 text-green-600" : ""
-                      }
-                    >
-                      {user.status === "active" ? "Hoạt động" : "Đã khóa"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleLockClick(user)}
-                        disabled={user.role === "admin"}
-                        title={user.status === "active" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
-                      >
-                        {user.status === "active" ? (
-                          <>
-                            <Lock className="h-4 w-4 mr-1" />
-                            Khóa
-                          </>
-                        ) : (
-                          <>
-                            <Unlock className="h-4 w-4 mr-1" />
-                            Mở khóa
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenResetModal(user)}
-                        disabled={user.role === "admin"}
-                        title="Reset mật khẩu"
-                      >
-                        <KeyRound className="h-4 w-4 mr-1" />
-                        Reset MK
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteClick(user.id)}
-                        disabled={user.role === "admin"}
-                        className="text-destructive hover:text-destructive"
-                        title="Xóa tài khoản"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead>Người dùng</TableHead>
+                  <TableHead>Email</TableHead>
+                  <SortableHeader sortKey="role" currentSort={sort} onSort={toggleSort}>
+                    Vai trò
+                  </SortableHeader>
+                  <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                    Trạng thái
+                  </SortableHeader>
+                  <TableHead className="text-right">Hành động</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedUsers.map((user) => (
+                  <TableRow key={user.id} className={isSelected(user.id) ? "bg-muted/50" : ""}>
+                    <TableCell>
+                      <input
+                        id={`user-checkbox-${user.id}`}
+                        name={`user-checkbox-${user.id}`}
+                        type="checkbox"
+                        checked={isSelected(user.id)}
+                        onChange={() => toggleSelection(user.id)}
+                        disabled={user.role === "admin"}
+                        className="h-4 w-4 rounded border-gray-300 disabled:opacity-50"
+                        aria-label={`Chọn ${user.name}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-medium">{user.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                        {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={user.status === "active" ? "outline" : "destructive"}
+                        className={
+                          user.status === "active" ? "border-green-500 text-green-600" : ""
+                        }
+                      >
+                        {user.status === "active" ? "Hoạt động" : "Đã khóa"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleLockClick(user)}
+                          disabled={user.role === "admin"}
+                          title={user.status === "active" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                        >
+                          {user.status === "active" ? (
+                            <>
+                              <Lock className="h-4 w-4 mr-1" />
+                              Khóa
+                            </>
+                          ) : (
+                            <>
+                              <Unlock className="h-4 w-4 mr-1" />
+                              Mở khóa
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenResetModal(user)}
+                          disabled={user.role === "admin"}
+                          title="Reset mật khẩu"
+                        >
+                          <KeyRound className="h-4 w-4 mr-1" />
+                          Reset MK
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(user.id)}
+                          disabled={user.role === "admin"}
+                          className="text-destructive hover:text-destructive"
+                          title="Xóa tài khoản"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          </>
         )}
       </div>
 
@@ -606,6 +621,6 @@ export default function UsersPage() {
         showDontShowAgain
         onDontShowAgainChange={handleDontShowAgain}
       />
-    </div>
+    </div >
   );
 }

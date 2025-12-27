@@ -8,7 +8,7 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, type BulkAction } from "@/components/admin";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,7 @@ export default function ToursManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Sorting state
   const { sort, toggleSort, sortData } = useSorting<Tour>({
@@ -103,8 +104,15 @@ export default function ToursManagementPage() {
     return sortData(filtered);
   }, [tours, searchTerm, sortData]);
 
-  // Get IDs of filtered tours for selection
-  const filteredTourIds = useMemo(() => filteredTours.map((t) => t.id), [filteredTours]);
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredTours.length / ITEMS_PER_PAGE);
+  const paginatedTours = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredTours.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredTours, currentPage]);
+
+  // Get IDs of paginated tours for selection
+  const paginatedTourIds = useMemo(() => paginatedTours.map((t) => t.id), [paginatedTours]);
 
   // Count selected tours by status for disabling bulk actions
   const selectedToursWithStatus = useMemo(() => {
@@ -261,6 +269,7 @@ export default function ToursManagementPage() {
   // Clear search filter
   const handleClearFilters = () => {
     setSearchTerm("");
+    setCurrentPage(1);
   };
 
   // Bulk actions configuration
@@ -339,7 +348,10 @@ export default function ToursManagementPage() {
             className="pl-8"
             aria-label="Tìm kiếm tour"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
         {hasSelection && (
@@ -361,81 +373,84 @@ export default function ToursManagementPage() {
             onClearFilters={handleClearFilters}
           />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <input
-                    id="select-all-tours"
-                    name="select-all-tours"
-                    type="checkbox"
-                    checked={isAllSelected(filteredTourIds)}
-                    ref={(el) => {
-                      if (el) el.indeterminate = isSomeSelected(filteredTourIds);
-                    }}
-                    onChange={() => toggleAll(filteredTourIds)}
-                    className="h-4 w-4 rounded border-gray-300"
-                    aria-label="Chọn tất cả tour"
-                  />
-                </TableHead>
-                <TableHead>Tên Tour</TableHead>
-                <TableHead>Địa điểm</TableHead>
-                <SortableHeader sortKey="price" currentSort={sort} onSort={toggleSort}>
-                  Giá
-                </SortableHeader>
-                <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
-                  Trạng thái
-                </SortableHeader>
-                <SortableHeader sortKey="bookings" currentSort={sort} onSort={toggleSort}>
-                  Đã đặt
-                </SortableHeader>
-                <TableHead className="text-right">Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTours.map((tour) => (
-                <TableRow key={tour.id} className={isSelected(tour.id) ? "bg-muted/50" : ""}>
-                  <TableCell>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
                     <input
-                      id={`tour-checkbox-${tour.id}`}
-                      name={`tour-checkbox-${tour.id}`}
+                      id="select-all-tours"
+                      name="select-all-tours"
                       type="checkbox"
-                      checked={isSelected(tour.id)}
-                      onChange={() => toggleSelection(tour.id)}
+                      checked={isAllSelected(paginatedTourIds)}
+                      ref={(el) => {
+                        if (el) el.indeterminate = isSomeSelected(paginatedTourIds);
+                      }}
+                      onChange={() => toggleAll(paginatedTourIds)}
                       className="h-4 w-4 rounded border-gray-300"
-                      aria-label={`Chọn ${tour.title}`}
+                      aria-label="Chọn tất cả tour"
                     />
-                  </TableCell>
-                  <TableCell className="font-medium">{tour.title}</TableCell>
-                  <TableCell>{tour.location}</TableCell>
-                  <TableCell>
-                    {formatCurrency(tour.price)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(tour.status)}</TableCell>
-                  <TableCell>{tour.bookings || 0}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenModal(tour)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteClick(tour.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead>Tên Tour</TableHead>
+                  <TableHead>Địa điểm</TableHead>
+                  <SortableHeader sortKey="price" currentSort={sort} onSort={toggleSort}>
+                    Giá
+                  </SortableHeader>
+                  <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                    Trạng thái
+                  </SortableHeader>
+                  <SortableHeader sortKey="bookings" currentSort={sort} onSort={toggleSort}>
+                    Đã đặt
+                  </SortableHeader>
+                  <TableHead className="text-right">Hành động</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedTours.map((tour) => (
+                  <TableRow key={tour.id} className={isSelected(tour.id) ? "bg-muted/50" : ""}>
+                    <TableCell>
+                      <input
+                        id={`tour-checkbox-${tour.id}`}
+                        name={`tour-checkbox-${tour.id}`}
+                        type="checkbox"
+                        checked={isSelected(tour.id)}
+                        onChange={() => toggleSelection(tour.id)}
+                        className="h-4 w-4 rounded border-gray-300"
+                        aria-label={`Chọn ${tour.title}`}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{tour.title}</TableCell>
+                    <TableCell>{tour.location}</TableCell>
+                    <TableCell>
+                      {formatCurrency(tour.price)}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(tour.status)}</TableCell>
+                    <TableCell>{tour.bookings || 0}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenModal(tour)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteClick(tour.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          </>
         )}
       </div>
 
