@@ -766,6 +766,9 @@ export default function InteractionManagementPage() {
                                             name="select-all-reviews"
                                             type="checkbox"
                                             checked={paginatedReviews.length > 0 && selectedReviews.size === paginatedReviews.length}
+                                            ref={(el) => {
+                                                if (el) el.indeterminate = selectedReviews.size > 0 && selectedReviews.size < paginatedReviews.length;
+                                            }}
                                             onChange={toggleAllReviews}
                                             className="h-4 w-4 rounded border-gray-300"
                                             aria-label="Chọn tất cả đánh giá"
@@ -950,6 +953,9 @@ export default function InteractionManagementPage() {
                                                     name="select-all-contacts"
                                                     type="checkbox"
                                                     checked={paginatedContacts.length > 0 && selectedContacts.size === paginatedContacts.length}
+                                                    ref={(el) => {
+                                                        if (el) el.indeterminate = selectedContacts.size > 0 && selectedContacts.size < paginatedContacts.length;
+                                                    }}
                                                     onChange={toggleAllContacts}
                                                     className="h-4 w-4 rounded border-gray-300"
                                                     aria-label="Chọn tất cả liên hệ"
