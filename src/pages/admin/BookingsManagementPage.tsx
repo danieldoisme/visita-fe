@@ -1,16 +1,13 @@
 import { useState, useMemo } from "react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useBooking, Booking } from "@/context/BookingContext";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, StatusBadge, bookingStatusConfig, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
     Table,
     TableBody,
@@ -20,55 +17,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Search, Check, X, Eye } from "lucide-react";
-
-// Status badge configuration
-type BookingStatus = Booking["status"];
-
-interface StatusConfig {
-    label: string;
-    className: string;
-}
-
-const statusConfig: Record<BookingStatus, StatusConfig> = {
-    pending: {
-        label: "Chờ xác nhận",
-        className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-    },
-    confirmed: {
-        label: "Đã xác nhận",
-        className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-    },
-    cancelled: {
-        label: "Đã hủy",
-        className: "bg-red-100 text-red-800 hover:bg-red-100",
-    },
-    completed: {
-        label: "Hoàn thành",
-        className: "bg-green-100 text-green-800 hover:bg-green-100",
-    },
-};
-
-const getStatusBadge = (status: BookingStatus) => {
-    const config = statusConfig[status];
-    return (
-        <Badge variant="outline" className={config.className}>
-            {config.label}
-        </Badge>
-    );
-};
-
-// Format booking ID as #0001
-const formatBookingId = (id: number): string => {
-    return `#${id.toString().padStart(4, "0")}`;
-};
-
-// Format price as VND currency
-const formatCurrency = (price: number): string => {
-    return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-    }).format(price);
-};
+import { formatCurrency, formatBookingId, formatDate } from "@/lib/formatters";
 
 // Confirmation dialog keys
 const CONFIRM_BOOKING_KEY = "confirm_booking";
@@ -425,12 +374,12 @@ export default function BookingsManagementPage() {
                                         {booking.tourTitle}
                                     </TableCell>
                                     <TableCell>
-                                        {format(new Date(booking.selectedDate), "dd/MM/yyyy", {
-                                            locale: vi,
-                                        })}
+                                        {formatDate(booking.selectedDate)}
                                     </TableCell>
                                     <TableCell>{formatCurrency(booking.totalPrice)}</TableCell>
-                                    <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                                    <TableCell>
+                                        <StatusBadge status={booking.status} config={bookingStatusConfig} />
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1">
                                             {/* View Details */}

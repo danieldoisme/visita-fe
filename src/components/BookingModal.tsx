@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { toast } from "sonner";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 import { Calendar } from "@/components/ui/calendar";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -234,10 +233,10 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                         <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
                             <p className="text-sm text-gray-600 mb-1">Tour: <span className="font-medium text-gray-900">{tour.title}</span></p>
                             <p className="text-sm text-gray-600 mb-1">
-                                Ngày khởi hành: <span className="font-medium text-gray-900">{selectedDate && format(selectedDate, "dd/MM/yyyy", { locale: vi })}</span>
+                                Ngày khởi hành: <span className="font-medium text-gray-900">{selectedDate && formatDate(selectedDate)}</span>
                             </p>
                             <p className="text-sm text-gray-600">
-                                Tổng tiền: <span className="font-medium text-primary">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalPrice)}</span>
+                                Tổng tiền: <span className="font-medium text-primary">{formatCurrency(totalPrice)}</span>
                             </p>
                         </div>
                         <Button onClick={onClose} className="w-full">
@@ -283,10 +282,10 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                             <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
                                 <p className="text-sm text-gray-600 mb-1">Tour: <span className="font-medium text-gray-900">{tour.title}</span></p>
                                 <p className="text-sm text-gray-600 mb-1">
-                                    Ngày khởi hành: <span className="font-medium text-gray-900">{selectedDate && format(selectedDate, "dd/MM/yyyy", { locale: vi })}</span>
+                                    Ngày khởi hành: <span className="font-medium text-gray-900">{selectedDate && formatDate(selectedDate)}</span>
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Tổng tiền: <span className="font-medium text-primary">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalPrice)}</span>
+                                    Tổng tiền: <span className="font-medium text-primary">{formatCurrency(totalPrice)}</span>
                                 </p>
                             </div>
 
@@ -387,7 +386,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                             <h3 className="font-semibold text-lg">{tour.title}</h3>
                             <p className="text-sm text-gray-600">{tour.location} • {tour.duration}</p>
                             <p className="text-primary font-bold mt-1">
-                                {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(tour.price)}
+                                {formatCurrency(tour.price)}
                                 <span className="text-gray-500 font-normal text-sm"> / người</span>
                             </p>
                         </div>
@@ -582,19 +581,19 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                     {/* Price Summary */}
                     <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                         <div className="flex justify-between text-sm">
-                            <span>{adults} người lớn × {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(tour.price)}</span>
-                            <span>{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(tour.price * adults)}</span>
+                            <span>{adults} người lớn × {formatCurrency(tour.price)}</span>
+                            <span>{formatCurrency(tour.price * adults)}</span>
                         </div>
                         {children > 0 && (
                             <div className="flex justify-between text-sm">
-                                <span>{children} trẻ em × {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(tour.price * 0.5)}</span>
-                                <span>{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(tour.price * 0.5 * children)}</span>
+                                <span>{children} trẻ em × {formatCurrency(tour.price * 0.5)}</span>
+                                <span>{formatCurrency(tour.price * 0.5 * children)}</span>
                             </div>
                         )}
                         <div className="border-t pt-2 flex justify-between font-semibold">
                             <span>Tổng cộng</span>
                             <span className="text-primary text-lg">
-                                {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalPrice)}
+                                {formatCurrency(totalPrice)}
                             </span>
                         </div>
                     </div>

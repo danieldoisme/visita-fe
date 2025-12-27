@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Clock, Star, ArrowLeft, Calendar, Users } from "lucide-react";
+import { formatCurrency } from "@/lib/formatters";
 
 export default function TourDetailsPage() {
   const { id } = useParams();
@@ -282,10 +283,7 @@ export default function TourDetailsPage() {
             <div className="mb-6">
               <span className="text-gray-500">Giá từ</span>
               <div className="text-3xl font-bold text-primary">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(tour.price)}
+                {formatCurrency(tour.price)}
               </div>
             </div>
 

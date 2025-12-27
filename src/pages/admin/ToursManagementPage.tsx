@@ -8,6 +8,7 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { TableSkeleton, EmptyState, BulkActionBar, type BulkAction } from "@/components/admin";
+import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, Check, FileText } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Check, FileText, XCircle } from "lucide-react";
 
 // Confirmation dialog keys
 const DELETE_TOUR_KEY = "delete_tour";
@@ -92,6 +93,17 @@ export default function ToursManagementPage() {
 
   // Get IDs of filtered tours for selection
   const filteredTourIds = useMemo(() => filteredTours.map((t) => t.id), [filteredTours]);
+
+  // Count selected tours by status for disabling bulk actions
+  const selectedToursWithStatus = useMemo(() => {
+    const selectedTours = tours.filter((t) => selectedArray.includes(t.id));
+    return {
+      active: selectedTours.filter((t) => t.status === "Hoạt động").length,
+      draft: selectedTours.filter((t) => t.status === "Nháp").length,
+      closed: selectedTours.filter((t) => t.status === "Đã đóng").length,
+      total: selectedTours.length,
+    };
+  }, [tours, selectedArray]);
 
   const form = useForm<TourFormData>({
     resolver: zodResolver(tourSchema),
@@ -245,12 +257,21 @@ export default function ToursManagementPage() {
       label: "Hoạt động",
       icon: <Check className="h-4 w-4 mr-1" />,
       onClick: () => handleBulkStatusChange("Hoạt động"),
+      disabled: selectedToursWithStatus.active === selectedToursWithStatus.total,
     },
     {
       label: "Nháp",
       icon: <FileText className="h-4 w-4 mr-1" />,
       onClick: () => handleBulkStatusChange("Nháp"),
       variant: "outline",
+      disabled: selectedToursWithStatus.draft === selectedToursWithStatus.total,
+    },
+    {
+      label: "Đã đóng",
+      icon: <XCircle className="h-4 w-4 mr-1" />,
+      onClick: () => handleBulkStatusChange("Đã đóng"),
+      variant: "outline",
+      disabled: selectedToursWithStatus.closed === selectedToursWithStatus.total,
     },
     {
       label: "Xóa",
@@ -370,10 +391,7 @@ export default function ToursManagementPage() {
                   <TableCell className="font-medium">{tour.title}</TableCell>
                   <TableCell>{tour.location}</TableCell>
                   <TableCell>
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(tour.price)}
+                    {formatCurrency(tour.price)}
                   </TableCell>
                   <TableCell>{getStatusBadge(tour.status)}</TableCell>
                   <TableCell>{tour.bookings || 0}</TableCell>

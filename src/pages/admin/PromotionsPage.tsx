@@ -5,10 +5,9 @@ import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, StatusBadge, promotionStatusConfig, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
@@ -117,21 +116,14 @@ const INITIAL_PROMOTIONS: Promotion[] = [
 ];
 
 // ============== Helper Functions ==============
-
-// Format Vietnamese Dong currency
-const formatVND = (amount: number): string => {
-    return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-    }).format(amount);
-};
+import { formatCurrency, formatDateRange } from "@/lib/formatters";
 
 // Format discount display (e.g., "15%" or "500.000đ")
 const formatDiscount = (type: DiscountType, value: number): string => {
     if (type === "percent") {
         return `${value}%`;
     }
-    return formatVND(value);
+    return formatCurrency(value);
 };
 
 // Calculate status based on dates with manual override support (Hybrid approach)
@@ -161,26 +153,6 @@ const calculateStatus = (
     }
 
     return "disabled";
-};
-
-// Status badge configuration
-const statusConfig: Record<PromotionStatus, { label: string; className: string }> = {
-    active: { label: "Đang hoạt động", className: "bg-green-100 text-green-800 hover:bg-green-100" },
-    expired: { label: "Hết hạn", className: "bg-gray-100 text-gray-800 hover:bg-gray-100" },
-    disabled: { label: "Vô hiệu hóa", className: "bg-red-100 text-red-800 hover:bg-red-100" },
-};
-
-// Render status badge
-const getStatusBadge = (status: PromotionStatus) => {
-    const config = statusConfig[status];
-    return <Badge className={config.className}>{config.label}</Badge>;
-};
-
-// Format date range display
-const formatDateRange = (startDate: string, endDate: string): string => {
-    const start = format(new Date(startDate), "dd/MM/yyyy", { locale: vi });
-    const end = format(new Date(endDate), "dd/MM/yyyy", { locale: vi });
-    return `${start} - ${end}`;
 };
 
 // Confirmation dialog keys
@@ -628,7 +600,9 @@ export default function PromotionsPage() {
                                             {promo.usedCount}/{promo.usageLimit}
                                         </span>
                                     </TableCell>
-                                    <TableCell>{getStatusBadge(promo.status)}</TableCell>
+                                    <TableCell>
+                                        <StatusBadge status={promo.status} config={promotionStatusConfig} />
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1">
                                             <Button

@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { toast } from "sonner";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { BulkActionBar, EmptyState, type BulkAction } from "@/components/admin";
+import { BulkActionBar, EmptyState, StatusBadge, reviewStatusConfig, contactStatusConfig, type BulkAction } from "@/components/admin";
+import { formatDate, formatDateTime } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -188,29 +187,13 @@ const INITIAL_CONTACTS: Contact[] = [
     },
 ];
 
-// ============== Status Badge Configs ==============
-const reviewStatusConfig: Record<ReviewStatus, { label: string; className: string }> = {
-    pending: { label: "Chờ duyệt", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" },
-    approved: { label: "Đã duyệt", className: "bg-green-100 text-green-800 hover:bg-green-100" },
-    hidden: { label: "Đã ẩn", className: "bg-gray-100 text-gray-800 hover:bg-gray-100" },
-};
-
-const contactStatusConfig: Record<ContactStatus, { label: string; className: string }> = {
-    new: { label: "Mới", className: "bg-blue-100 text-blue-800 hover:bg-blue-100" },
-    read: { label: "Đã đọc", className: "bg-gray-100 text-gray-800 hover:bg-gray-100" },
-};
-
 // ============== Helper Functions ==============
 const getReviewStatusBadge = (status: ReviewStatus) => (
-    <Badge variant="outline" className={reviewStatusConfig[status].className}>
-        {reviewStatusConfig[status].label}
-    </Badge>
+    <StatusBadge status={status} config={reviewStatusConfig} />
 );
 
 const getContactStatusBadge = (status: ContactStatus) => (
-    <Badge variant="outline" className={contactStatusConfig[status].className}>
-        {contactStatusConfig[status].label}
-    </Badge>
+    <StatusBadge status={status} config={contactStatusConfig} />
 );
 
 const renderStars = (rating: number, size: "sm" | "md" = "sm") => (
@@ -226,9 +209,6 @@ const renderStars = (rating: number, size: "sm" | "md" = "sm") => (
         ))}
     </div>
 );
-
-const formatDateTime = (dateStr: string) => format(new Date(dateStr), "dd/MM/yyyy HH:mm", { locale: vi });
-const formatDate = (dateStr: string) => format(new Date(dateStr), "dd/MM/yyyy", { locale: vi });
 
 // ============== Confirmation Dialog Keys ==============
 const DELETE_REVIEW_KEY = "delete_review";
@@ -350,6 +330,26 @@ export default function InteractionManagementPage() {
         const start = (contactPage - 1) * ITEMS_PER_PAGE;
         return filteredContacts.slice(start, start + ITEMS_PER_PAGE);
     }, [filteredContacts, contactPage]);
+
+    // ============== Selected Items By Status (for disabled bulk actions) ==============
+    const selectedReviewsWithStatus = useMemo(() => {
+        const selected = reviews.filter((r) => selectedReviews.has(r.id));
+        return {
+            pending: selected.filter((r) => r.status === "pending").length,
+            approved: selected.filter((r) => r.status === "approved").length,
+            hidden: selected.filter((r) => r.status === "hidden").length,
+            total: selected.length,
+        };
+    }, [reviews, selectedReviews]);
+
+    const selectedContactsWithStatus = useMemo(() => {
+        const selected = contacts.filter((c) => selectedContacts.has(c.id));
+        return {
+            new: selected.filter((c) => c.status === "new").length,
+            read: selected.filter((c) => c.status === "read").length,
+            total: selected.length,
+        };
+    }, [contacts, selectedContacts]);
 
     // ============== Selection Handlers ==============
     const toggleReviewSelection = (id: number) => {
@@ -751,11 +751,13 @@ export default function InteractionManagementPage() {
                                         label: "Duyệt tất cả",
                                         icon: <Check className="h-4 w-4 mr-1" />,
                                         onClick: handleBulkApproveReviews,
+                                        disabled: selectedReviewsWithStatus.approved === selectedReviewsWithStatus.total,
                                     },
                                     {
                                         label: "Ẩn tất cả",
                                         icon: <EyeOff className="h-4 w-4 mr-1" />,
                                         onClick: handleBulkHideReviews,
+                                        disabled: selectedReviewsWithStatus.hidden === selectedReviewsWithStatus.total,
                                     },
                                     {
                                         label: "Xóa tất cả",
@@ -933,11 +935,13 @@ export default function InteractionManagementPage() {
                                                 label: "Đánh dấu đã đọc",
                                                 icon: <CheckCircle className="h-4 w-4 mr-1" />,
                                                 onClick: handleBulkMarkAsRead,
+                                                disabled: selectedContactsWithStatus.read === selectedContactsWithStatus.total,
                                             },
                                             {
                                                 label: "Đánh dấu chưa đọc",
                                                 icon: <MailOpen className="h-4 w-4 mr-1" />,
                                                 onClick: handleBulkMarkAsUnread,
+                                                disabled: selectedContactsWithStatus.new === selectedContactsWithStatus.total,
                                             },
                                             {
                                                 label: "Xóa tất cả",

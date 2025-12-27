@@ -122,6 +122,16 @@ export default function UsersPage() {
     [filteredUsers]
   );
 
+  // Count selected users by status for disabling bulk actions
+  const selectedUsersWithStatus = useMemo(() => {
+    const selectedUsers = users.filter((u) => selectedArray.includes(u.id) && u.role !== "admin");
+    return {
+      active: selectedUsers.filter((u) => u.status === "active").length,
+      locked: selectedUsers.filter((u) => u.status === "locked").length,
+      total: selectedUsers.length,
+    };
+  }, [users, selectedArray]);
+
   // Execute lock/unlock single user
   const executeToggleLock = (userId: number) => {
     const user = users.find((u) => u.id === userId);
@@ -337,11 +347,13 @@ export default function UsersPage() {
       label: "Khóa",
       icon: <Lock className="h-4 w-4 mr-1" />,
       onClick: handleBulkLockClick,
+      disabled: selectedUsersWithStatus.locked === selectedUsersWithStatus.total,
     },
     {
       label: "Mở khóa",
       icon: <Unlock className="h-4 w-4 mr-1" />,
       onClick: handleBulkUnlockClick,
+      disabled: selectedUsersWithStatus.active === selectedUsersWithStatus.total,
     },
     {
       label: "Xóa",
