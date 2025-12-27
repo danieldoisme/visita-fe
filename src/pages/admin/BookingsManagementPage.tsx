@@ -17,8 +17,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Search, Check, X, Eye, CalendarDays } from "lucide-react";
+import { Search, Check, X, Eye, CalendarDays, Pencil } from "lucide-react";
 import { formatCurrency, formatBookingId, formatDate } from "@/lib/formatters";
+import { EditBookingModal } from "@/components/admin/EditBookingModal";
 
 // Confirmation dialog keys
 const CONFIRM_BOOKING_KEY = "confirm_booking";
@@ -28,17 +29,19 @@ const BULK_CANCEL_KEY = "bulk_cancel_booking";
 
 export default function BookingsManagementPage() {
     const navigate = useNavigate();
-    const { bookings, confirmBooking, cancelBooking } = useBooking();
+    const { bookings, confirmBooking, cancelBooking, updateBooking } = useBooking();
     const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
 
     const [searchTerm, setSearchTerm] = useState("");
     const [loading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
     // Sorting state
     const { sort, toggleSort, sortData } = useSorting<Booking>({
-        defaultSort: { key: "selectedDate", direction: "desc" },
+        defaultSort: { key: "id", direction: "desc" },
         sortConfig: {
+            id: "number",
             selectedDate: "date",
             totalPrice: "number",
             status: "string",
@@ -262,6 +265,22 @@ export default function BookingsManagementPage() {
         setCurrentPage(1);
     };
 
+    // Handle edit booking
+    const handleEditClick = (booking: Booking) => {
+        setEditingBooking(booking);
+    };
+
+    // Handle save edited booking
+    const handleSaveBooking = async (id: number, data: Partial<Booking>) => {
+        try {
+            await updateBooking(id, data);
+            toast.success("Đã cập nhật booking thành công!");
+            setEditingBooking(null);
+        } catch {
+            toast.error("Không thể cập nhật booking. Vui lòng thử lại.");
+        }
+    };
+
     // Bulk actions configuration
     const bulkActions: BulkAction[] = [
         {
@@ -367,7 +386,9 @@ export default function BookingsManagementPage() {
                                             aria-label="Chọn tất cả booking"
                                         />
                                     </TableHead>
-                                    <TableHead>ID</TableHead>
+                                    <SortableHeader sortKey="id" currentSort={sort} onSort={toggleSort}>
+                                        ID
+                                    </SortableHeader>
                                     <TableHead>Khách hàng</TableHead>
                                     <TableHead>Tour</TableHead>
                                     <SortableHeader sortKey="selectedDate" currentSort={sort} onSort={toggleSort}>
@@ -419,7 +440,6 @@ export default function BookingsManagementPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                                {/* View Details */}
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
@@ -427,6 +447,16 @@ export default function BookingsManagementPage() {
                                                     onClick={() => handleViewDetails(booking)}
                                                 >
                                                     <Eye className="h-4 w-4" />
+                                                </Button>
+
+                                                {/* Edit */}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Chỉnh sửa"
+                                                    onClick={() => handleEditClick(booking)}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
                                                 </Button>
 
                                                 {/* Confirm - only for pending */}
@@ -477,6 +507,14 @@ export default function BookingsManagementPage() {
                 variant={dialogContent.variant}
                 showDontShowAgain
                 onDontShowAgainChange={handleDontShowAgain}
+            />
+
+            {/* Edit Booking Modal */}
+            <EditBookingModal
+                isOpen={editingBooking !== null}
+                onClose={() => setEditingBooking(null)}
+                booking={editingBooking}
+                onSave={handleSaveBooking}
             />
         </div>
     );

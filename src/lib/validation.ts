@@ -67,6 +67,20 @@ export const bookingSchema = z.object({
 
 export type BookingFormData = z.infer<typeof bookingSchema>;
 
+// Edit Booking form schema (for admin)
+export const editBookingSchema = z.object({
+  selectedDate: z.date({ message: "Vui lòng chọn ngày khởi hành" }),
+  adults: z.number().min(1, "Phải có ít nhất 1 người lớn").max(10),
+  children: z.number().min(0).max(10),
+  fullName: z.string().min(1, "Vui lòng nhập họ tên"),
+  email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
+  phone: z.string().min(1, "Vui lòng nhập số điện thoại")
+    .regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ (10-11 số)"),
+  status: z.enum(["pending", "confirmed", "cancelled", "completed"]),
+});
+
+export type EditBookingFormData = z.infer<typeof editBookingSchema>;
+
 // Tour form schema
 export const tourSchema = z.object({
   title: z.string().min(1, "Vui lòng nhập tên tour"),

@@ -42,16 +42,129 @@ interface BookingContextType {
   cancelBooking: (id: number) => Promise<void>;
   confirmBooking: (id: number) => Promise<void>;
   completeBooking: (id: number) => Promise<void>;
+  updateBooking: (id: number, data: Partial<Booking>) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 const BOOKING_STORAGE_KEY = "visita_bookings";
 
+// Mock data for testing
+const MOCK_BOOKINGS: Booking[] = [
+  {
+    id: 1,
+    tourId: 1,
+    tourTitle: "Khám phá Vịnh Hạ Long 3 ngày 2 đêm",
+    tourPrice: 4500000,
+    selectedDate: new Date("2025-01-15"),
+    adults: 2,
+    children: 1,
+    contactInfo: {
+      fullName: "Nguyễn Văn An",
+      email: "nguyenvanan@gmail.com",
+      phone: "0901234567",
+    },
+    paymentMethod: "bank_transfer",
+    totalPrice: 11250000,
+    status: "confirmed",
+    createdAt: new Date("2024-12-20"),
+  },
+  {
+    id: 2,
+    tourId: 2,
+    tourTitle: "Tour Đà Nẵng - Hội An 4 ngày 3 đêm",
+    tourPrice: 5200000,
+    selectedDate: new Date("2025-01-20"),
+    adults: 4,
+    children: 0,
+    contactInfo: {
+      fullName: "Trần Thị Bình",
+      email: "tranthib@gmail.com",
+      phone: "0912345678",
+    },
+    paymentMethod: "credit_card",
+    totalPrice: 20800000,
+    status: "pending",
+    createdAt: new Date("2024-12-25"),
+  },
+  {
+    id: 3,
+    tourId: 3,
+    tourTitle: "Phú Quốc nghỉ dưỡng 5 ngày 4 đêm",
+    tourPrice: 7800000,
+    selectedDate: new Date("2025-02-01"),
+    adults: 2,
+    children: 2,
+    contactInfo: {
+      fullName: "Lê Hoàng Cường",
+      email: "lehoangcuong@gmail.com",
+      phone: "0923456789",
+    },
+    paymentMethod: "momo",
+    totalPrice: 23400000,
+    status: "confirmed",
+    createdAt: new Date("2024-12-22"),
+  },
+  {
+    id: 4,
+    tourId: 4,
+    tourTitle: "Sapa trekking 3 ngày 2 đêm",
+    tourPrice: 3200000,
+    selectedDate: new Date("2024-12-28"),
+    adults: 1,
+    children: 0,
+    contactInfo: {
+      fullName: "Phạm Minh Đức",
+      email: "phamminhduc@gmail.com",
+      phone: "0934567890",
+    },
+    paymentMethod: "cash",
+    totalPrice: 3200000,
+    status: "completed",
+    createdAt: new Date("2024-12-15"),
+  },
+  {
+    id: 5,
+    tourId: 5,
+    tourTitle: "Đà Lạt mộng mơ 3 ngày 2 đêm",
+    tourPrice: 2800000,
+    selectedDate: new Date("2025-01-10"),
+    adults: 3,
+    children: 1,
+    contactInfo: {
+      fullName: "Hoàng Thị Em",
+      email: "hoangthiem@gmail.com",
+      phone: "0945678901",
+    },
+    paymentMethod: "paypal",
+    totalPrice: 9800000,
+    status: "cancelled",
+    createdAt: new Date("2024-12-18"),
+  },
+  {
+    id: 6,
+    tourId: 1,
+    tourTitle: "Khám phá Vịnh Hạ Long 3 ngày 2 đêm",
+    tourPrice: 4500000,
+    selectedDate: new Date("2025-02-14"),
+    adults: 2,
+    children: 0,
+    contactInfo: {
+      fullName: "Võ Văn Phong",
+      email: "vovanphong@gmail.com",
+      phone: "0956789012",
+    },
+    paymentMethod: "bank_transfer",
+    totalPrice: 9000000,
+    status: "pending",
+    createdAt: new Date("2024-12-27"),
+  },
+];
+
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
-  // Load bookings from localStorage on mount
+  // Load bookings from localStorage on mount, or use mock data
   useEffect(() => {
     const storedBookings = localStorage.getItem(BOOKING_STORAGE_KEY);
     if (storedBookings) {
@@ -66,7 +179,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         setBookings(bookingsWithDates);
       } catch {
         localStorage.removeItem(BOOKING_STORAGE_KEY);
+        setBookings(MOCK_BOOKINGS);
       }
+    } else {
+      // No stored bookings, use mock data
+      setBookings(MOCK_BOOKINGS);
     }
   }, []);
 
@@ -141,9 +258,18 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const updateBooking = async (id: number, data: Partial<Booking>) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setBookings((prev) =>
+      prev.map((booking) =>
+        booking.id === id ? { ...booking, ...data } : booking
+      )
+    );
+  };
+
   return (
     <BookingContext.Provider
-      value={{ bookings, addBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking, confirmBooking, completeBooking }}
+      value={{ bookings, addBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking, confirmBooking, completeBooking, updateBooking }}
     >
       {children}
     </BookingContext.Provider>
