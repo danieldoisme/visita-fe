@@ -31,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, Check, FileText, XCircle } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Check, FileText, XCircle, Map } from "lucide-react";
 
 // Confirmation dialog keys
 const DELETE_TOUR_KEY = "delete_tour";
@@ -308,7 +308,10 @@ export default function ToursManagementPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Danh sách Tour</h2>
+            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Map className="h-6 w-6" />
+              Danh sách Tour
+            </h2>
             <p className="text-muted-foreground">
               Quản lý các gói tour và danh sách hiển thị.
             </p>
@@ -327,7 +330,10 @@ export default function ToursManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Danh sách Tour</h2>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Map className="h-6 w-6" />
+            Danh sách Tour
+          </h2>
           <p className="text-muted-foreground">
             Quản lý các gói tour và danh sách hiển thị.
           </p>

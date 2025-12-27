@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
-import { Save, Check, RotateCcw } from "lucide-react";
+import { Save, Check, RotateCcw, Settings } from "lucide-react";
 
 // Settings state interface
 interface SettingsState {
@@ -63,7 +63,10 @@ export default function SettingsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Cài đặt</h2>
+                    <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                        <Settings className="h-6 w-6" />
+                        Cài đặt
+                    </h2>
                     <p className="text-muted-foreground">
                         Quản lý cài đặt hệ thống và tùy chọn của bạn.
                     </p>

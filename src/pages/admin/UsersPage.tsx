@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Lock, Unlock, KeyRound, Trash2 } from "lucide-react";
+import { Search, Lock, Unlock, KeyRound, Trash2, Users } from "lucide-react";
 
 interface UserData {
   id: number;
@@ -389,7 +389,10 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Quản lý Người dùng</h2>
+            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Users className="h-6 w-6" />
+              Quản lý Người dùng
+            </h2>
             <p className="text-muted-foreground">
               Quản lý tài khoản và quyền truy cập của người dùng.
             </p>
@@ -405,7 +408,10 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Quản lý Người dùng</h2>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            Quản lý Người dùng
+          </h2>
           <p className="text-muted-foreground">
             Quản lý tài khoản và quyền truy cập của người dùng.
           </p>

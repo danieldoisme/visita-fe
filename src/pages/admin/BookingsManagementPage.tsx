@@ -17,7 +17,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Search, Check, X, Eye } from "lucide-react";
+import { Search, Check, X, Eye, CalendarDays } from "lucide-react";
 import { formatCurrency, formatBookingId, formatDate } from "@/lib/formatters";
 
 // Confirmation dialog keys
@@ -285,7 +285,10 @@ export default function BookingsManagementPage() {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Quản lý Booking</h2>
+                        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                            <CalendarDays className="h-6 w-6" />
+                            Quản lý Booking
+                        </h2>
                         <p className="text-muted-foreground">
                             Xem và quản lý các đơn đặt tour của khách hàng.
                         </p>
@@ -301,7 +304,10 @@ export default function BookingsManagementPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Quản lý Booking</h2>
+                    <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                        <CalendarDays className="h-6 w-6" />
+                        Quản lý Booking
+                    </h2>
                     <p className="text-muted-foreground">
                         Xem và quản lý các đơn đặt tour của khách hàng.
                     </p>

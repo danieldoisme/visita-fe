@@ -617,7 +617,10 @@ export default function InteractionManagementPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h2 className="text-2xl font-bold tracking-tight">Quản lý Tương tác</h2>
+                <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <MessageSquare className="h-6 w-6" />
+                    Quản lý Tương tác
+                </h2>
                 <p className="text-muted-foreground">
                     Xem và kiểm duyệt đánh giá khách hàng, quản lý liên hệ.
                 </p>
