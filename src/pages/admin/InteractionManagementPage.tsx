@@ -4,6 +4,7 @@ import { vi } from "date-fns/locale";
 import { toast } from "sonner";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { BulkActionBar, EmptyState, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -743,23 +744,28 @@ export default function InteractionManagementPage() {
                             />
                         </div>
                         {selectedReviews.size > 0 && (
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">
-                                    Đã chọn {selectedReviews.size}
-                                </span>
-                                <Button size="sm" variant="outline" onClick={handleBulkApproveReviews}>
-                                    <Check className="h-4 w-4 mr-1" />
-                                    Duyệt tất cả
-                                </Button>
-                                <Button size="sm" variant="outline" onClick={handleBulkHideReviews}>
-                                    <EyeOff className="h-4 w-4 mr-1" />
-                                    Ẩn tất cả
-                                </Button>
-                                <Button size="sm" variant="destructive" onClick={handleBulkDeleteReviewsClick}>
-                                    <Trash className="h-4 w-4 mr-1" />
-                                    Xóa tất cả
-                                </Button>
-                            </div>
+                            <BulkActionBar
+                                selectedCount={selectedReviews.size}
+                                actions={[
+                                    {
+                                        label: "Duyệt tất cả",
+                                        icon: <Check className="h-4 w-4 mr-1" />,
+                                        onClick: handleBulkApproveReviews,
+                                    },
+                                    {
+                                        label: "Ẩn tất cả",
+                                        icon: <EyeOff className="h-4 w-4 mr-1" />,
+                                        onClick: handleBulkHideReviews,
+                                    },
+                                    {
+                                        label: "Xóa tất cả",
+                                        icon: <Trash className="h-4 w-4 mr-1" />,
+                                        onClick: handleBulkDeleteReviewsClick,
+                                        variant: "destructive",
+                                    },
+                                ] as BulkAction[]}
+                                onClearSelection={() => setSelectedReviews(new Set())}
+                            />
                         )}
                     </div>
 
@@ -809,8 +815,12 @@ export default function InteractionManagementPage() {
                             <TableBody>
                                 {paginatedReviews.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                                            {reviewSearchTerm ? "Không tìm thấy đánh giá nào." : "Chưa có đánh giá nào."}
+                                        <TableCell colSpan={8} className="p-0">
+                                            <EmptyState
+                                                message={reviewSearchTerm ? "Không tìm thấy đánh giá nào" : "Chưa có đánh giá nào"}
+                                                showClearFilters={!!reviewSearchTerm}
+                                                onClearFilters={() => setReviewSearchTerm("")}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -916,23 +926,28 @@ export default function InteractionManagementPage() {
                                     />
                                 </div>
                                 {selectedContacts.size > 0 && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm text-muted-foreground">
-                                            Đã chọn {selectedContacts.size}
-                                        </span>
-                                        <Button size="sm" variant="outline" onClick={handleBulkMarkAsRead}>
-                                            <CheckCircle className="h-4 w-4 mr-1" />
-                                            Đánh dấu đã đọc
-                                        </Button>
-                                        <Button size="sm" variant="outline" onClick={handleBulkMarkAsUnread}>
-                                            <MailOpen className="h-4 w-4 mr-1" />
-                                            Đánh dấu chưa đọc
-                                        </Button>
-                                        <Button size="sm" variant="destructive" onClick={handleBulkDeleteContactsClick}>
-                                            <Trash className="h-4 w-4 mr-1" />
-                                            Xóa tất cả
-                                        </Button>
-                                    </div>
+                                    <BulkActionBar
+                                        selectedCount={selectedContacts.size}
+                                        actions={[
+                                            {
+                                                label: "Đánh dấu đã đọc",
+                                                icon: <CheckCircle className="h-4 w-4 mr-1" />,
+                                                onClick: handleBulkMarkAsRead,
+                                            },
+                                            {
+                                                label: "Đánh dấu chưa đọc",
+                                                icon: <MailOpen className="h-4 w-4 mr-1" />,
+                                                onClick: handleBulkMarkAsUnread,
+                                            },
+                                            {
+                                                label: "Xóa tất cả",
+                                                icon: <Trash className="h-4 w-4 mr-1" />,
+                                                onClick: handleBulkDeleteContactsClick,
+                                                variant: "destructive",
+                                            },
+                                        ] as BulkAction[]}
+                                        onClearSelection={() => setSelectedContacts(new Set())}
+                                    />
                                 )}
                             </div>
 
@@ -974,8 +989,12 @@ export default function InteractionManagementPage() {
                                     <TableBody>
                                         {paginatedContacts.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                                    {contactSearchTerm ? "Không tìm thấy liên hệ nào." : "Chưa có liên hệ nào."}
+                                                <TableCell colSpan={6} className="p-0">
+                                                    <EmptyState
+                                                        message={contactSearchTerm ? "Không tìm thấy liên hệ nào" : "Chưa có liên hệ nào"}
+                                                        showClearFilters={!!contactSearchTerm}
+                                                        onClearFilters={() => setContactSearchTerm("")}
+                                                    />
                                                 </TableCell>
                                             </TableRow>
                                         ) : (

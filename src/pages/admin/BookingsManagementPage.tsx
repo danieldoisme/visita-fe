@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useBooking, Booking } from "@/context/BookingContext";
+import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { TableSkeleton, EmptyState, BulkActionBar, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +73,8 @@ const formatCurrency = (price: number): string => {
 // Confirmation dialog keys
 const CONFIRM_BOOKING_KEY = "confirm_booking";
 const CANCEL_BOOKING_KEY = "cancel_booking";
+const BULK_CONFIRM_KEY = "bulk_confirm_booking";
+const BULK_CANCEL_KEY = "bulk_cancel_booking";
 
 export default function BookingsManagementPage() {
     const navigate = useNavigate();
@@ -78,9 +82,24 @@ export default function BookingsManagementPage() {
     const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
 
     const [searchTerm, setSearchTerm] = useState("");
+    const [loading] = useState(false);
+
+    // Selection state
+    const {
+        selectedCount,
+        selectedArray,
+        hasSelection,
+        toggleSelection,
+        toggleAll,
+        clearSelection,
+        isSelected,
+        isAllSelected,
+        isSomeSelected,
+    } = useTableSelection<number>();
+
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean;
-        type: "confirm" | "cancel";
+        type: "confirm" | "cancel" | "bulk_confirm" | "bulk_cancel";
         bookingId: number | null;
     }>({
         isOpen: false,
@@ -89,14 +108,36 @@ export default function BookingsManagementPage() {
     });
 
     // Filter bookings by customer name or tour title
-    const filteredBookings = bookings.filter((booking) => {
-        const search = searchTerm.toLowerCase();
-        return (
-            booking.contactInfo.fullName.toLowerCase().includes(search) ||
-            booking.tourTitle.toLowerCase().includes(search) ||
-            booking.contactInfo.email.toLowerCase().includes(search)
+    const filteredBookings = useMemo(() => {
+        return bookings.filter((booking) => {
+            const search = searchTerm.toLowerCase();
+            return (
+                booking.contactInfo.fullName.toLowerCase().includes(search) ||
+                booking.tourTitle.toLowerCase().includes(search) ||
+                booking.contactInfo.email.toLowerCase().includes(search)
+            );
+        });
+    }, [bookings, searchTerm]);
+
+    // Get IDs of filtered bookings
+    const filteredBookingIds = useMemo(
+        () => filteredBookings.map((b) => b.id),
+        [filteredBookings]
+    );
+
+    // Get pending bookings in selection (for bulk confirm)
+    const selectedPendingBookings = useMemo(() => {
+        return bookings.filter(
+            (b) => selectedArray.includes(b.id) && b.status === "pending"
         );
-    });
+    }, [bookings, selectedArray]);
+
+    // Get cancellable bookings in selection (for bulk cancel)
+    const selectedCancellableBookings = useMemo(() => {
+        return bookings.filter(
+            (b) => selectedArray.includes(b.id) && (b.status === "pending" || b.status === "confirmed")
+        );
+    }, [bookings, selectedArray]);
 
     // Handle confirm action
     const handleConfirmClick = (bookingId: number) => {
@@ -113,6 +154,24 @@ export default function BookingsManagementPage() {
             setConfirmDialog({ isOpen: true, type: "cancel", bookingId });
         } else {
             executeCancel(bookingId);
+        }
+    };
+
+    // Handle bulk confirm click
+    const handleBulkConfirmClick = () => {
+        if (shouldShowConfirmation(BULK_CONFIRM_KEY)) {
+            setConfirmDialog({ isOpen: true, type: "bulk_confirm", bookingId: null });
+        } else {
+            executeBulkConfirm();
+        }
+    };
+
+    // Handle bulk cancel click
+    const handleBulkCancelClick = () => {
+        if (shouldShowConfirmation(BULK_CANCEL_KEY)) {
+            setConfirmDialog({ isOpen: true, type: "bulk_cancel", bookingId: null });
+        } else {
+            executeBulkCancel();
         }
     };
 
@@ -136,16 +195,42 @@ export default function BookingsManagementPage() {
         }
     };
 
+    // Execute bulk confirm
+    const executeBulkConfirm = async () => {
+        const pendingIds = selectedPendingBookings.map((b) => b.id);
+        for (const id of pendingIds) {
+            await confirmBooking(id);
+        }
+        toast.success(`Đã xác nhận ${pendingIds.length} booking!`);
+        clearSelection();
+    };
+
+    // Execute bulk cancel
+    const executeBulkCancel = async () => {
+        const cancellableIds = selectedCancellableBookings.map((b) => b.id);
+        for (const id of cancellableIds) {
+            await cancelBooking(id);
+        }
+        toast.success(`Đã hủy ${cancellableIds.length} booking!`);
+        clearSelection();
+    };
+
     // Handle dialog confirm
     const handleDialogConfirm = () => {
-        if (confirmDialog.bookingId === null) return;
-
-        if (confirmDialog.type === "confirm") {
-            executeConfirm(confirmDialog.bookingId);
-        } else {
-            executeCancel(confirmDialog.bookingId);
+        switch (confirmDialog.type) {
+            case "confirm":
+                if (confirmDialog.bookingId) executeConfirm(confirmDialog.bookingId);
+                break;
+            case "cancel":
+                if (confirmDialog.bookingId) executeCancel(confirmDialog.bookingId);
+                break;
+            case "bulk_confirm":
+                executeBulkConfirm();
+                break;
+            case "bulk_cancel":
+                executeBulkCancel();
+                break;
         }
-
         setConfirmDialog({ isOpen: false, type: "confirm", bookingId: null });
     };
 
@@ -156,14 +241,90 @@ export default function BookingsManagementPage() {
 
     // Handle "don't show again" checkbox
     const handleDontShowAgain = () => {
-        const key = confirmDialog.type === "confirm" ? CONFIRM_BOOKING_KEY : CANCEL_BOOKING_KEY;
-        setDontShowAgain(key);
+        const keyMap: Record<string, string> = {
+            confirm: CONFIRM_BOOKING_KEY,
+            cancel: CANCEL_BOOKING_KEY,
+            bulk_confirm: BULK_CONFIRM_KEY,
+            bulk_cancel: BULK_CANCEL_KEY,
+        };
+        setDontShowAgain(keyMap[confirmDialog.type]);
     };
+
+    // Get dialog content
+    const getDialogContent = () => {
+        switch (confirmDialog.type) {
+            case "confirm":
+                return {
+                    title: "Xác nhận booking",
+                    message: "Bạn có chắc chắn muốn xác nhận booking này không?",
+                    variant: "default" as const,
+                };
+            case "cancel":
+                return {
+                    title: "Hủy booking",
+                    message: "Bạn có chắc chắn muốn hủy booking này không? Hành động này không thể hoàn tác.",
+                    variant: "danger" as const,
+                };
+            case "bulk_confirm":
+                return {
+                    title: "Xác nhận các booking đã chọn",
+                    message: `Bạn có chắc chắn muốn xác nhận ${selectedPendingBookings.length} booking đang chờ?`,
+                    variant: "default" as const,
+                };
+            case "bulk_cancel":
+                return {
+                    title: "Hủy các booking đã chọn",
+                    message: `Bạn có chắc chắn muốn hủy ${selectedCancellableBookings.length} booking? Hành động này không thể hoàn tác.`,
+                    variant: "danger" as const,
+                };
+        }
+    };
+
+    const dialogContent = getDialogContent();
 
     // Navigate to booking details (tour page for now)
     const handleViewDetails = (booking: Booking) => {
         navigate(`/tours/${booking.tourId}`);
     };
+
+    // Clear search filter
+    const handleClearFilters = () => {
+        setSearchTerm("");
+    };
+
+    // Bulk actions configuration
+    const bulkActions: BulkAction[] = [
+        {
+            label: `Xác nhận (${selectedPendingBookings.length})`,
+            icon: <Check className="h-4 w-4 mr-1" />,
+            onClick: handleBulkConfirmClick,
+            disabled: selectedPendingBookings.length === 0,
+        },
+        {
+            label: `Hủy (${selectedCancellableBookings.length})`,
+            icon: <X className="h-4 w-4 mr-1" />,
+            onClick: handleBulkCancelClick,
+            variant: "destructive",
+            disabled: selectedCancellableBookings.length === 0,
+        },
+    ];
+
+    // Show loading skeleton
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Quản lý Booking</h2>
+                        <p className="text-muted-foreground">
+                            Xem và quản lý các đơn đặt tour của khách hàng.
+                        </p>
+                    </div>
+                </div>
+                <TableSkeleton columns={7} rows={5} hasCheckbox />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -177,8 +338,8 @@ export default function BookingsManagementPage() {
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="flex items-center gap-2">
+            {/* Toolbar: Search & Bulk Actions */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -191,32 +352,64 @@ export default function BookingsManagementPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+                {hasSelection && (
+                    <BulkActionBar
+                        selectedCount={selectedCount}
+                        actions={bulkActions}
+                        onClearSelection={clearSelection}
+                    />
+                )}
             </div>
 
             {/* Table */}
             <div className="rounded-md border bg-card">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>Khách hàng</TableHead>
-                            <TableHead>Tour</TableHead>
-                            <TableHead>Ngày khởi hành</TableHead>
-                            <TableHead>Tổng tiền</TableHead>
-                            <TableHead>Trạng thái</TableHead>
-                            <TableHead className="text-right">Hành động</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredBookings.length === 0 ? (
+                {filteredBookings.length === 0 ? (
+                    <EmptyState
+                        message={searchTerm ? "Không tìm thấy booking nào" : "Chưa có booking nào"}
+                        showClearFilters={!!searchTerm}
+                        onClearFilters={handleClearFilters}
+                    />
+                ) : (
+                    <Table>
+                        <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                    {searchTerm ? "Không tìm thấy booking nào." : "Chưa có booking nào."}
-                                </TableCell>
+                                <TableHead className="w-12">
+                                    <input
+                                        id="select-all-bookings"
+                                        name="select-all-bookings"
+                                        type="checkbox"
+                                        checked={isAllSelected(filteredBookingIds)}
+                                        ref={(el) => {
+                                            if (el) el.indeterminate = isSomeSelected(filteredBookingIds);
+                                        }}
+                                        onChange={() => toggleAll(filteredBookingIds)}
+                                        className="h-4 w-4 rounded border-gray-300"
+                                        aria-label="Chọn tất cả booking"
+                                    />
+                                </TableHead>
+                                <TableHead>ID</TableHead>
+                                <TableHead>Khách hàng</TableHead>
+                                <TableHead>Tour</TableHead>
+                                <TableHead>Ngày khởi hành</TableHead>
+                                <TableHead>Tổng tiền</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead className="text-right">Hành động</TableHead>
                             </TableRow>
-                        ) : (
-                            filteredBookings.map((booking) => (
-                                <TableRow key={booking.id}>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredBookings.map((booking) => (
+                                <TableRow key={booking.id} className={isSelected(booking.id) ? "bg-muted/50" : ""}>
+                                    <TableCell>
+                                        <input
+                                            id={`booking-checkbox-${booking.id}`}
+                                            name={`booking-checkbox-${booking.id}`}
+                                            type="checkbox"
+                                            checked={isSelected(booking.id)}
+                                            onChange={() => toggleSelection(booking.id)}
+                                            className="h-4 w-4 rounded border-gray-300"
+                                            aria-label={`Chọn ${formatBookingId(booking.id)}`}
+                                        />
+                                    </TableCell>
                                     <TableCell className="font-medium">
                                         {formatBookingId(booking.id)}
                                     </TableCell>
@@ -278,10 +471,10 @@ export default function BookingsManagementPage() {
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
             </div>
 
             {/* Confirmation Dialog */}
@@ -289,15 +482,11 @@ export default function BookingsManagementPage() {
                 isOpen={confirmDialog.isOpen}
                 onConfirm={handleDialogConfirm}
                 onCancel={handleDialogCancel}
-                title={confirmDialog.type === "confirm" ? "Xác nhận booking" : "Hủy booking"}
-                message={
-                    confirmDialog.type === "confirm"
-                        ? "Bạn có chắc chắn muốn xác nhận booking này không?"
-                        : "Bạn có chắc chắn muốn hủy booking này không? Hành động này không thể hoàn tác."
-                }
-                confirmText={confirmDialog.type === "confirm" ? "Xác nhận" : "Hủy booking"}
+                title={dialogContent.title}
+                message={dialogContent.message}
+                confirmText={confirmDialog.type.includes("cancel") ? "Hủy booking" : "Xác nhận"}
                 cancelText="Đóng"
-                variant={confirmDialog.type === "cancel" ? "danger" : "default"}
+                variant={dialogContent.variant}
                 showDontShowAgain
                 onDontShowAgainChange={handleDontShowAgain}
             />

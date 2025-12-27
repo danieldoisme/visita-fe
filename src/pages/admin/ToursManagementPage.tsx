@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useTour, Tour } from "@/context/TourContext";
 import { tourSchema, TourFormData } from "@/lib/validation";
+import { useTableSelection } from "@/hooks/useTableSelection";
+import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { TableSkeleton, EmptyState, BulkActionBar, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +29,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Check, FileText } from "lucide-react";
+
+// Confirmation dialog keys
+const DELETE_TOUR_KEY = "delete_tour";
+const BULK_DELETE_TOUR_KEY = "bulk_delete_tour";
 
 // Helper function to render status badge with appropriate styling
 const getStatusBadge = (status: string) => {
@@ -45,14 +53,45 @@ export default function ToursManagementPage() {
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter tours based on search term (case-insensitive match on title or location)
-  const filteredTours = tours.filter((tour) => {
-    const search = searchTerm.toLowerCase();
-    return (
-      tour.title.toLowerCase().includes(search) ||
-      tour.location.toLowerCase().includes(search)
-    );
+  // Selection state
+  const {
+    selectedCount,
+    selectedArray,
+    hasSelection,
+    toggleSelection,
+    toggleAll,
+    clearSelection,
+    isSelected,
+    isAllSelected,
+    isSomeSelected,
+  } = useTableSelection<number>();
+
+  // Confirmation dialog state
+  const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    type: "delete" | "bulk_delete" | "bulk_status";
+    itemId: number | null;
+    newStatus?: string;
+  }>({
+    isOpen: false,
+    type: "delete",
+    itemId: null,
   });
+
+  // Filter tours based on search term (case-insensitive match on title or location)
+  const filteredTours = useMemo(() => {
+    return tours.filter((tour) => {
+      const search = searchTerm.toLowerCase();
+      return (
+        tour.title.toLowerCase().includes(search) ||
+        tour.location.toLowerCase().includes(search)
+      );
+    });
+  }, [tours, searchTerm]);
+
+  // Get IDs of filtered tours for selection
+  const filteredTourIds = useMemo(() => filteredTours.map((t) => t.id), [filteredTours]);
 
   const form = useForm<TourFormData>({
     resolver: zodResolver(tourSchema),
@@ -123,19 +162,127 @@ export default function ToursManagementPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Bạn có chắc chắn muốn xóa tour này không?")) {
+  // Execute delete action
+  const executeDelete = async (id: number) => {
+    await deleteTour(id);
+    clearSelection();
+    toast.success("Đã xóa tour thành công!");
+  };
+
+  // Execute bulk delete action
+  const executeBulkDelete = async () => {
+    for (const id of selectedArray) {
       await deleteTour(id);
-      toast.success("Đã xóa tour thành công!");
+    }
+    toast.success(`Đã xóa ${selectedCount} tour thành công!`);
+    clearSelection();
+  };
+
+  // Execute bulk status change
+  const executeBulkStatusChange = async (newStatus: "Hoạt động" | "Nháp" | "Đã đóng") => {
+    for (const id of selectedArray) {
+      const tour = tours.find((t) => t.id === id);
+      if (tour) {
+        await updateTour(id, { ...tour, status: newStatus });
+      }
+    }
+    toast.success(`Đã cập nhật trạng thái ${selectedCount} tour!`);
+    clearSelection();
+  };
+
+  // Handle delete click
+  const handleDeleteClick = (id: number) => {
+    if (shouldShowConfirmation(DELETE_TOUR_KEY)) {
+      setConfirmDialog({ isOpen: true, type: "delete", itemId: id });
+    } else {
+      executeDelete(id);
     }
   };
 
+  // Handle bulk delete click
+  const handleBulkDeleteClick = () => {
+    if (shouldShowConfirmation(BULK_DELETE_TOUR_KEY)) {
+      setConfirmDialog({ isOpen: true, type: "bulk_delete", itemId: null });
+    } else {
+      executeBulkDelete();
+    }
+  };
+
+  // Handle bulk status change click
+  const handleBulkStatusChange = (newStatus: "Hoạt động" | "Nháp" | "Đã đóng") => {
+    executeBulkStatusChange(newStatus);
+  };
+
+  // Dialog confirm handler
+  const handleDialogConfirm = () => {
+    if (confirmDialog.type === "delete" && confirmDialog.itemId) {
+      executeDelete(confirmDialog.itemId);
+    } else if (confirmDialog.type === "bulk_delete") {
+      executeBulkDelete();
+    }
+    setConfirmDialog({ isOpen: false, type: "delete", itemId: null });
+  };
+
+  // Dialog cancel handler
+  const handleDialogCancel = () => {
+    setConfirmDialog({ isOpen: false, type: "delete", itemId: null });
+  };
+
+  // Don't show again handler
+  const handleDontShowAgain = () => {
+    const key = confirmDialog.type === "bulk_delete" ? BULK_DELETE_TOUR_KEY : DELETE_TOUR_KEY;
+    setDontShowAgain(key);
+  };
+
+  // Clear search filter
+  const handleClearFilters = () => {
+    setSearchTerm("");
+  };
+
+  // Bulk actions configuration
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Hoạt động",
+      icon: <Check className="h-4 w-4 mr-1" />,
+      onClick: () => handleBulkStatusChange("Hoạt động"),
+    },
+    {
+      label: "Nháp",
+      icon: <FileText className="h-4 w-4 mr-1" />,
+      onClick: () => handleBulkStatusChange("Nháp"),
+      variant: "outline",
+    },
+    {
+      label: "Xóa",
+      icon: <Trash2 className="h-4 w-4 mr-1" />,
+      onClick: handleBulkDeleteClick,
+      variant: "destructive",
+    },
+  ];
+
+  // Show loading skeleton
   if (loading) {
-    return <div>Đang tải dữ liệu...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Danh sách Tour</h2>
+            <p className="text-muted-foreground">
+              Quản lý các gói tour và danh sách hiển thị.
+            </p>
+          </div>
+          <Button disabled>
+            <Plus className="mr-2 h-4 w-4" /> Thêm Tour mới
+          </Button>
+        </div>
+        <TableSkeleton columns={6} rows={5} hasCheckbox />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Danh sách Tour</h2>
@@ -148,7 +295,8 @@ export default function ToursManagementPage() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Toolbar: Search & Bulk Actions */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -161,58 +309,101 @@ export default function ToursManagementPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        {hasSelection && (
+          <BulkActionBar
+            selectedCount={selectedCount}
+            actions={bulkActions}
+            onClearSelection={clearSelection}
+          />
+        )}
       </div>
 
+      {/* Table */}
       <div className="rounded-md border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Tên Tour</TableHead>
-              <TableHead>Địa điểm</TableHead>
-              <TableHead>Giá</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Đã đặt</TableHead>
-              <TableHead className="text-right">Hành động</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTours.map((tour) => (
-              <TableRow key={tour.id}>
-                <TableCell className="font-medium">{tour.title}</TableCell>
-                <TableCell>{tour.location}</TableCell>
-                <TableCell>
-                  {new Intl.NumberFormat("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                  }).format(tour.price)}
-                </TableCell>
-                <TableCell>{getStatusBadge(tour.status)}</TableCell>
-                <TableCell>{tour.bookings || 0}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleOpenModal(tour)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(tour.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+        {filteredTours.length === 0 ? (
+          <EmptyState
+            message={searchTerm ? "Không tìm thấy tour nào" : "Chưa có tour nào"}
+            description={searchTerm ? "Thử thay đổi từ khóa tìm kiếm" : "Tạo tour đầu tiên để bắt đầu"}
+            showClearFilters={!!searchTerm}
+            onClearFilters={handleClearFilters}
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">
+                  <input
+                    id="select-all-tours"
+                    name="select-all-tours"
+                    type="checkbox"
+                    checked={isAllSelected(filteredTourIds)}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isSomeSelected(filteredTourIds);
+                    }}
+                    onChange={() => toggleAll(filteredTourIds)}
+                    className="h-4 w-4 rounded border-gray-300"
+                    aria-label="Chọn tất cả tour"
+                  />
+                </TableHead>
+                <TableHead>Tên Tour</TableHead>
+                <TableHead>Địa điểm</TableHead>
+                <TableHead>Giá</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Đã đặt</TableHead>
+                <TableHead className="text-right">Hành động</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredTours.map((tour) => (
+                <TableRow key={tour.id} className={isSelected(tour.id) ? "bg-muted/50" : ""}>
+                  <TableCell>
+                    <input
+                      id={`tour-checkbox-${tour.id}`}
+                      name={`tour-checkbox-${tour.id}`}
+                      type="checkbox"
+                      checked={isSelected(tour.id)}
+                      onChange={() => toggleSelection(tour.id)}
+                      className="h-4 w-4 rounded border-gray-300"
+                      aria-label={`Chọn ${tour.title}`}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{tour.title}</TableCell>
+                  <TableCell>{tour.location}</TableCell>
+                  <TableCell>
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(tour.price)}
+                  </TableCell>
+                  <TableCell>{getStatusBadge(tour.status)}</TableCell>
+                  <TableCell>{tour.bookings || 0}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenModal(tour)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteClick(tour.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
+      {/* Create/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -360,6 +551,24 @@ export default function ToursManagementPage() {
           </form>
         </Form>
       </Modal>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        onConfirm={handleDialogConfirm}
+        onCancel={handleDialogCancel}
+        title={confirmDialog.type === "bulk_delete" ? "Xóa các tour đã chọn" : "Xóa tour"}
+        message={
+          confirmDialog.type === "bulk_delete"
+            ? `Bạn có chắc chắn muốn xóa ${selectedCount} tour đã chọn? Hành động này không thể hoàn tác.`
+            : "Bạn có chắc chắn muốn xóa tour này? Hành động này không thể hoàn tác."
+        }
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="danger"
+        showDontShowAgain
+        onDontShowAgainChange={handleDontShowAgain}
+      />
     </div>
   );
 }

@@ -2,8 +2,10 @@ import { useState, useMemo } from "react";
 import { format, isAfter, isBefore, isWithinInterval, startOfDay } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "sonner";
+import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { TableSkeleton, EmptyState, BulkActionBar, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +25,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Ticket, Calendar as CalendarIcon, Plus, Pencil, Trash2, Search, Percent, Banknote } from "lucide-react";
+import { Ticket, Calendar as CalendarIcon, Plus, Pencil, Trash2, Search, Percent, Banknote, Check, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
@@ -181,12 +183,30 @@ const formatDateRange = (startDate: string, endDate: string): string => {
     return `${start} - ${end}`;
 };
 
+// Confirmation dialog keys
+const DELETE_PROMOTION_KEY = "delete_promotion";
+const BULK_DELETE_PROMOTION_KEY = "bulk_delete_promotion";
+
 // ============== Main Component ==============
 export default function PromotionsPage() {
     const [promotions, setPromotions] = useState<Promotion[]>(INITIAL_PROMOTIONS);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [loading] = useState(false);
+
+    // Selection state
+    const {
+        selectedCount,
+        selectedArray,
+        hasSelection,
+        toggleSelection,
+        toggleAll,
+        clearSelection,
+        isSelected,
+        isAllSelected,
+        isSomeSelected,
+    } = useTableSelection<number>();
 
     // Form state
     const [formData, setFormData] = useState({
@@ -200,13 +220,14 @@ export default function PromotionsPage() {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     // Confirmation dialog
-    const DELETE_PROMOTION_KEY = "delete_promotion";
     const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean;
+        type: "delete" | "bulk_delete";
         itemId: number | null;
     }>({
         isOpen: false,
+        type: "delete",
         itemId: null,
     });
 
@@ -226,6 +247,25 @@ export default function PromotionsPage() {
                 );
             });
     }, [promotions, searchTerm]);
+
+    // Get IDs of filtered promotions
+    const filteredPromotionIds = useMemo(
+        () => filteredPromotions.map((p) => p.id),
+        [filteredPromotions]
+    );
+
+    // Get selected promotions that can be activated/deactivated
+    const selectedActivatableCount = useMemo(() => {
+        return promotions.filter(
+            (p) => selectedArray.includes(p.id) && p.isManuallyDisabled
+        ).length;
+    }, [promotions, selectedArray]);
+
+    const selectedDeactivatableCount = useMemo(() => {
+        return promotions.filter(
+            (p) => selectedArray.includes(p.id) && !p.isManuallyDisabled
+        ).length;
+    }, [promotions, selectedArray]);
 
     // Validate form
     const validateForm = (): boolean => {
@@ -332,35 +372,55 @@ export default function PromotionsPage() {
     // Delete promotion - execute action
     const executeDeletePromotion = (id: number) => {
         setPromotions((prev) => prev.filter((p) => p.id !== id));
+        clearSelection();
         toast.success("Đã xóa khuyến mãi thành công!");
+    };
+
+    // Bulk delete - execute action
+    const executeBulkDelete = () => {
+        setPromotions((prev) => prev.filter((p) => !selectedArray.includes(p.id)));
+        toast.success(`Đã xóa ${selectedCount} khuyến mãi!`);
+        clearSelection();
     };
 
     // Delete promotion - click handler
     const handleDeleteClick = (id: number) => {
         if (shouldShowConfirmation(DELETE_PROMOTION_KEY)) {
-            setConfirmDialog({ isOpen: true, itemId: id });
+            setConfirmDialog({ isOpen: true, type: "delete", itemId: id });
         } else {
             executeDeletePromotion(id);
         }
     };
 
+    // Bulk delete - click handler
+    const handleBulkDeleteClick = () => {
+        if (shouldShowConfirmation(BULK_DELETE_PROMOTION_KEY)) {
+            setConfirmDialog({ isOpen: true, type: "bulk_delete", itemId: null });
+        } else {
+            executeBulkDelete();
+        }
+    };
+
     // Dialog handlers
     const handleDialogConfirm = () => {
-        if (confirmDialog.itemId) {
+        if (confirmDialog.type === "delete" && confirmDialog.itemId) {
             executeDeletePromotion(confirmDialog.itemId);
+        } else if (confirmDialog.type === "bulk_delete") {
+            executeBulkDelete();
         }
-        setConfirmDialog({ isOpen: false, itemId: null });
+        setConfirmDialog({ isOpen: false, type: "delete", itemId: null });
     };
 
     const handleDialogCancel = () => {
-        setConfirmDialog({ isOpen: false, itemId: null });
+        setConfirmDialog({ isOpen: false, type: "delete", itemId: null });
     };
 
     const handleDontShowAgain = () => {
-        setDontShowAgain(DELETE_PROMOTION_KEY);
+        const key = confirmDialog.type === "bulk_delete" ? BULK_DELETE_PROMOTION_KEY : DELETE_PROMOTION_KEY;
+        setDontShowAgain(key);
     };
 
-    // Toggle promotion disabled status
+    // Toggle promotion disabled status (single)
     const handleToggleStatus = (id: number) => {
         setPromotions((prev) =>
             prev.map((p) =>
@@ -376,6 +436,78 @@ export default function PromotionsPage() {
             );
         }
     };
+
+    // Bulk activate
+    const handleBulkActivate = () => {
+        setPromotions((prev) =>
+            prev.map((p) =>
+                selectedArray.includes(p.id) ? { ...p, isManuallyDisabled: false } : p
+            )
+        );
+        toast.success(`Đã kích hoạt ${selectedActivatableCount} khuyến mãi!`);
+        clearSelection();
+    };
+
+    // Bulk deactivate
+    const handleBulkDeactivate = () => {
+        setPromotions((prev) =>
+            prev.map((p) =>
+                selectedArray.includes(p.id) ? { ...p, isManuallyDisabled: true } : p
+            )
+        );
+        toast.success(`Đã vô hiệu hóa ${selectedDeactivatableCount} khuyến mãi!`);
+        clearSelection();
+    };
+
+    // Clear search filter
+    const handleClearFilters = () => {
+        setSearchTerm("");
+    };
+
+    // Bulk actions configuration
+    const bulkActions: BulkAction[] = [
+        {
+            label: "Kích hoạt",
+            icon: <Check className="h-4 w-4 mr-1" />,
+            onClick: handleBulkActivate,
+            disabled: selectedActivatableCount === 0,
+        },
+        {
+            label: "Vô hiệu hóa",
+            icon: <Ban className="h-4 w-4 mr-1" />,
+            onClick: handleBulkDeactivate,
+            disabled: selectedDeactivatableCount === 0,
+        },
+        {
+            label: "Xóa",
+            icon: <Trash2 className="h-4 w-4 mr-1" />,
+            onClick: handleBulkDeleteClick,
+            variant: "destructive",
+        },
+    ];
+
+    // Show loading skeleton
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                            <Ticket className="h-6 w-6" />
+                            Quản lý Khuyến mãi
+                        </h2>
+                        <p className="text-muted-foreground">
+                            Quản lý mã giảm giá và các chiến dịch marketing
+                        </p>
+                    </div>
+                    <Button disabled>
+                        <Plus className="mr-2 h-4 w-4" /> Tạo khuyến mãi
+                    </Button>
+                </div>
+                <TableSkeleton columns={7} rows={5} hasCheckbox />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -395,8 +527,8 @@ export default function PromotionsPage() {
                 </Button>
             </div>
 
-            {/* Search */}
-            <div className="flex items-center gap-2">
+            {/* Toolbar: Search & Bulk Actions */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -409,32 +541,65 @@ export default function PromotionsPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+                {hasSelection && (
+                    <BulkActionBar
+                        selectedCount={selectedCount}
+                        actions={bulkActions}
+                        onClearSelection={clearSelection}
+                    />
+                )}
             </div>
 
             {/* Table */}
             <div className="rounded-md border bg-card">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Mã khuyến mãi</TableHead>
-                            <TableHead>Mô tả</TableHead>
-                            <TableHead>Giảm giá</TableHead>
-                            <TableHead>Thời gian</TableHead>
-                            <TableHead>Sử dụng</TableHead>
-                            <TableHead>Trạng thái</TableHead>
-                            <TableHead className="text-right">Hành động</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredPromotions.length === 0 ? (
+                {filteredPromotions.length === 0 ? (
+                    <EmptyState
+                        message={searchTerm ? "Không tìm thấy khuyến mãi nào" : "Chưa có khuyến mãi nào"}
+                        description={searchTerm ? "Thử thay đổi từ khóa tìm kiếm" : "Tạo khuyến mãi đầu tiên để bắt đầu"}
+                        showClearFilters={!!searchTerm}
+                        onClearFilters={handleClearFilters}
+                    />
+                ) : (
+                    <Table>
+                        <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                    Không tìm thấy khuyến mãi nào
-                                </TableCell>
+                                <TableHead className="w-12">
+                                    <input
+                                        id="select-all-promotions"
+                                        name="select-all-promotions"
+                                        type="checkbox"
+                                        checked={isAllSelected(filteredPromotionIds)}
+                                        ref={(el) => {
+                                            if (el) el.indeterminate = isSomeSelected(filteredPromotionIds);
+                                        }}
+                                        onChange={() => toggleAll(filteredPromotionIds)}
+                                        className="h-4 w-4 rounded border-gray-300"
+                                        aria-label="Chọn tất cả khuyến mãi"
+                                    />
+                                </TableHead>
+                                <TableHead>Mã khuyến mãi</TableHead>
+                                <TableHead>Mô tả</TableHead>
+                                <TableHead>Giảm giá</TableHead>
+                                <TableHead>Thời gian</TableHead>
+                                <TableHead>Sử dụng</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead className="text-right">Hành động</TableHead>
                             </TableRow>
-                        ) : (
-                            filteredPromotions.map((promo) => (
-                                <TableRow key={promo.id}>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredPromotions.map((promo) => (
+                                <TableRow key={promo.id} className={isSelected(promo.id) ? "bg-muted/50" : ""}>
+                                    <TableCell>
+                                        <input
+                                            id={`promotion-checkbox-${promo.id}`}
+                                            name={`promotion-checkbox-${promo.id}`}
+                                            type="checkbox"
+                                            checked={isSelected(promo.id)}
+                                            onChange={() => toggleSelection(promo.id)}
+                                            className="h-4 w-4 rounded border-gray-300"
+                                            aria-label={`Chọn ${promo.code}`}
+                                        />
+                                    </TableCell>
                                     <TableCell>
                                         <span className="font-mono font-semibold text-primary">
                                             {promo.code}
@@ -499,10 +664,10 @@ export default function PromotionsPage() {
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
             </div>
 
             {/* Create/Edit Modal */}
@@ -672,8 +837,12 @@ export default function PromotionsPage() {
                 isOpen={confirmDialog.isOpen}
                 onConfirm={handleDialogConfirm}
                 onCancel={handleDialogCancel}
-                title="Xóa khuyến mãi"
-                message="Bạn có chắc chắn muốn xóa khuyến mãi này không? Hành động này không thể hoàn tác."
+                title={confirmDialog.type === "bulk_delete" ? "Xóa các khuyến mãi đã chọn" : "Xóa khuyến mãi"}
+                message={
+                    confirmDialog.type === "bulk_delete"
+                        ? `Bạn có chắc chắn muốn xóa ${selectedCount} khuyến mãi đã chọn? Hành động này không thể hoàn tác.`
+                        : "Bạn có chắc chắn muốn xóa khuyến mãi này không? Hành động này không thể hoàn tác."
+                }
                 confirmText="Xóa"
                 cancelText="Hủy"
                 variant="danger"
