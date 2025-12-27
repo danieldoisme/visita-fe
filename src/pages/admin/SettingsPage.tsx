@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Save, Check } from "lucide-react";
+import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
+import { Save, Check, RotateCcw } from "lucide-react";
 
 // Settings state interface
 interface SettingsState {
@@ -39,6 +41,7 @@ export default function SettingsPage() {
     const [settings, setSettings] = useState<SettingsState>(initialSettings);
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const { restoreAllConfirmations, hasDismissedConfirmations } = useConfirmationPreferences();
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -238,6 +241,33 @@ export default function SettingsPage() {
                         onCheckedChange={(checked) => updateSetting("darkMode", checked)}
                     />
                 </SettingsRow>
+            </SettingsCard>
+
+            {/* Warnings & Confirmations Settings */}
+            <SettingsCard
+                title="Cảnh báo & Xác nhận"
+                description="Quản lý các hộp thoại xác nhận trong hệ thống."
+            >
+                <div className="flex items-center justify-between py-2">
+                    <div className="space-y-0.5">
+                        <p className="text-sm font-medium">Khôi phục cảnh báo</p>
+                        <p className="text-sm text-muted-foreground">
+                            Hiển thị lại tất cả các hộp thoại xác nhận đã bị ẩn.
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!hasDismissedConfirmations()}
+                        onClick={() => {
+                            restoreAllConfirmations();
+                            toast.success("Đã khôi phục tất cả cảnh báo!");
+                        }}
+                    >
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Khôi phục
+                    </Button>
+                </div>
             </SettingsCard>
         </div>
     );

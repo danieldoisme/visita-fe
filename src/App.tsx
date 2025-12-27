@@ -17,6 +17,8 @@ import DashboardPage from "@/pages/admin/DashboardPage";
 import ToursManagementPage from "@/pages/admin/ToursManagementPage";
 import UsersPage from "@/pages/admin/UsersPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
+import BookingsManagementPage from "@/pages/admin/BookingsManagementPage";
+import InteractionManagementPage from "@/pages/admin/InteractionManagementPage";
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
@@ -70,6 +72,8 @@ function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="tours" element={<ToursManagementPage />} />
                 <Route path="users" element={<UsersPage />} />
+                <Route path="bookings" element={<BookingsManagementPage />} />
+                <Route path="interactions" element={<InteractionManagementPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
 

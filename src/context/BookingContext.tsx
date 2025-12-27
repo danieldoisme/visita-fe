@@ -27,7 +27,7 @@ export interface Booking {
   contactInfo: ContactInfo;
   paymentMethod: PaymentMethod;
   totalPrice: number;
-  status: "pending" | "confirmed" | "cancelled";
+  status: "pending" | "confirmed" | "cancelled" | "completed";
   createdAt: Date;
 }
 
@@ -40,6 +40,8 @@ interface BookingContextType {
   getUserBookings: (userId: string) => Booking[];
   claimGuestBookings: (email: string, userId: string) => void;
   cancelBooking: (id: number) => Promise<void>;
+  confirmBooking: (id: number) => Promise<void>;
+  completeBooking: (id: number) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -121,9 +123,27 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const confirmBooking = async (id: number) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setBookings((prev) =>
+      prev.map((booking) =>
+        booking.id === id ? { ...booking, status: "confirmed" as const } : booking
+      )
+    );
+  };
+
+  const completeBooking = async (id: number) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setBookings((prev) =>
+      prev.map((booking) =>
+        booking.id === id ? { ...booking, status: "completed" as const } : booking
+      )
+    );
+  };
+
   return (
     <BookingContext.Provider
-      value={{ bookings, addBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking }}
+      value={{ bookings, addBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking, confirmBooking, completeBooking }}
     >
       {children}
     </BookingContext.Provider>
