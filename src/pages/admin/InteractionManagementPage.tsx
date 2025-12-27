@@ -670,7 +670,7 @@ export default function InteractionManagementPage() {
             {activeTab === "reviews" && (
                 <div className="space-y-4">
                     {/* Search & Bulk Actions */}
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center justify-between gap-4 flex-wrap overflow-x-hidden">
                         <div className="relative flex-1 max-w-sm">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -857,7 +857,7 @@ export default function InteractionManagementPage() {
                     {!selectedContact && (
                         <div className="space-y-4">
                             {/* Search & Bulk Actions */}
-                            <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <div className="flex items-center justify-between gap-4 flex-wrap overflow-x-hidden">
                                 <div className="relative flex-1 max-w-sm">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input

@@ -35,7 +35,7 @@ export function BulkActionBar({
     if (selectedCount === 0) return null;
 
     return (
-        <div className="flex items-center gap-2 animate-in slide-in-from-left-2">
+        <div className="flex items-center gap-2 flex-wrap animate-in slide-in-from-left-2">
             <span className="text-sm text-muted-foreground whitespace-nowrap">
                 Đã chọn {selectedCount}
             </span>
