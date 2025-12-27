@@ -4,8 +4,9 @@ import { vi } from "date-fns/locale";
 import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
+import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, StatusBadge, promotionStatusConfig, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, StatusBadge, promotionStatusConfig, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
@@ -167,6 +168,17 @@ export default function PromotionsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [loading] = useState(false);
 
+    // Sorting state
+    const { sort, toggleSort, sortData } = useSorting<Promotion>({
+        defaultSort: { key: "startDate", direction: "desc" },
+        sortConfig: {
+            discountValue: "number",
+            startDate: "date",
+            usedCount: "number",
+            status: "string",
+        },
+    });
+
     // Selection state
     const {
         selectedCount,
@@ -203,9 +215,9 @@ export default function PromotionsPage() {
         itemId: null,
     });
 
-    // Filter promotions based on search
+    // Filter and sort promotions based on search
     const filteredPromotions = useMemo(() => {
-        return promotions
+        const filtered = promotions
             .map((promo) => ({
                 ...promo,
                 // Recalculate status based on dates
@@ -218,7 +230,8 @@ export default function PromotionsPage() {
                     promo.description.toLowerCase().includes(search)
                 );
             });
-    }, [promotions, searchTerm]);
+        return sortData(filtered);
+    }, [promotions, searchTerm, sortData]);
 
     // Get IDs of filtered promotions
     const filteredPromotionIds = useMemo(
@@ -551,10 +564,18 @@ export default function PromotionsPage() {
                                 </TableHead>
                                 <TableHead>Mã khuyến mãi</TableHead>
                                 <TableHead>Mô tả</TableHead>
-                                <TableHead>Giảm giá</TableHead>
-                                <TableHead>Thời gian</TableHead>
-                                <TableHead>Sử dụng</TableHead>
-                                <TableHead>Trạng thái</TableHead>
+                                <SortableHeader sortKey="discountValue" currentSort={sort} onSort={toggleSort}>
+                                    Giảm giá
+                                </SortableHeader>
+                                <SortableHeader sortKey="startDate" currentSort={sort} onSort={toggleSort}>
+                                    Thời gian
+                                </SortableHeader>
+                                <SortableHeader sortKey="usedCount" currentSort={sort} onSort={toggleSort}>
+                                    Sử dụng
+                                </SortableHeader>
+                                <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                                    Trạng thái
+                                </SortableHeader>
                                 <TableHead className="text-right">Hành động</TableHead>
                             </TableRow>
                         </TableHeader>

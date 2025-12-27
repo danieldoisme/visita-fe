@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useBooking, Booking } from "@/context/BookingContext";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
+import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, StatusBadge, bookingStatusConfig, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, StatusBadge, bookingStatusConfig, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +34,16 @@ export default function BookingsManagementPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [loading] = useState(false);
 
+    // Sorting state
+    const { sort, toggleSort, sortData } = useSorting<Booking>({
+        defaultSort: { key: "selectedDate", direction: "desc" },
+        sortConfig: {
+            selectedDate: "date",
+            totalPrice: "number",
+            status: "string",
+        },
+    });
+
     // Selection state
     const {
         selectedCount,
@@ -56,9 +67,9 @@ export default function BookingsManagementPage() {
         bookingId: null,
     });
 
-    // Filter bookings by customer name or tour title
+    // Filter and sort bookings by customer name or tour title
     const filteredBookings = useMemo(() => {
-        return bookings.filter((booking) => {
+        const filtered = bookings.filter((booking) => {
             const search = searchTerm.toLowerCase();
             return (
                 booking.contactInfo.fullName.toLowerCase().includes(search) ||
@@ -66,7 +77,8 @@ export default function BookingsManagementPage() {
                 booking.contactInfo.email.toLowerCase().includes(search)
             );
         });
-    }, [bookings, searchTerm]);
+        return sortData(filtered);
+    }, [bookings, searchTerm, sortData]);
 
     // Get IDs of filtered bookings
     const filteredBookingIds = useMemo(
@@ -339,9 +351,15 @@ export default function BookingsManagementPage() {
                                 <TableHead>ID</TableHead>
                                 <TableHead>Khách hàng</TableHead>
                                 <TableHead>Tour</TableHead>
-                                <TableHead>Ngày khởi hành</TableHead>
-                                <TableHead>Tổng tiền</TableHead>
-                                <TableHead>Trạng thái</TableHead>
+                                <SortableHeader sortKey="selectedDate" currentSort={sort} onSort={toggleSort}>
+                                    Ngày khởi hành
+                                </SortableHeader>
+                                <SortableHeader sortKey="totalPrice" currentSort={sort} onSort={toggleSort}>
+                                    Tổng tiền
+                                </SortableHeader>
+                                <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                                    Trạng thái
+                                </SortableHeader>
                                 <TableHead className="text-right">Hành động</TableHead>
                             </TableRow>
                         </TableHeader>

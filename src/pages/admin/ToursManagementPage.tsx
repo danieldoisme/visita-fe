@@ -6,8 +6,9 @@ import { useTour, Tour } from "@/context/TourContext";
 import { tourSchema, TourFormData } from "@/lib/validation";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
+import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, type BulkAction } from "@/components/admin";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,16 @@ export default function ToursManagementPage() {
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Sorting state
+  const { sort, toggleSort, sortData } = useSorting<Tour>({
+    defaultSort: { key: "price", direction: "desc" },
+    sortConfig: {
+      price: "number",
+      status: "string",
+      bookings: "number",
+    },
+  });
+
   // Selection state
   const {
     selectedCount,
@@ -80,16 +91,17 @@ export default function ToursManagementPage() {
     itemId: null,
   });
 
-  // Filter tours based on search term (case-insensitive match on title or location)
+  // Filter and sort tours based on search term (case-insensitive match on title or location)
   const filteredTours = useMemo(() => {
-    return tours.filter((tour) => {
+    const filtered = tours.filter((tour) => {
       const search = searchTerm.toLowerCase();
       return (
         tour.title.toLowerCase().includes(search) ||
         tour.location.toLowerCase().includes(search)
       );
     });
-  }, [tours, searchTerm]);
+    return sortData(filtered);
+  }, [tours, searchTerm, sortData]);
 
   // Get IDs of filtered tours for selection
   const filteredTourIds = useMemo(() => filteredTours.map((t) => t.id), [filteredTours]);
@@ -368,9 +380,15 @@ export default function ToursManagementPage() {
                 </TableHead>
                 <TableHead>Tên Tour</TableHead>
                 <TableHead>Địa điểm</TableHead>
-                <TableHead>Giá</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Đã đặt</TableHead>
+                <SortableHeader sortKey="price" currentSort={sort} onSort={toggleSort}>
+                  Giá
+                </SortableHeader>
+                <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                  Trạng thái
+                </SortableHeader>
+                <SortableHeader sortKey="bookings" currentSort={sort} onSort={toggleSort}>
+                  Đã đặt
+                </SortableHeader>
                 <TableHead className="text-right">Hành động</TableHead>
               </TableRow>
             </TableHeader>

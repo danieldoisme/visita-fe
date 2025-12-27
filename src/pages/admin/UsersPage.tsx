@@ -2,8 +2,9 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
+import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +83,15 @@ export default function UsersPage() {
   const [resetSuccess, setResetSuccess] = useState(false);
   const loading = false; // Simulated loading state for skeleton demo
 
+  // Sorting state
+  const { sort, toggleSort, sortData } = useSorting<UserData>({
+    defaultSort: { key: "role", direction: "desc" },
+    sortConfig: {
+      role: "string",
+      status: "string",
+    },
+  });
+
   // Selection state
   const {
     selectedCount,
@@ -107,14 +117,15 @@ export default function UsersPage() {
     userId: null,
   });
 
-  // Filter users (exclude admins from selection for bulk actions)
+  // Filter and sort users (exclude admins from selection for bulk actions)
   const filteredUsers = useMemo(() => {
-    return users.filter(
+    const filtered = users.filter(
       (user) =>
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [users, searchTerm]);
+    return sortData(filtered);
+  }, [users, searchTerm, sortData]);
 
   // Get IDs of selectable users (non-admin only)
   const selectableUserIds = useMemo(
@@ -443,8 +454,12 @@ export default function UsersPage() {
                 </TableHead>
                 <TableHead>Người dùng</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Vai trò</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <SortableHeader sortKey="role" currentSort={sort} onSort={toggleSort}>
+                  Vai trò
+                </SortableHeader>
+                <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                  Trạng thái
+                </SortableHeader>
                 <TableHead className="text-right">Hành động</TableHead>
               </TableRow>
             </TableHeader>

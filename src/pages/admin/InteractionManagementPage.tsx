@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { BulkActionBar, EmptyState, StatusBadge, reviewStatusConfig, contactStatusConfig, type BulkAction } from "@/components/admin";
+import { BulkActionBar, EmptyState, StatusBadge, SortableHeader, reviewStatusConfig, contactStatusConfig, type BulkAction, type SortState } from "@/components/admin";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Send,
-    ArrowUpDown,
     Eye,
     ArrowLeft,
     MailOpen,
@@ -39,7 +38,6 @@ import { cn } from "@/lib/utils";
 type ReviewStatus = "pending" | "approved" | "hidden";
 type ContactStatus = "new" | "read";
 type TabType = "reviews" | "contacts";
-type SortDirection = "asc" | "desc";
 
 interface Review {
     id: number;
@@ -232,8 +230,8 @@ export default function InteractionManagementPage() {
     const [contactSearchTerm, setContactSearchTerm] = useState("");
 
     // Sort state
-    const [reviewSort, setReviewSort] = useState<{ key: string; direction: SortDirection }>({ key: "date", direction: "desc" });
-    const [contactSort, setContactSort] = useState<{ key: string; direction: SortDirection }>({ key: "date", direction: "desc" });
+    const [reviewSort, setReviewSort] = useState<SortState>({ key: "date", direction: "desc" });
+    const [contactSort, setContactSort] = useState<SortState>({ key: "date", direction: "desc" });
 
     // Pagination state
     const [reviewPage, setReviewPage] = useState(1);
@@ -261,12 +259,22 @@ export default function InteractionManagementPage() {
     });
 
     // ============== Sorting Helper ==============
-    const toggleSort = (key: string, currentSort: { key: string; direction: SortDirection }, setSort: (sort: { key: string; direction: SortDirection }) => void) => {
-        if (currentSort.key === key) {
-            setSort({ key, direction: currentSort.direction === "asc" ? "desc" : "asc" });
-        } else {
-            setSort({ key, direction: "desc" });
-        }
+    const toggleReviewSort = (key: string) => {
+        setReviewSort((prev) => {
+            if (prev.key === key) {
+                return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+            }
+            return { key, direction: "desc" };
+        });
+    };
+
+    const toggleContactSort = (key: string) => {
+        setContactSort((prev) => {
+            if (prev.key === key) {
+                return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+            }
+            return { key, direction: "desc" };
+        });
     };
 
     // ============== Filtered, Sorted & Paginated Data ==============
@@ -648,30 +656,6 @@ export default function InteractionManagementPage() {
         );
     };
 
-    // ============== Sortable Header ==============
-    const SortableHeader = ({
-        children,
-        sortKey,
-        currentSort,
-        onSort,
-    }: {
-        children: React.ReactNode;
-        sortKey: string;
-        currentSort: { key: string; direction: SortDirection };
-        onSort: () => void;
-    }) => (
-        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={onSort}>
-            <div className="flex items-center gap-1">
-                {children}
-                <ArrowUpDown
-                    className={cn(
-                        "h-3 w-3",
-                        currentSort.key === sortKey ? "text-primary" : "text-muted-foreground"
-                    )}
-                />
-            </div>
-        </TableHead>
-    );
 
     return (
         <div className="space-y-6">
@@ -792,7 +776,7 @@ export default function InteractionManagementPage() {
                                     <SortableHeader
                                         sortKey="rating"
                                         currentSort={reviewSort}
-                                        onSort={() => toggleSort("rating", reviewSort, setReviewSort)}
+                                        onSort={toggleReviewSort}
                                     >
                                         Đánh giá
                                     </SortableHeader>
@@ -800,14 +784,14 @@ export default function InteractionManagementPage() {
                                     <SortableHeader
                                         sortKey="date"
                                         currentSort={reviewSort}
-                                        onSort={() => toggleSort("date", reviewSort, setReviewSort)}
+                                        onSort={toggleReviewSort}
                                     >
                                         Ngày
                                     </SortableHeader>
                                     <SortableHeader
                                         sortKey="status"
                                         currentSort={reviewSort}
-                                        onSort={() => toggleSort("status", reviewSort, setReviewSort)}
+                                        onSort={toggleReviewSort}
                                     >
                                         Trạng thái
                                     </SortableHeader>
@@ -976,14 +960,14 @@ export default function InteractionManagementPage() {
                                             <SortableHeader
                                                 sortKey="date"
                                                 currentSort={contactSort}
-                                                onSort={() => toggleSort("date", contactSort, setContactSort)}
+                                                onSort={toggleContactSort}
                                             >
                                                 Ngày
                                             </SortableHeader>
                                             <SortableHeader
                                                 sortKey="status"
                                                 currentSort={contactSort}
-                                                onSort={() => toggleSort("status", contactSort, setContactSort)}
+                                                onSort={toggleContactSort}
                                             >
                                                 Trạng thái
                                             </SortableHeader>
