@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, DollarSign, ShoppingBag, Activity } from "lucide-react";
+import { Users, DollarSign, ShoppingBag, Activity, LayoutDashboard, Download, FileSpreadsheet, TrendingUp, ChevronDown } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -9,9 +9,45 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useExcelExport } from "@/hooks/useExcelExport";
 
-// Mock revenue data for the last 6 months (Jan to June)
-const revenueData = [
+// ============================================================================
+// TYPES - Structured to mirror future API responses
+// ============================================================================
+
+interface RevenueData {
+  month: string;
+  revenue: number;
+}
+
+interface TopSellingTour {
+  tourName: string;
+  bookings: number;
+  totalRevenue: number;
+}
+
+interface CustomerExport {
+  name: string;
+  email: string;
+  phone: string;
+  bookingCount: number;
+}
+
+// ============================================================================
+// MOCK DATA - Replace with API calls later
+// ============================================================================
+
+// Revenue data for the last 6 months (Jan to June)
+const revenueData: RevenueData[] = [
   { month: "Tháng 1", revenue: 180000000 },
   { month: "Tháng 2", revenue: 220000000 },
   { month: "Tháng 3", revenue: 195000000 },
@@ -19,6 +55,31 @@ const revenueData = [
   { month: "Tháng 5", revenue: 310000000 },
   { month: "Tháng 6", revenue: 250000000 },
 ];
+
+// Top selling tours data
+const topSellingToursData: TopSellingTour[] = [
+  { tourName: "Phú Quốc 4N3Đ", bookings: 156, totalRevenue: 780000000 },
+  { tourName: "Đà Nẵng - Hội An 3N2Đ", bookings: 134, totalRevenue: 402000000 },
+  { tourName: "Sapa Mùa Hoa 2N1Đ", bookings: 98, totalRevenue: 196000000 },
+  { tourName: "Nha Trang Biển Xanh 3N2Đ", bookings: 87, totalRevenue: 261000000 },
+  { tourName: "Hạ Long Bay Cruise 2N1Đ", bookings: 76, totalRevenue: 228000000 },
+];
+
+// Customer list data
+const customerListData: CustomerExport[] = [
+  { name: "Nguyễn Văn An", email: "nguyen.an@email.com", phone: "0901234567", bookingCount: 5 },
+  { name: "Trần Thị Bình", email: "tran.binh@email.com", phone: "0912345678", bookingCount: 3 },
+  { name: "Lê Hoàng Cường", email: "le.cuong@email.com", phone: "0923456789", bookingCount: 7 },
+  { name: "Phạm Minh Duy", email: "pham.duy@email.com", phone: "0934567890", bookingCount: 2 },
+  { name: "Hoàng Thị Em", email: "hoang.em@email.com", phone: "0945678901", bookingCount: 4 },
+  { name: "Võ Văn Phong", email: "vo.phong@email.com", phone: "0956789012", bookingCount: 1 },
+  { name: "Đặng Thị Giang", email: "dang.giang@email.com", phone: "0967890123", bookingCount: 6 },
+  { name: "Bùi Văn Hải", email: "bui.hai@email.com", phone: "0978901234", bookingCount: 2 },
+];
+
+// ============================================================================
+// HELPERS
+// ============================================================================
 
 // Custom tooltip formatter for VND currency
 const formatVND = (value: number) => {
@@ -39,15 +100,92 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
+  const { exportToExcel, isExporting } = useExcelExport();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Export handlers
+  const handleExportRevenue = () => {
+    exportToExcel(revenueData, "doanh_thu_theo_thang", {
+      columns: [
+        { header: "Tháng", key: "month" },
+        { header: "Doanh thu (VNĐ)", key: "revenue", formatter: (v) => formatVND(v as number) },
+      ],
+      sheetName: "Doanh Thu",
+    });
+  };
+
+  const handleExportTopTours = () => {
+    exportToExcel(topSellingToursData, "tour_ban_chay", {
+      columns: [
+        { header: "Tên Tour", key: "tourName" },
+        { header: "Số lượt đặt", key: "bookings" },
+        { header: "Tổng doanh thu (VNĐ)", key: "totalRevenue", formatter: (v) => formatVND(v as number) },
+      ],
+      sheetName: "Tour Bán Chạy",
+    });
+  };
+
+  const handleExportCustomers = () => {
+    exportToExcel(customerListData, "danh_sach_khach_hang", {
+      columns: [
+        { header: "Họ và Tên", key: "name" },
+        { header: "Email", key: "email" },
+        { header: "Số điện thoại", key: "phone" },
+        { header: "Số lần đặt tour", key: "bookingCount" },
+      ],
+      sheetName: "Khách Hàng",
+    });
+  };
+
   return (
     <div className="space-y-8">
+      {/* Header with Export Dropdown */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <LayoutDashboard className="h-6 w-6" />
+            Dashboard
+          </h2>
+          <p className="text-muted-foreground">
+            Tổng quan hệ thống quản trị
+          </p>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" disabled={isExporting}>
+              <Download className="mr-2 h-4 w-4" />
+              Xuất Dữ Liệu
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Báo Cáo & Thống Kê</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleExportRevenue}>
+              <TrendingUp className="mr-2 h-4 w-4" />
+              Doanh Thu Theo Tháng
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportTopTours}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Tour Bán Chạy
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportCustomers}>
+              <Users className="mr-2 h-4 w-4" />
+              Danh Sách Khách Hàng
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card
           title="Tổng doanh thu"
