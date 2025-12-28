@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
-import { Users, DollarSign, ShoppingBag, Activity, LayoutDashboard, Download, FileSpreadsheet, TrendingUp, ChevronDown } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Users, DollarSign, ShoppingBag, Activity, LayoutDashboard, Download, FileSpreadsheet, TrendingUp, ChevronDown, UserPlus, CalendarCheck } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -18,81 +20,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useExcelExport } from "@/hooks/useExcelExport";
-
-// ============================================================================
-// TYPES - Structured to mirror future API responses
-// ============================================================================
-
-interface RevenueData {
-  month: string;
-  revenue: number;
-}
-
-interface TopSellingTour {
-  tourName: string;
-  bookings: number;
-  totalRevenue: number;
-}
-
-interface CustomerExport {
-  name: string;
-  email: string;
-  phone: string;
-  bookingCount: number;
-}
-
-// ============================================================================
-// MOCK DATA - Replace with API calls later
-// ============================================================================
-
-// Revenue data for the last 6 months (Jan to June)
-const revenueData: RevenueData[] = [
-  { month: "Tháng 1", revenue: 180000000 },
-  { month: "Tháng 2", revenue: 220000000 },
-  { month: "Tháng 3", revenue: 195000000 },
-  { month: "Tháng 4", revenue: 280000000 },
-  { month: "Tháng 5", revenue: 310000000 },
-  { month: "Tháng 6", revenue: 250000000 },
-];
-
-// Top selling tours data
-const topSellingToursData: TopSellingTour[] = [
-  { tourName: "Phú Quốc 4N3Đ", bookings: 156, totalRevenue: 780000000 },
-  { tourName: "Đà Nẵng - Hội An 3N2Đ", bookings: 134, totalRevenue: 402000000 },
-  { tourName: "Sapa Mùa Hoa 2N1Đ", bookings: 98, totalRevenue: 196000000 },
-  { tourName: "Nha Trang Biển Xanh 3N2Đ", bookings: 87, totalRevenue: 261000000 },
-  { tourName: "Hạ Long Bay Cruise 2N1Đ", bookings: 76, totalRevenue: 228000000 },
-];
-
-// Customer list data
-const customerListData: CustomerExport[] = [
-  { name: "Nguyễn Văn An", email: "nguyen.an@email.com", phone: "0901234567", bookingCount: 5 },
-  { name: "Trần Thị Bình", email: "tran.binh@email.com", phone: "0912345678", bookingCount: 3 },
-  { name: "Lê Hoàng Cường", email: "le.cuong@email.com", phone: "0923456789", bookingCount: 7 },
-  { name: "Phạm Minh Duy", email: "pham.duy@email.com", phone: "0934567890", bookingCount: 2 },
-  { name: "Hoàng Thị Em", email: "hoang.em@email.com", phone: "0945678901", bookingCount: 4 },
-  { name: "Võ Văn Phong", email: "vo.phong@email.com", phone: "0956789012", bookingCount: 1 },
-  { name: "Đặng Thị Giang", email: "dang.giang@email.com", phone: "0967890123", bookingCount: 6 },
-  { name: "Bùi Văn Hải", email: "bui.hai@email.com", phone: "0978901234", bookingCount: 2 },
-];
+import {
+  type ViewMode,
+  type DayRange,
+  monthlyRevenueData,
+  dailyRevenueData,
+  monthlyNewUsersData,
+  dailyNewUsersData,
+  monthlyBookedToursData,
+  dailyBookedToursData,
+  filterDailyData,
+  topSellingToursData,
+  customerListData,
+} from "@/data/dashboardMockData";
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
-// Custom tooltip formatter for VND currency
 const formatVND = (value: number) => {
   return value.toLocaleString("vi-VN") + "đ";
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, valueFormatter, valueSuffix = "" }: any) => {
   if (active && payload && payload.length) {
+    const value = payload[0].value;
+    const formattedValue = valueFormatter ? valueFormatter(value) : value.toLocaleString("vi-VN");
     return (
       <div className="bg-card border rounded-lg shadow-lg p-3">
         <p className="font-medium text-sm">{label}</p>
         <p className="text-primary font-semibold">
-          {formatVND(payload[0].value)}
+          {formattedValue}{valueSuffix}
         </p>
       </div>
     );
@@ -101,20 +67,101 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // ============================================================================
-// COMPONENT
+// CHART CONTROLS COMPONENT
+// ============================================================================
+
+interface ChartControlsProps {
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  dayRange: DayRange;
+  onDayRangeChange: (range: DayRange) => void;
+}
+
+function ChartControls({ viewMode, onViewModeChange, dayRange, onDayRangeChange }: ChartControlsProps) {
+  return (
+    <div className="flex items-center gap-2">
+      {/* View Mode Toggle */}
+      <div className="flex rounded-lg border bg-muted p-0.5">
+        <button
+          onClick={() => onViewModeChange('daily')}
+          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${viewMode === 'daily'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+            }`}
+        >
+          Ngày
+        </button>
+        <button
+          onClick={() => onViewModeChange('monthly')}
+          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${viewMode === 'monthly'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+            }`}
+        >
+          Tháng
+        </button>
+      </div>
+
+      {/* Day Range Selector - only visible in daily mode */}
+      {viewMode === 'daily' && (
+        <Select value={String(dayRange)} onValueChange={(v) => onDayRangeChange(Number(v) as DayRange)}>
+          <SelectTrigger className="w-[100px] h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">7 ngày</SelectItem>
+            <SelectItem value="14">14 ngày</SelectItem>
+            <SelectItem value="30">30 ngày</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN COMPONENT
 // ============================================================================
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const { exportToExcel, isExporting } = useExcelExport();
 
+  // Revenue chart state
+  const [revenueViewMode, setRevenueViewMode] = useState<ViewMode>('monthly');
+  const [revenueDayRange, setRevenueDayRange] = useState<DayRange>(7);
+
+  // New Users chart state
+  const [usersViewMode, setUsersViewMode] = useState<ViewMode>('monthly');
+  const [usersDayRange, setUsersDayRange] = useState<DayRange>(7);
+
+  // Booked Tours chart state
+  const [toursViewMode, setToursViewMode] = useState<ViewMode>('monthly');
+  const [toursDayRange, setToursDayRange] = useState<DayRange>(7);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Computed chart data
+  const revenueChartData = useMemo(() => {
+    if (revenueViewMode === 'monthly') return monthlyRevenueData;
+    return filterDailyData(dailyRevenueData, revenueDayRange);
+  }, [revenueViewMode, revenueDayRange]);
+
+  const usersChartData = useMemo(() => {
+    if (usersViewMode === 'monthly') return monthlyNewUsersData;
+    return filterDailyData(dailyNewUsersData, usersDayRange);
+  }, [usersViewMode, usersDayRange]);
+
+  const toursChartData = useMemo(() => {
+    if (toursViewMode === 'monthly') return monthlyBookedToursData;
+    return filterDailyData(dailyBookedToursData, toursDayRange);
+  }, [toursViewMode, toursDayRange]);
+
   // Export handlers
   const handleExportRevenue = () => {
-    exportToExcel(revenueData, "doanh_thu_theo_thang", {
+    exportToExcel(monthlyRevenueData.map(d => ({ month: d.label, revenue: d.revenue })), "doanh_thu_theo_thang", {
       columns: [
         { header: "Tháng", key: "month" },
         { header: "Doanh thu (VNĐ)", key: "revenue", formatter: (v) => formatVND(v as number) },
@@ -149,7 +196,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header with Export Dropdown */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <LayoutDashboard className="h-6 w-6" />
@@ -161,7 +208,7 @@ export default function DashboardPage() {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" disabled={isExporting}>
+            <Button variant="outline" disabled={isExporting} className="w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />
               Xuất Dữ Liệu
               <ChevronDown className="ml-2 h-4 w-4" />
@@ -186,6 +233,7 @@ export default function DashboardPage() {
         </DropdownMenu>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card
           title="Tổng doanh thu"
@@ -213,18 +261,28 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-4 rounded-xl border bg-card text-card-foreground shadow-sm p-6 min-w-0">
-          <h3 className="font-semibold leading-none tracking-tight mb-4">
-            Tổng quan
-          </h3>
+      {/* Revenue Chart + Recent Transactions */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+        <div className="lg:col-span-4 rounded-xl border bg-card text-card-foreground shadow-sm p-6 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-500 shrink-0" />
+              Doanh thu
+            </h3>
+            <ChartControls
+              viewMode={revenueViewMode}
+              onViewModeChange={setRevenueViewMode}
+              dayRange={revenueDayRange}
+              onDayRangeChange={setRevenueDayRange}
+            />
+          </div>
           <div className="w-full min-w-0">
             {mounted && (
               <ResponsiveContainer width="100%" height={300} debounce={100}>
-                <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <BarChart data={revenueChartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis
-                    dataKey="month"
+                    dataKey="label"
                     tick={{ fontSize: 12 }}
                     tickLine={false}
                     axisLine={false}
@@ -237,7 +295,7 @@ export default function DashboardPage() {
                     axisLine={false}
                     className="text-muted-foreground"
                   />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                  <Tooltip content={<CustomTooltip valueFormatter={formatVND} />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
                   <Bar
                     dataKey="revenue"
                     fill="#3b82f6"
@@ -248,25 +306,119 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-        <div className="col-span-3 rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+        <div className="lg:col-span-3 rounded-xl border bg-card text-card-foreground shadow-sm p-6 overflow-hidden">
           <h3 className="font-semibold leading-none tracking-tight mb-4">
             Giao dịch gần đây
           </h3>
-          <div className="space-y-8">
+          <div className="space-y-6">
             {recentSales.map((sale, i) => (
-              <div key={i} className="flex items-center">
-                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+              <div key={i} className="flex items-center gap-3 min-w-0">
+                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
                   <Users className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium leading-none truncate">
                     {sale.name}
                   </p>
-                  <p className="text-sm text-muted-foreground">{sale.email}</p>
+                  <p className="text-sm text-muted-foreground truncate hidden sm:block">{sale.email}</p>
                 </div>
-                <div className="ml-auto font-medium">{sale.amount}</div>
+                <div className="font-medium text-sm shrink-0">{sale.amount}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* New Users + Booked Tours Charts */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* New Users Line Chart */}
+        <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-emerald-500 shrink-0" />
+              Người dùng mới
+            </h3>
+            <ChartControls
+              viewMode={usersViewMode}
+              onViewModeChange={setUsersViewMode}
+              dayRange={usersDayRange}
+              onDayRangeChange={setUsersDayRange}
+            />
+          </div>
+          <div className="w-full min-w-0">
+            {mounted && (
+              <ResponsiveContainer width="100%" height={250} debounce={100}>
+                <LineChart data={usersChartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    className="text-muted-foreground"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    className="text-muted-foreground"
+                  />
+                  <Tooltip content={<CustomTooltip valueSuffix=" người" />} cursor={{ strokeDasharray: '3 3' }} />
+                  <Line
+                    type="monotone"
+                    dataKey="users"
+                    stroke="#10B981"
+                    strokeWidth={2}
+                    dot={{ fill: "#10B981", strokeWidth: 0, r: 3 }}
+                    activeDot={{ fill: "#10B981", strokeWidth: 0, r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Booked Tours Bar Chart */}
+        <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
+              <CalendarCheck className="h-5 w-5 text-violet-500 shrink-0" />
+              Tour đã đặt
+            </h3>
+            <ChartControls
+              viewMode={toursViewMode}
+              onViewModeChange={setToursViewMode}
+              dayRange={toursDayRange}
+              onDayRangeChange={setToursDayRange}
+            />
+          </div>
+          <div className="w-full min-w-0">
+            {mounted && (
+              <ResponsiveContainer width="100%" height={250} debounce={100}>
+                <BarChart data={toursChartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    className="text-muted-foreground"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    className="text-muted-foreground"
+                  />
+                  <Tooltip content={<CustomTooltip valueSuffix=" đặt tour" />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                  <Bar
+                    dataKey="bookings"
+                    fill="#8B5CF6"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </div>
