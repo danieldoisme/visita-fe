@@ -134,6 +134,7 @@ export function PromoCodeInput({
                         }}
                         onKeyDown={handleKeyDown}
                         disabled={isLoading}
+                        autoComplete="off"
                         className={cn(
                             "font-mono uppercase",
                             error && "border-red-500 focus-visible:ring-red-500"

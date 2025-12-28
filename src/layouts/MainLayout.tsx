@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield, Lock } from "lucide-react";
+import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield, Lock, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -88,6 +88,15 @@ export default function MainLayout() {
             >
               Giới thiệu
             </Link>
+            <Link
+              to="/contact"
+              className={`transition-colors hover:text-foreground/80 ${isActive("/contact")
+                ? "text-primary font-semibold"
+                : "text-foreground/60"
+                }`}
+            >
+              Liên hệ
+            </Link>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -153,6 +162,15 @@ export default function MainLayout() {
                         >
                           <Calendar className="w-4 h-4" />
                           Đặt chỗ của tôi
+                        </Link>
+                        <Link
+                          to="/profile"
+                          state={{ tab: "favorites" }}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                        >
+                          <Heart className="w-4 h-4" />
+                          Yêu thích
                         </Link>
                         <Link
                           to="/profile"
@@ -243,6 +261,14 @@ export default function MainLayout() {
                   }`}
               >
                 Giới thiệu
+              </Link>
+              <Link
+                to="/contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/contact") ? "bg-primary/10 text-primary" : ""
+                  }`}
+              >
+                Liên hệ
               </Link>
               <div className="border-t my-2"></div>
               {isAuthenticated ? (

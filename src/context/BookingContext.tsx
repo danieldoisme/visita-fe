@@ -203,7 +203,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     const newBooking: Booking = {
       ...bookingData,
       id: Math.max(...bookings.map((b) => b.id), 0) + 1,
-      status: "confirmed",
+      status: "pending",
       createdAt: new Date(),
     };
 

@@ -131,3 +131,19 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
+// Contact form schema
+export const contactFormSchema = z.object({
+  name: z.string().min(1, "Vui lòng nhập họ tên"),
+  email: z
+    .string()
+    .min(1, "Vui lòng nhập email")
+    .email("Email không hợp lệ"),
+  subject: z.string().min(1, "Vui lòng nhập tiêu đề"),
+  message: z
+    .string()
+    .min(1, "Vui lòng nhập nội dung")
+    .min(10, "Nội dung phải có ít nhất 10 ký tự"),
+});
+
+export type ContactFormData = z.infer<typeof contactFormSchema>;

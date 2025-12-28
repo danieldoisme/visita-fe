@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { BookingProvider } from "@/context/BookingContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { PromotionsProvider } from "@/context/PromotionsContext";
+import { ContactProvider } from "@/context/ContactContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import MainLayout from "@/layouts/MainLayout";
@@ -14,6 +15,7 @@ import ToursPage from "@/pages/user/ToursPage";
 import DestinationsPage from "@/pages/user/DestinationsPage";
 import TourDetailsPage from "@/pages/user/TourDetailsPage";
 import AboutPage from "@/pages/user/AboutPage";
+import ContactPage from "@/pages/user/ContactPage";
 import ProfilePage from "@/pages/user/ProfilePage";
 import DashboardPage from "@/pages/admin/DashboardPage";
 import ToursManagementPage from "@/pages/admin/ToursManagementPage";
@@ -33,61 +35,64 @@ function App() {
       <BookingProvider>
         <FavoritesProvider>
           <PromotionsProvider>
-            <TourProvider>
-              <Toaster position="top-right" richColors />
-              <BrowserRouter
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true,
-                }}
-              >
-                <ScrollToTop />
-                <Routes>
-                  {/* Auth Routes */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/admin/login" element={<AdminLoginPage />} />
+            <ContactProvider>
+              <TourProvider>
+                <Toaster position="top-right" richColors />
+                <BrowserRouter
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true,
+                  }}
+                >
+                  <ScrollToTop />
+                  <Routes>
+                    {/* Auth Routes */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/admin/login" element={<AdminLoginPage />} />
 
-                  {/* User Routes */}
-                  <Route path="/" element={<MainLayout />}>
-                    <Route index element={<HomePage />} />
-                    <Route path="destinations" element={<DestinationsPage />} />
-                    <Route path="tours" element={<ToursPage />} />
-                    <Route path="tours/:id" element={<TourDetailsPage />} />
-                    <Route path="about" element={<AboutPage />} />
+                    {/* User Routes */}
+                    <Route path="/" element={<MainLayout />}>
+                      <Route index element={<HomePage />} />
+                      <Route path="destinations" element={<DestinationsPage />} />
+                      <Route path="tours" element={<ToursPage />} />
+                      <Route path="tours/:id" element={<TourDetailsPage />} />
+                      <Route path="about" element={<AboutPage />} />
+                      <Route path="contact" element={<ContactPage />} />
+                      <Route
+                        path="profile"
+                        element={
+                          <ProtectedRoute blockedRoles={["admin"]} redirectTo="/admin">
+                            <ProfilePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                    </Route>
+
+                    {/* Admin Routes - Protected */}
                     <Route
-                      path="profile"
+                      path="/admin"
                       element={
-                        <ProtectedRoute blockedRoles={["admin"]} redirectTo="/admin">
-                          <ProfilePage />
+                        <ProtectedRoute requiredRole="admin" adminLoginRedirect>
+                          <AdminLayout />
                         </ProtectedRoute>
                       }
-                    />
-                  </Route>
+                    >
+                      <Route index element={<DashboardPage />} />
+                      <Route path="tours" element={<ToursManagementPage />} />
+                      <Route path="users" element={<UsersPage />} />
+                      <Route path="bookings" element={<BookingsManagementPage />} />
+                      <Route path="interactions" element={<InteractionManagementPage />} />
+                      <Route path="promotions" element={<PromotionsPage />} />
+                      <Route path="settings" element={<SettingsPage />} />
+                    </Route>
 
-                  {/* Admin Routes - Protected */}
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute requiredRole="admin" adminLoginRedirect>
-                        <AdminLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<DashboardPage />} />
-                    <Route path="tours" element={<ToursManagementPage />} />
-                    <Route path="users" element={<UsersPage />} />
-                    <Route path="bookings" element={<BookingsManagementPage />} />
-                    <Route path="interactions" element={<InteractionManagementPage />} />
-                    <Route path="promotions" element={<PromotionsPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                  </Route>
-
-                  {/* 404 */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </BrowserRouter>
-            </TourProvider>
+                    {/* 404 */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </BrowserRouter>
+              </TourProvider>
+            </ContactProvider>
           </PromotionsProvider>
         </FavoritesProvider>
       </BookingProvider>
