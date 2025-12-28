@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import ChatWidget from "@/components/ChatWidget";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 export default function MainLayout() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();

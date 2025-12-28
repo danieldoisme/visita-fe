@@ -8,6 +8,10 @@ const MOCK_CREDENTIALS = {
         email: "admin@visita.com",
         password: "admin123",
     },
+    staff: {
+        email: "staff@visita.com",
+        password: "staff123",
+    },
     user: {
         email: "user@visita.com",
         password: "user123",
@@ -23,6 +27,12 @@ const MOCK_USERS: Record<string, User> = {
         email: "admin@visita.com",
         fullName: "Admin Visita",
         role: "admin",
+    },
+    "staff-001": {
+        userId: "staff-001",
+        email: "staff@visita.com",
+        fullName: "Nhân viên Hỗ trợ",
+        role: "staff",
     },
     "user-001": {
         userId: "user-001",
@@ -59,7 +69,7 @@ export const mockAuthenticate = (
     password: string,
     isAdmin: boolean = false
 ): AuthResult => {
-    // Check admin credentials
+    // Check admin/staff credentials (internal login)
     if (isAdmin) {
         if (
             email === MOCK_CREDENTIALS.admin.email &&
@@ -71,9 +81,19 @@ export const mockAuthenticate = (
                 token: "mock-admin-token-" + Date.now(),
             };
         }
+        if (
+            email === MOCK_CREDENTIALS.staff.email &&
+            password === MOCK_CREDENTIALS.staff.password
+        ) {
+            return {
+                success: true,
+                user: MOCK_USERS["staff-001"],
+                token: "mock-staff-token-" + Date.now(),
+            };
+        }
         return {
             success: false,
-            error: "Thông tin đăng nhập quản trị viên không đúng",
+            error: "Thông tin đăng nhập không đúng",
         };
     }
 

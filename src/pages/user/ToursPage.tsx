@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTour } from "@/context/TourContext";
+import { useChat } from "@/context/ChatContext";
 import { matchesDateRange } from "@/utils/dateUtils";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -17,6 +18,8 @@ import {
 } from "@/components/ui/popover";
 import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
+import { AuthRequiredModal } from "@/components/AuthRequiredModal";
+import { useAuth } from "@/context/AuthContext";
 import {
   MapPin,
   Search,
@@ -46,6 +49,9 @@ const RATINGS = [5, 4, 3];
 export default function ToursPage() {
   const [searchParams] = useSearchParams();
   const { tours, loading } = useTour();
+  const { setWidgetOpen } = useChat();
+  const { isAuthenticated } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     const saved = localStorage.getItem("visita_tours_view_mode");
@@ -649,6 +655,13 @@ export default function ToursPage() {
                   </Button>
                   <Button
                     size="lg"
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        setAuthModalOpen(true);
+                        return;
+                      }
+                      setWidgetOpen(true);
+                    }}
                     className="h-14 px-8 rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 hover:text-white hover:border-white/40 font-medium text-base backdrop-blur-md transition-all"
                   >
                     Chat với chuyên gia
@@ -688,6 +701,16 @@ export default function ToursPage() {
           </div>
         </div>
       </section>
-    </div>
+
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => {
+          setAuthModalOpen(false);
+          setWidgetOpen(true);
+        }}
+        message="Vui lòng đăng nhập để chat với chuyên gia tư vấn."
+      />
+    </div >
   );
 }

@@ -34,7 +34,7 @@ export default function ProtectedRoute({
 
     // Not authenticated - redirect to appropriate login page
     if (!isAuthenticated) {
-        const loginPath = adminLoginRedirect ? "/admin/login" : "/login";
+        const loginPath = adminLoginRedirect ? "/internal/login" : "/login";
         return <Navigate to={loginPath} state={{ from: location }} replace />;
     }
 

@@ -7,6 +7,7 @@ import { FavoritesProvider } from "@/context/FavoritesContext";
 import { PromotionsProvider } from "@/context/PromotionsContext";
 import { ContactProvider } from "@/context/ContactContext";
 import { ReviewProvider } from "@/context/ReviewContext";
+import { ChatProvider } from "@/context/ChatContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import MainLayout from "@/layouts/MainLayout";
@@ -25,7 +26,9 @@ import SettingsPage from "@/pages/admin/SettingsPage";
 import BookingsManagementPage from "@/pages/admin/BookingsManagementPage";
 import InteractionManagementPage from "@/pages/admin/InteractionManagementPage";
 import PromotionsPage from "@/pages/admin/PromotionsPage";
-import AdminLoginPage from "@/pages/admin/AdminLoginPage";
+import StaffLayout from "@/layouts/StaffLayout";
+import StaffChatPage from "@/pages/staff/StaffChatPage";
+import InternalLoginPage from "@/pages/admin/InternalLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 
@@ -38,62 +41,77 @@ function App() {
           <PromotionsProvider>
             <ContactProvider>
               <ReviewProvider>
-                <TourProvider>
-                  <Toaster position="top-right" richColors />
-                  <BrowserRouter
-                    future={{
-                      v7_startTransition: true,
-                      v7_relativeSplatPath: true,
-                    }}
-                  >
-                    <ScrollToTop />
-                    <Routes>
-                      {/* Auth Routes */}
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route path="/register" element={<RegisterPage />} />
-                      <Route path="/admin/login" element={<AdminLoginPage />} />
+                <ChatProvider>
+                  <TourProvider>
+                    <Toaster position="top-right" richColors />
+                    <BrowserRouter
+                      future={{
+                        v7_startTransition: true,
+                        v7_relativeSplatPath: true,
+                      }}
+                    >
+                      <ScrollToTop />
+                      <Routes>
+                        {/* Auth Routes */}
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/internal/login" element={<InternalLoginPage />} />
+                        <Route path="/admin/login" element={<Navigate to="/internal/login" replace />} />
 
-                      {/* User Routes */}
-                      <Route path="/" element={<MainLayout />}>
-                        <Route index element={<HomePage />} />
-                        <Route path="destinations" element={<DestinationsPage />} />
-                        <Route path="tours" element={<ToursPage />} />
-                        <Route path="tours/:id" element={<TourDetailsPage />} />
-                        <Route path="about" element={<AboutPage />} />
-                        <Route path="contact" element={<ContactPage />} />
+                        {/* User Routes */}
+                        <Route path="/" element={<MainLayout />}>
+                          <Route index element={<HomePage />} />
+                          <Route path="destinations" element={<DestinationsPage />} />
+                          <Route path="tours" element={<ToursPage />} />
+                          <Route path="tours/:id" element={<TourDetailsPage />} />
+                          <Route path="about" element={<AboutPage />} />
+                          <Route path="contact" element={<ContactPage />} />
+                          <Route
+                            path="profile"
+                            element={
+                              <ProtectedRoute blockedRoles={["admin"]} redirectTo="/admin">
+                                <ProfilePage />
+                              </ProtectedRoute>
+                            }
+                          />
+                        </Route>
+
+                        {/* Admin Routes - Protected */}
                         <Route
-                          path="profile"
+                          path="/admin"
                           element={
-                            <ProtectedRoute blockedRoles={["admin"]} redirectTo="/admin">
-                              <ProfilePage />
+                            <ProtectedRoute requiredRole="admin" adminLoginRedirect>
+                              <AdminLayout />
                             </ProtectedRoute>
                           }
-                        />
-                      </Route>
+                        >
+                          <Route index element={<DashboardPage />} />
+                          <Route path="tours" element={<ToursManagementPage />} />
+                          <Route path="users" element={<UsersPage />} />
+                          <Route path="bookings" element={<BookingsManagementPage />} />
+                          <Route path="interactions" element={<InteractionManagementPage />} />
+                          <Route path="promotions" element={<PromotionsPage />} />
+                          <Route path="settings" element={<SettingsPage />} />
+                        </Route>
 
-                      {/* Admin Routes - Protected */}
-                      <Route
-                        path="/admin"
-                        element={
-                          <ProtectedRoute requiredRole="admin" adminLoginRedirect>
-                            <AdminLayout />
-                          </ProtectedRoute>
-                        }
-                      >
-                        <Route index element={<DashboardPage />} />
-                        <Route path="tours" element={<ToursManagementPage />} />
-                        <Route path="users" element={<UsersPage />} />
-                        <Route path="bookings" element={<BookingsManagementPage />} />
-                        <Route path="interactions" element={<InteractionManagementPage />} />
-                        <Route path="promotions" element={<PromotionsPage />} />
-                        <Route path="settings" element={<SettingsPage />} />
-                      </Route>
+                        {/* Staff Routes - Protected */}
+                        <Route
+                          path="/staff"
+                          element={
+                            <ProtectedRoute requiredRole="staff" adminLoginRedirect>
+                              <StaffLayout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route path="chat" element={<StaffChatPage />} />
+                        </Route>
 
-                      {/* 404 */}
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </BrowserRouter>
-                </TourProvider>
+                        {/* 404 */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </Routes>
+                    </BrowserRouter>
+                  </TourProvider>
+                </ChatProvider>
               </ReviewProvider>
             </ContactProvider>
           </PromotionsProvider>

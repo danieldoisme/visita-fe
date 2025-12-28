@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const { login, isAuthenticated, isAdmin } = useAuth();
+    const { login, isAuthenticated, isAdmin, isStaff } = useAuth();
     const navigate = useNavigate();
 
     const form = useForm<LoginFormData>({
@@ -32,12 +32,16 @@ export default function AdminLoginPage() {
         },
     });
 
-    // Redirect if already logged in as admin
+    // Redirect if already logged in based on role
     useEffect(() => {
-        if (isAuthenticated && isAdmin) {
-            navigate("/admin", { replace: true });
+        if (isAuthenticated) {
+            if (isAdmin) {
+                navigate("/admin", { replace: true });
+            } else if (isStaff) {
+                navigate("/staff/chat", { replace: true });
+            }
         }
-    }, [isAuthenticated, isAdmin, navigate]);
+    }, [isAuthenticated, isAdmin, isStaff, navigate]);
 
     const onSubmit = async (data: LoginFormData) => {
         setError("");
@@ -45,12 +49,10 @@ export default function AdminLoginPage() {
 
         const result = await login(data.email, data.password, true); // isAdmin=true
 
-        if (result.success) {
-            // Check if user is admin
-            navigate("/admin", { replace: true });
-        } else {
+        if (!result.success) {
             setError(result.error || "Đăng nhập thất bại");
         }
+        // Role-based redirect handled by useEffect
 
         setIsLoading(false);
     };
@@ -69,11 +71,10 @@ export default function AdminLoginPage() {
                         <Shield className="h-10 w-10" />
                     </div>
                     <h1 className="text-4xl font-bold text-white mb-4 text-center">
-                        Quản trị Visita
+                        Đăng nhập nội bộ
                     </h1>
                     <p className="text-zinc-400 text-center max-w-md text-lg">
-                        Truy cập bảng điều khiển quản trị để quản lý tours, người dùng và
-                        cài đặt hệ thống.
+                        Cổng đăng nhập dành cho nhân viên hỗ trợ và quản trị viên hệ thống Visita.
                     </p>
                     <div className="mt-12 flex items-center gap-4 text-zinc-500 text-sm">
                         <div className="flex items-center gap-2">
@@ -94,13 +95,13 @@ export default function AdminLoginPage() {
                         <div className="h-16 w-16 rounded-xl bg-primary/20 flex items-center justify-center text-primary mb-4 border border-primary/30">
                             <Shield className="h-8 w-8" />
                         </div>
-                        <h1 className="text-2xl font-bold text-white">Quản trị Visita</h1>
+                        <h1 className="text-2xl font-bold text-white">Đăng nhập nội bộ</h1>
                     </div>
 
                     <div className="text-center lg:text-left">
                         <h2 className="text-2xl font-bold text-white mb-2">Đăng nhập</h2>
                         <p className="text-zinc-400">
-                            Nhập thông tin đăng nhập của quản trị viên
+                            Dành cho nhân viên và quản trị viên
                         </p>
                     </div>
 

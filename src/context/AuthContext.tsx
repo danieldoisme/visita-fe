@@ -8,7 +8,7 @@ import {
 import { tokenStorage } from "../utils/tokenStorage";
 import { mockAuthenticate, mockRegister, mockGetUserInfo } from "../services/mockAuthService";
 
-export type UserRole = "user" | "admin";
+export type UserRole = "user" | "admin" | "staff";
 
 export interface User {
   userId: string;
@@ -26,6 +26,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isStaff: boolean;
   loading: boolean;
   login: (email: string, password: string, isAdmin?: boolean) => Promise<{ success: boolean; error?: string }>;
   register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
@@ -117,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         isAuthenticated: !!user,
         isAdmin: user?.role === "admin",
+        isStaff: user?.role === "staff",
         loading,
         login,
         register,
