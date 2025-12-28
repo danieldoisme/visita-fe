@@ -441,6 +441,7 @@ export default function ToursManagementPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleOpenModal(tour)}
+                          title="Chỉnh sửa tour"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -449,6 +450,7 @@ export default function ToursManagementPage() {
                           size="icon"
                           className="text-destructive hover:text-destructive"
                           onClick={() => handleDeleteClick(tour.id)}
+                          title="Xóa tour"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

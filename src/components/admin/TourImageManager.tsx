@@ -1,4 +1,21 @@
 import { useState, useCallback } from "react";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { TourImage } from "@/context/TourContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +38,189 @@ interface TourImageManagerProps {
 // Generate a simple unique ID
 const generateId = () => `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+// Sortable Image Item Component
+interface SortableImageItemProps {
+    image: TourImage;
+    index: number;
+    totalCount: number;
+    editingId: string | null;
+    editCaption: string;
+    onMoveUp: (id: string) => void;
+    onMoveDown: (id: string) => void;
+    onSetPrimary: (id: string) => void;
+    onRemove: (id: string) => void;
+    onStartEditCaption: (image: TourImage) => void;
+    onSaveCaption: (id: string) => void;
+    onCancelEdit: () => void;
+    onEditCaptionChange: (value: string) => void;
+}
+
+function SortableImageItem({
+    image,
+    index,
+    totalCount,
+    editingId,
+    editCaption,
+    onMoveUp,
+    onMoveDown,
+    onSetPrimary,
+    onRemove,
+    onStartEditCaption,
+    onSaveCaption,
+    onCancelEdit,
+    onEditCaptionChange,
+}: SortableImageItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: image.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1000 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`flex items-start gap-3 p-3 border rounded-lg bg-card ${image.isPrimary ? "ring-2 ring-primary ring-offset-1" : ""
+                } ${isDragging ? "shadow-lg" : ""}`}
+        >
+            {/* Drag handle and reorder controls */}
+            <div className="flex flex-col items-center gap-1">
+                <button
+                    type="button"
+                    onClick={() => onMoveUp(image.id)}
+                    disabled={index === 0}
+                    className="p-1 hover:bg-muted rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Di chuyển lên"
+                >
+                    <ChevronUp className="h-4 w-4" />
+                </button>
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded touch-none"
+                    title="Kéo để sắp xếp"
+                >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <button
+                    type="button"
+                    onClick={() => onMoveDown(image.id)}
+                    disabled={index === totalCount - 1}
+                    className="p-1 hover:bg-muted rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Di chuyển xuống"
+                >
+                    <ChevronDown className="h-4 w-4" />
+                </button>
+            </div>
+
+            {/* Image thumbnail */}
+            <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+                <img
+                    src={image.url}
+                    alt={image.altText || image.caption || "Tour image"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                            "https://placehold.co/80x80?text=Error";
+                    }}
+                />
+                {image.isPrimary && (
+                    <div className="absolute top-1 left-1 bg-primary text-primary-foreground px-1.5 py-0.5 rounded text-xs font-medium">
+                        Ảnh bìa
+                    </div>
+                )}
+            </div>
+
+            {/* Image info */}
+            <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-xs text-muted-foreground truncate" title={image.url}>
+                    {image.url}
+                </p>
+                {editingId === image.id ? (
+                    <div className="flex gap-2">
+                        <Input
+                            id={`edit-caption-${image.id}`}
+                            name={`edit-caption-${image.id}`}
+                            aria-label="Chỉnh sửa chú thích"
+                            value={editCaption}
+                            onChange={(e) => onEditCaptionChange(e.target.value)}
+                            placeholder="Chú thích"
+                            className="h-8 text-sm"
+                            autoFocus
+                        />
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 px-2"
+                            onClick={() => onSaveCaption(image.id)}
+                        >
+                            Lưu
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 px-2"
+                            onClick={onCancelEdit}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ) : (
+                    <p
+                        className="text-sm cursor-pointer hover:text-primary"
+                        onClick={() => onStartEditCaption(image)}
+                        title="Nhấn để chỉnh sửa chú thích"
+                    >
+                        {image.caption || (
+                            <span className="text-muted-foreground italic">
+                                Thêm chú thích...
+                            </span>
+                        )}
+                    </p>
+                )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1">
+                <button
+                    type="button"
+                    onClick={() => onSetPrimary(image.id)}
+                    className={`p-2 rounded hover:bg-muted ${image.isPrimary
+                        ? "text-yellow-500"
+                        : "text-muted-foreground hover:text-yellow-500"
+                        }`}
+                    title={image.isPrimary ? "Ảnh bìa hiện tại" : "Đặt làm ảnh bìa"}
+                    disabled={image.isPrimary}
+                >
+                    <Star
+                        className={`h-4 w-4 ${image.isPrimary ? "fill-current" : ""}`}
+                    />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onRemove(image.id)}
+                    className="p-2 rounded text-muted-foreground hover:text-destructive hover:bg-muted"
+                    title="Xóa ảnh"
+                >
+                    <Trash2 className="h-4 w-4" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export function TourImageManager({ images, onChange }: TourImageManagerProps) {
     const [newUrl, setNewUrl] = useState("");
     const [newCaption, setNewCaption] = useState("");
@@ -32,6 +232,18 @@ export function TourImageManager({ images, onChange }: TourImageManagerProps) {
     // Sort images by order
     const sortedImages = [...images].sort((a, b) => a.order - b.order);
 
+    // Configure sensors for drag and drop
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // 8px movement required before drag starts
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
     // Validate URL
     const isValidUrl = (url: string): boolean => {
         try {
@@ -41,6 +253,27 @@ export function TourImageManager({ images, onChange }: TourImageManagerProps) {
             return false;
         }
     };
+
+    // Handle drag end
+    const handleDragEnd = useCallback(
+        (event: DragEndEvent) => {
+            const { active, over } = event;
+
+            if (over && active.id !== over.id) {
+                const oldIndex = sortedImages.findIndex((img) => img.id === active.id);
+                const newIndex = sortedImages.findIndex((img) => img.id === over.id);
+
+                const reordered = arrayMove(sortedImages, oldIndex, newIndex);
+                // Update order values
+                const updated = reordered.map((img, index) => ({
+                    ...img,
+                    order: index,
+                }));
+                onChange(updated);
+            }
+        },
+        [sortedImages, onChange]
+    );
 
     // Add new image
     const handleAddImage = useCallback(() => {
@@ -102,17 +335,11 @@ export function TourImageManager({ images, onChange }: TourImageManagerProps) {
             const index = sortedImages.findIndex((img) => img.id === id);
             if (index <= 0) return;
 
-            const updated = [...images];
-            const currentImg = updated.find((img) => img.id === id)!;
-            const prevImg = updated.find((img) => img.order === currentImg.order - 1)!;
-
-            if (prevImg) {
-                currentImg.order -= 1;
-                prevImg.order += 1;
-                onChange(updated);
-            }
+            const reordered = arrayMove(sortedImages, index, index - 1);
+            const updated = reordered.map((img, i) => ({ ...img, order: i }));
+            onChange(updated);
         },
-        [images, sortedImages, onChange]
+        [sortedImages, onChange]
     );
 
     // Move image down (increase order)
@@ -121,17 +348,11 @@ export function TourImageManager({ images, onChange }: TourImageManagerProps) {
             const index = sortedImages.findIndex((img) => img.id === id);
             if (index >= sortedImages.length - 1) return;
 
-            const updated = [...images];
-            const currentImg = updated.find((img) => img.id === id)!;
-            const nextImg = updated.find((img) => img.order === currentImg.order + 1)!;
-
-            if (nextImg) {
-                currentImg.order += 1;
-                nextImg.order -= 1;
-                onChange(updated);
-            }
+            const reordered = arrayMove(sortedImages, index, index + 1);
+            const updated = reordered.map((img, i) => ({ ...img, order: i }));
+            onChange(updated);
         },
-        [images, sortedImages, onChange]
+        [sortedImages, onChange]
     );
 
     // Start editing caption
@@ -225,7 +446,7 @@ export function TourImageManager({ images, onChange }: TourImageManagerProps) {
                 </div>
             )}
 
-            {/* Image list */}
+            {/* Image list with drag and drop */}
             {sortedImages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
                     <ImageIcon className="h-12 w-12 mb-2 opacity-50" />
@@ -233,140 +454,44 @@ export function TourImageManager({ images, onChange }: TourImageManagerProps) {
                     <p className="text-xs">Thêm ảnh để hiển thị cho tour</p>
                 </div>
             ) : (
-                <div className="space-y-2">
-                    {sortedImages.map((image, index) => (
-                        <div
-                            key={image.id}
-                            className={`flex items-start gap-3 p-3 border rounded-lg bg-card ${image.isPrimary ? "ring-2 ring-primary ring-offset-1" : ""
-                                }`}
-                        >
-                            {/* Reorder controls */}
-                            <div className="flex flex-col items-center gap-1">
-                                <button
-                                    type="button"
-                                    onClick={() => handleMoveUp(image.id)}
-                                    disabled={index === 0}
-                                    className="p-1 hover:bg-muted rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title="Di chuyển lên"
-                                >
-                                    <ChevronUp className="h-4 w-4" />
-                                </button>
-                                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                <button
-                                    type="button"
-                                    onClick={() => handleMoveDown(image.id)}
-                                    disabled={index === sortedImages.length - 1}
-                                    className="p-1 hover:bg-muted rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title="Di chuyển xuống"
-                                >
-                                    <ChevronDown className="h-4 w-4" />
-                                </button>
-                            </div>
-
-                            {/* Image thumbnail */}
-                            <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0 bg-muted">
-                                <img
-                                    src={image.url}
-                                    alt={image.altText || image.caption || "Tour image"}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src =
-                                            "https://placehold.co/80x80?text=Error";
-                                    }}
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext
+                        items={sortedImages.map((img) => img.id)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <div className="space-y-2">
+                            {sortedImages.map((image, index) => (
+                                <SortableImageItem
+                                    key={image.id}
+                                    image={image}
+                                    index={index}
+                                    totalCount={sortedImages.length}
+                                    editingId={editingId}
+                                    editCaption={editCaption}
+                                    onMoveUp={handleMoveUp}
+                                    onMoveDown={handleMoveDown}
+                                    onSetPrimary={handleSetPrimary}
+                                    onRemove={handleRemoveImage}
+                                    onStartEditCaption={handleStartEditCaption}
+                                    onSaveCaption={handleSaveCaption}
+                                    onCancelEdit={() => setEditingId(null)}
+                                    onEditCaptionChange={setEditCaption}
                                 />
-                                {image.isPrimary && (
-                                    <div className="absolute top-1 left-1 bg-primary text-primary-foreground px-1.5 py-0.5 rounded text-xs font-medium">
-                                        Ảnh bìa
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Image info */}
-                            <div className="flex-1 min-w-0 space-y-1">
-                                <p className="text-xs text-muted-foreground truncate" title={image.url}>
-                                    {image.url}
-                                </p>
-                                {editingId === image.id ? (
-                                    <div className="flex gap-2">
-                                        <Input
-                                            id={`edit-caption-${image.id}`}
-                                            name={`edit-caption-${image.id}`}
-                                            aria-label="Chỉnh sửa chú thích"
-                                            value={editCaption}
-                                            onChange={(e) => setEditCaption(e.target.value)}
-                                            placeholder="Chú thích"
-                                            className="h-8 text-sm"
-                                            autoFocus
-                                        />
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-8 px-2"
-                                            onClick={() => handleSaveCaption(image.id)}
-                                        >
-                                            Lưu
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-8 px-2"
-                                            onClick={() => setEditingId(null)}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <p
-                                        className="text-sm cursor-pointer hover:text-primary"
-                                        onClick={() => handleStartEditCaption(image)}
-                                        title="Nhấn để chỉnh sửa chú thích"
-                                    >
-                                        {image.caption || (
-                                            <span className="text-muted-foreground italic">
-                                                Thêm chú thích...
-                                            </span>
-                                        )}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    onClick={() => handleSetPrimary(image.id)}
-                                    className={`p-2 rounded hover:bg-muted ${image.isPrimary
-                                        ? "text-yellow-500"
-                                        : "text-muted-foreground hover:text-yellow-500"
-                                        }`}
-                                    title={image.isPrimary ? "Ảnh bìa hiện tại" : "Đặt làm ảnh bìa"}
-                                    disabled={image.isPrimary}
-                                >
-                                    <Star
-                                        className={`h-4 w-4 ${image.isPrimary ? "fill-current" : ""}`}
-                                    />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveImage(image.id)}
-                                    className="p-2 rounded text-muted-foreground hover:text-destructive hover:bg-muted"
-                                    title="Xóa ảnh"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+                    </SortableContext>
+                </DndContext>
             )}
 
             {/* Helper text */}
             {images.length > 0 && (
                 <p className="text-xs text-muted-foreground">
                     <Star className="h-3 w-3 inline-block mr-1 fill-yellow-500 text-yellow-500" />
-                    Ảnh có ngôi sao sẽ được hiển thị làm ảnh bìa. Sử dụng các mũi tên để sắp xếp thứ tự.
+                    Ảnh có ngôi sao sẽ được hiển thị làm ảnh bìa. Kéo thả hoặc dùng mũi tên để sắp xếp thứ tự.
                 </p>
             )}
         </div>
