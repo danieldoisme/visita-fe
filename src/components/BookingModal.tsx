@@ -21,8 +21,6 @@ import {
 import {
     CalendarDays,
     Users,
-    CreditCard,
-    Building2,
     Banknote,
     Plus,
     Minus,
@@ -59,7 +57,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
             fullName: "",
             email: "",
             phone: "",
-            paymentMethod: "bank_transfer",
+            paymentMethod: "cash",
         },
     });
 
@@ -87,7 +85,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 fullName: user?.fullName || "",
                 email: user?.email || "",
                 phone: "",
-                paymentMethod: "bank_transfer",
+                paymentMethod: "cash",
             });
             // Reset account creation state
             setShowAccountCreation(false);
@@ -181,14 +179,12 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
     const paymentMethods: {
         id: PaymentMethod;
         label: string;
-        icon?: typeof Building2;
+        icon?: typeof Banknote;
         imageUrl?: string;
     }[] = [
-            { id: "bank_transfer" as PaymentMethod, label: "Chuyển khoản ngân hàng", icon: Building2 },
-            { id: "credit_card" as PaymentMethod, label: "Thẻ tín dụng / Ghi nợ", icon: CreditCard },
+            { id: "cash" as PaymentMethod, label: "Thanh toán khi nhận tour", icon: Banknote },
             { id: "momo" as PaymentMethod, label: "Ví MoMo", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/a/a0/MoMo_Logo_App.svg" },
             { id: "paypal" as PaymentMethod, label: "PayPal", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" },
-            { id: "cash" as PaymentMethod, label: "Thanh toán khi nhận tour", icon: Banknote },
         ];
 
     // Block admin users from booking
