@@ -1,13 +1,25 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTour } from "@/context/TourContext";
+import { matchesDateRange } from "@/utils/dateUtils";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
 import {
   MapPin,
   Search,
+  Calendar as CalendarIcon,
   Clock,
   Star,
   LayoutGrid,
@@ -50,6 +62,28 @@ export default function ToursPage() {
     }
   }, [searchParams]);
 
+  // Get date filter params from URL
+  const startDateParam = searchParams.get("startDate");
+  const endDateParam = searchParams.get("endDate");
+
+  // State for date range filter - initialize from URL or undefined
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    startDateParam ? {
+      from: new Date(startDateParam),
+      to: endDateParam ? new Date(endDateParam) : undefined
+    } : undefined
+  );
+
+  // Sync state when URL params change (e.g. navigation from home)
+  useEffect(() => {
+    if (startDateParam) {
+      setDateRange({
+        from: new Date(startDateParam),
+        to: endDateParam ? new Date(endDateParam) : undefined
+      });
+    }
+  }, [startDateParam, endDateParam]);
+
   // Helper function to parse duration string to days
   const parseDurationToDays = (duration: string): number => {
     const match = duration.match(/(\d+)/);
@@ -84,6 +118,12 @@ export default function ToursPage() {
           tour.location.toLowerCase().includes(searchTerm.toLowerCase())) &&
         matchesCategory(tour.tags) &&
         matchesDuration(tour.duration) &&
+        matchesDateRange(
+          tour.startDate,
+          tour.endDate,
+          dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+          dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined
+        ) &&
         tour.rating >= minRating &&
         tour.price >= priceRange[0] &&
         tour.price <= priceRange[1]
@@ -187,16 +227,64 @@ export default function ToursPage() {
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
                   Tìm kiếm
                 </h3>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    name="search"
-                    placeholder="Tìm kiếm tour..."
-                    className="pl-9 bg-white border-slate-200 focus-visible:ring-primary"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                <div className="relative flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      name="search"
+                      placeholder="Tìm kiếm tour..."
+                      className="pl-9 bg-white border-slate-200 focus-visible:ring-primary"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <VoiceSearchButton
+                    onResult={(text) => setSearchTerm(text)}
+                    size="md"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
+                  Thời gian
+                </h3>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date-range-picker"
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-white border-slate-200 hover:bg-slate-50",
+                        !dateRange && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                            {format(dateRange.to, "dd/MM/yyyy")}
+                          </>
+                        ) : (
+                          format(dateRange.from, "dd/MM/yyyy")
+                        )
+                      ) : (
+                        <span>Chọn ngày đi - về</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarPicker
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={setDateRange}
+                      numberOfMonths={2}
+                      disabled={{ before: new Date() }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Price Range */}

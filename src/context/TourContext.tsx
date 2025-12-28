@@ -34,6 +34,8 @@ export interface Tour {
   difficulty?: string;
   tags?: string[];
   features?: string[];
+  startDate?: string;   // Tour start date (ISO format "YYYY-MM-DD")
+  endDate?: string;     // Tour end date (ISO format "YYYY-MM-DD")
 }
 
 // Helper function to get the primary/cover image URL
@@ -100,6 +102,8 @@ const INITIAL_TOURS: Tour[] = [
     features: ["Bao gồm hướng dẫn viên", "Bao gồm bữa ăn", "Xe đưa đón"],
     tags: ["Bán chạy", "Hủy miễn phí"],
     difficulty: "Trung bình",
+    startDate: "2025-01-15",
+    endDate: "2025-01-16",
   },
   {
     id: 2,
@@ -143,6 +147,8 @@ const INITIAL_TOURS: Tour[] = [
     features: ["Nhóm nhỏ", "Vé tham quan"],
     tags: ["Sắp hết chỗ"],
     difficulty: "Dễ",
+    startDate: "2025-02-01",
+    endDate: "2025-02-03",
   },
   {
     id: 3,
@@ -186,6 +192,8 @@ const INITIAL_TOURS: Tour[] = [
     features: ["Trực thăng", "Lều trại cao cấp"],
     tags: ["Cao cấp"],
     difficulty: "Khó",
+    startDate: "2025-02-20",
+    endDate: "2025-02-23",
   },
   {
     id: 4,
@@ -229,10 +237,12 @@ const INITIAL_TOURS: Tour[] = [
     features: ["Khách sạn 4 sao", "Tiệc BBQ"],
     tags: ["Cặp đôi"],
     difficulty: "Dễ",
+    startDate: "2025-03-10",
+    endDate: "2025-03-12",
   },
 ];
 
-const STORAGE_KEY = "visita_tours_data";
+const STORAGE_KEY = "visita_tours_data_v2"; // Bumped to v2 to include startDate/endDate fields
 
 export const TourProvider = ({ children }: { children: ReactNode }) => {
   const [tours, setTours] = useState<Tour[]>([]);

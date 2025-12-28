@@ -30,6 +30,7 @@ import {
   Minus,
   Plus,
 } from "lucide-react";
+import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
 
 const TRENDING_DESTINATIONS = [
   "Hạ Long, Quảng Ninh",
@@ -220,13 +221,13 @@ export default function HomePage() {
                     Địa điểm
                   </label>
                   <div className="relative flex items-center">
-                    <MapPin className="h-5 w-5 text-primary mr-2" />
+                    <MapPin className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
                     <input
                       id="location-input"
                       name="location-input"
                       type="text"
                       placeholder="Bạn muốn đi đâu?"
-                      className="w-full bg-transparent border-0 p-0 text-base font-medium placeholder:text-muted-foreground/70 focus:ring-0 focus:outline-none"
+                      className="flex-1 bg-transparent border-0 p-0 text-base font-medium placeholder:text-muted-foreground/70 focus:ring-0 focus:outline-none"
                       value={locationQuery}
                       onChange={(e) => setLocationQuery(e.target.value)}
                       onFocus={() => setShowDestinations(true)}
@@ -234,14 +235,20 @@ export default function HomePage() {
                         setTimeout(() => setShowDestinations(false), 200)
                       }
                     />
-                    {locationQuery && (
-                      <button
-                        onClick={() => setLocationQuery("")}
-                        className="absolute right-0 p-1 hover:bg-slate-200 rounded-full text-muted-foreground"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <VoiceSearchButton
+                        onResult={(text) => setLocationQuery(text)}
+                        size="sm"
+                      />
+                      {locationQuery && (
+                        <button
+                          onClick={() => setLocationQuery("")}
+                          className="p-1 hover:bg-slate-200 rounded-full text-muted-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {showDestinations && (
                     <div className="absolute top-full left-0 right-0 mt-4 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
