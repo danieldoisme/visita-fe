@@ -78,13 +78,6 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
                         </div>
                     )}
 
-                    {/* Caption */}
-                    {currentImage?.caption && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                            <p className="text-white text-sm">{currentImage.caption}</p>
-                        </div>
-                    )}
-
                     {/* Navigation arrows (only if multiple images) */}
                     {hasImages && sortedImages.length > 1 && (
                         <>
@@ -121,7 +114,7 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
 
                 {/* Thumbnail strip (only if multiple images) */}
                 {hasImages && sortedImages.length > 1 && (
-                    <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                    <div className="flex gap-2 mt-4 overflow-x-auto p-1">
                         {sortedImages.map((image, index) => (
                             <button
                                 key={image.id}
@@ -202,13 +195,6 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
                             alt={currentImage?.altText || currentImage?.caption || tour.title}
                             className="max-w-full max-h-[85vh] object-contain"
                         />
-
-                        {/* Caption in lightbox */}
-                        {currentImage?.caption && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 text-center">
-                                <p className="text-white">{currentImage.caption}</p>
-                            </div>
-                        )}
                     </div>
 
                     {/* Counter in lightbox */}
@@ -220,7 +206,7 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
 
                     {/* Thumbnail strip in lightbox */}
                     {sortedImages.length > 1 && (
-                        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-2 max-w-[80vw] overflow-x-auto pb-2">
+                        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-2 max-w-[80vw] overflow-x-auto p-1">
                             {sortedImages.map((image, index) => (
                                 <button
                                     key={image.id}
