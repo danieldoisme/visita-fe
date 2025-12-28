@@ -18,6 +18,7 @@ export interface Booking {
   id: number;
   userId?: string;        // Set when user is logged in
   guestEmail?: string;    // For guest bookings, used to claim later
+  staffId?: string;       // Set when booking is created by staff
   tourId: number;
   tourTitle: string;
   tourPrice: number;
@@ -35,6 +36,10 @@ interface BookingContextType {
   bookings: Booking[];
   addBooking: (
     booking: Omit<Booking, "id" | "status" | "createdAt">
+  ) => Promise<Booking>;
+  addStaffBooking: (
+    booking: Omit<Booking, "id" | "status" | "createdAt">,
+    staffId: string
   ) => Promise<Booking>;
   getBookings: () => Booking[];
   getUserBookings: (userId: string) => Booking[];
@@ -211,6 +216,25 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     return newBooking;
   };
 
+  // Staff booking - automatically confirmed (paid upfront at office)
+  const addStaffBooking = async (
+    bookingData: Omit<Booking, "id" | "status" | "createdAt">,
+    staffId: string
+  ): Promise<Booking> => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const newBooking: Booking = {
+      ...bookingData,
+      id: Math.max(...bookings.map((b) => b.id), 0) + 1,
+      staffId,
+      status: "confirmed", // Auto-confirmed for staff bookings
+      createdAt: new Date(),
+    };
+
+    setBookings((prev) => [...prev, newBooking]);
+    return newBooking;
+  };
+
   const getBookings = () => {
     return bookings;
   };
@@ -269,7 +293,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <BookingContext.Provider
-      value={{ bookings, addBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking, confirmBooking, completeBooking, updateBooking }}
+      value={{ bookings, addBooking, addStaffBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking, confirmBooking, completeBooking, updateBooking }}
     >
       {children}
     </BookingContext.Provider>

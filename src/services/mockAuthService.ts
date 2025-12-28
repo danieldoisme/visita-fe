@@ -186,3 +186,74 @@ export const mockGetUserInfo = (userId: string): User | null => {
 
     return null;
 };
+
+// ============================================================================
+// STAFF-SPECIFIC FUNCTIONS (for walk-in customer booking)
+// ============================================================================
+
+/**
+ * Find user by email - used by staff to check if customer exists
+ */
+export const findUserByEmail = (email: string): User | null => {
+    // Check predefined users
+    const predefinedUser = Object.values(MOCK_USERS).find(
+        (u) => u.email.toLowerCase() === email.toLowerCase()
+    );
+    if (predefinedUser) {
+        return predefinedUser;
+    }
+
+    // Check registered users
+    const registeredUser = Object.values(registeredUsers).find(
+        (u) => u.email.toLowerCase() === email.toLowerCase()
+    );
+    if (registeredUser) {
+        const { password: _, ...userWithoutPassword } = registeredUser;
+        return userWithoutPassword;
+    }
+
+    return null;
+};
+
+export interface CreateUserData {
+    email: string;
+    fullName: string;
+    phone: string;
+}
+
+/**
+ * Create user account for walk-in customer (staff use only)
+ * Returns created user or error if email exists
+ */
+export const createUserForStaff = (
+    data: CreateUserData
+): { success: boolean; user?: User; error?: string } => {
+    // Check if email already exists
+    const existingUser = findUserByEmail(data.email);
+    if (existingUser) {
+        return {
+            success: false,
+            error: "Email đã được sử dụng",
+        };
+    }
+
+    // Create new user (no password - staff-created account)
+    const userId = "user-" + Date.now();
+    const newUser: User & { password: string } = {
+        userId,
+        email: data.email,
+        fullName: data.fullName,
+        phone: data.phone,
+        role: "user" as UserRole,
+        isActive: true,
+        password: "", // Empty password - customer can set later via "forgot password"
+    };
+
+    registeredUsers[userId] = newUser;
+
+    const { password: _, ...userWithoutPassword } = newUser;
+    return {
+        success: true,
+        user: userWithoutPassword,
+    };
+};

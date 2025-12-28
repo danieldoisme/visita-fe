@@ -28,6 +28,8 @@ import InteractionManagementPage from "@/pages/admin/InteractionManagementPage";
 import PromotionsPage from "@/pages/admin/PromotionsPage";
 import StaffLayout from "@/layouts/StaffLayout";
 import StaffChatPage from "@/pages/staff/StaffChatPage";
+import StaffToursPage from "@/pages/staff/StaffToursPage";
+import StaffBookingFormPage from "@/pages/staff/StaffBookingFormPage";
 import InternalLoginPage from "@/pages/admin/InternalLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
@@ -104,6 +106,9 @@ function App() {
                           }
                         >
                           <Route path="chat" element={<StaffChatPage />} />
+                          <Route path="tours" element={<StaffToursPage />} />
+                          <Route path="booking" element={<StaffBookingFormPage />} />
+                          <Route path="booking/:tourId" element={<StaffBookingFormPage />} />
                         </Route>
 
                         {/* 404 */}

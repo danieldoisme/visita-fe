@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, LogOut, Menu } from "lucide-react";
+import { MessageSquare, LogOut, Menu, Map, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function StaffLayout() {
@@ -22,7 +22,16 @@ export default function StaffLayout() {
             icon: MessageSquare,
             path: "/staff/chat",
         },
-        // Future staff features can go here
+        {
+            title: "Danh sách tour",
+            icon: Map,
+            path: "/staff/tours",
+        },
+        {
+            title: "Đặt tour",
+            icon: CalendarPlus,
+            path: "/staff/booking",
+        },
     ];
 
     return (
