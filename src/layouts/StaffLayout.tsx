@@ -35,7 +35,7 @@ export default function StaffLayout() {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50 flex">
+        <div className="h-screen overflow-hidden bg-slate-50 flex">
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
                 <div
