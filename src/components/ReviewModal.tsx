@@ -115,7 +115,7 @@ export function ReviewModal({ isOpen, onClose, booking }: ReviewModalProps) {
 
                 {/* Rating Stars */}
                 <div className="space-y-2">
-                    <Label>Đánh giá của bạn *</Label>
+                    <span className="text-sm font-medium leading-none">Đánh giá của bạn *</span>
                     <div className="flex items-center gap-4">
                         <div className="flex gap-1">
                             {[1, 2, 3, 4, 5].map((star) => (
@@ -126,6 +126,7 @@ export function ReviewModal({ isOpen, onClose, booking }: ReviewModalProps) {
                                     onMouseEnter={() => setHoverRating(star)}
                                     onMouseLeave={() => setHoverRating(0)}
                                     className="focus:outline-none transition-transform hover:scale-110"
+                                    aria-label={`Đánh giá ${star} sao - ${ratingLabels[star]}`}
                                 >
                                     <Star
                                         className={cn(

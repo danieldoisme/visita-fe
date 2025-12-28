@@ -160,7 +160,7 @@ export default function TourDetailsPage() {
               <div className="flex items-center gap-1 text-yellow-500">
                 <Star className="h-4 w-4 fill-current" />
                 <span>
-                  {tour.rating} ({tour.reviews} đánh giá)
+                  {averageRating} ({reviewCount} đánh giá)
                 </span>
               </div>
             </div>

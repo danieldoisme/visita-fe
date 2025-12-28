@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield, Lock, Heart } from "lucide-react";
+import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield, Lock, Heart, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -165,6 +165,15 @@ export default function MainLayout() {
                         </Link>
                         <Link
                           to="/profile"
+                          state={{ tab: "reviews" }}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          Đánh giá của tôi
+                        </Link>
+                        <Link
+                          to="/profile"
                           state={{ tab: "favorites" }}
                           onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
@@ -298,6 +307,14 @@ export default function MainLayout() {
                         className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
                       >
                         Đặt chỗ của tôi
+                      </Link>
+                      <Link
+                        to="/profile"
+                        state={{ tab: "reviews" }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                      >
+                        Đánh giá của tôi
                       </Link>
                     </>
                   )}

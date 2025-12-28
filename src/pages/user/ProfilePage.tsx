@@ -332,23 +332,6 @@ export default function ProfilePage() {
                                 </div>
                             </button>
                             <button
-                                onClick={() => setActiveTab("favorites")}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "favorites"
-                                    ? "border-primary text-primary"
-                                    : "border-transparent text-slate-500 hover:text-slate-700"
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Heart className="w-4 h-4" />
-                                    Yêu thích
-                                    {favoriteTours.length > 0 && (
-                                        <Badge variant="secondary" className="ml-1">
-                                            {favoriteTours.length}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </button>
-                            <button
                                 onClick={() => setActiveTab("reviews")}
                                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "reviews"
                                     ? "border-primary text-primary"
@@ -361,6 +344,23 @@ export default function ProfilePage() {
                                     {userReviews.length > 0 && (
                                         <Badge variant="secondary" className="ml-1">
                                             {userReviews.length}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("favorites")}
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "favorites"
+                                    ? "border-primary text-primary"
+                                    : "border-transparent text-slate-500 hover:text-slate-700"
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Heart className="w-4 h-4" />
+                                    Yêu thích
+                                    {favoriteTours.length > 0 && (
+                                        <Badge variant="secondary" className="ml-1">
+                                            {favoriteTours.length}
                                         </Badge>
                                     )}
                                 </div>
@@ -811,10 +811,10 @@ export default function ProfilePage() {
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xl font-semibold text-slate-900">
-                                    Danh gia cua toi
+                                    Đánh giá của tôi
                                 </h2>
                                 <p className="text-sm text-slate-500">
-                                    {userReviews.length} danh gia
+                                    {userReviews.length} đánh giá
                                 </p>
                             </div>
 
@@ -826,13 +826,13 @@ export default function ProfilePage() {
                                             <MessageSquare className="w-8 h-8 text-slate-400" />
                                         </div>
                                         <h3 className="text-lg font-medium text-slate-900 mb-2">
-                                            Chua co danh gia nao
+                                            Chưa có đánh giá nào
                                         </h3>
                                         <p className="text-slate-500 mb-6 max-w-sm mx-auto">
-                                            Sau khi hoan thanh tour, ban co the viet danh gia de chia se trai nghiem cua minh.
+                                            Sau khi hoàn thành tour, bạn có thể viết đánh giá để chia sẻ trải nghiệm của mình.
                                         </p>
                                         <Button onClick={() => setActiveTab("bookings")}>
-                                            Xem dat cho cua toi
+                                            Xem đặt chỗ của tôi
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -864,12 +864,12 @@ export default function ProfilePage() {
 
                                                         {review.status === "pending" && (
                                                             <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                                                                Danh gia cua ban dang cho quan tri vien xem xet truoc khi hien thi cong khai.
+                                                                Đánh giá của bạn đang chờ quản trị viên xem xét trước khi hiển thị công khai.
                                                             </p>
                                                         )}
                                                         {review.status === "hidden" && (
                                                             <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                                                                Danh gia nay da bi an va khong hien thi cong khai.
+                                                                Đánh giá này đã bị ẩn và không hiển thị công khai.
                                                             </p>
                                                         )}
                                                     </div>
