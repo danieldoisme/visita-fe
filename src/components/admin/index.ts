@@ -11,3 +11,4 @@ export {
     contactStatusConfig,
     type StatusConfig,
 } from "./StatusBadge";
+export { TourImageManager } from "./TourImageManager";

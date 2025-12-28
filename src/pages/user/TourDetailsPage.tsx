@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTour, Tour } from "@/context/TourContext";
 import { BookingModal } from "@/components/BookingModal";
+import { TourImageGallery } from "@/components/TourImageGallery";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -101,15 +102,13 @@ export default function TourDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6 min-w-0 bg-white lg:pr-4">
-          <div className="relative h-[400px] rounded-xl overflow-hidden">
-            <img
-              src={tour.image}
-              alt={tour.title}
-              className="w-full h-full object-cover"
-            />
-            <Badge className="absolute top-4 right-4 bg-white/90 text-black hover:bg-white">
-              {tour.category}
-            </Badge>
+          <div className="relative">
+            <TourImageGallery tour={tour} />
+            {tour.category && (
+              <Badge className="absolute top-4 right-4 bg-white/90 text-black hover:bg-white z-10">
+                {tour.category}
+              </Badge>
+            )}
           </div>
 
           <div>

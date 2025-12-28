@@ -8,7 +8,7 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, TourImageManager, type BulkAction } from "@/components/admin";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,6 +134,7 @@ export default function ToursManagementPage() {
       duration: "",
       category: "",
       status: "Nháp",
+      images: [],
       image: "",
       description: "",
     },
@@ -149,6 +150,7 @@ export default function ToursManagementPage() {
         duration: tour.duration,
         category: tour.category || "",
         status: tour.status,
+        images: tour.images || [],
         image: tour.image || "",
         description: tour.description || "",
       });
@@ -161,6 +163,7 @@ export default function ToursManagementPage() {
         duration: "",
         category: "",
         status: "Nháp",
+        images: [],
         image: "",
         description: "",
       });
@@ -548,6 +551,7 @@ export default function ToursManagementPage() {
                     <FormLabel>Trạng thái</FormLabel>
                     <FormControl>
                       <select
+                        aria-label="Trạng thái tour"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         {...field}
                       >
@@ -561,18 +565,14 @@ export default function ToursManagementPage() {
                 )}
               />
               <div className="col-span-2">
-                <FormField
-                  control={form.control}
-                  name="image"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hình ảnh (URL)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/image.jpg" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <TourImageManager
+                  images={form.watch("images") || []}
+                  onChange={(images) => {
+                    form.setValue("images", images);
+                    // Also set the legacy image field to the primary image URL
+                    const primaryImage = images.find((img) => img.isPrimary);
+                    form.setValue("image", primaryImage?.url || images[0]?.url || "");
+                  }}
                 />
               </div>
               <div className="col-span-2">

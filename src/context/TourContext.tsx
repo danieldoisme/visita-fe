@@ -6,13 +6,24 @@ import {
   ReactNode,
 } from "react";
 
+// Tour image structure for multi-image support
+export interface TourImage {
+  id: string;           // Unique ID
+  url: string;          // Image URL (Cloudinary URL in production)
+  isPrimary: boolean;   // Cover image designation
+  order: number;        // Display order (0-based)
+  caption?: string;     // Optional caption
+  altText?: string;     // Accessibility alt text
+}
+
 export interface Tour {
   id: number;
   title: string;
   location: string;
   price: number;
   duration: string;
-  image: string;
+  images: TourImage[];  // Multiple images with ordering
+  image?: string;       // Legacy field for backwards compatibility
   rating: number;
   reviews: number;
   category?: string;
@@ -24,6 +35,14 @@ export interface Tour {
   tags?: string[];
   features?: string[];
 }
+
+// Helper function to get the primary/cover image URL
+export const getCoverImage = (tour: Tour): string => {
+  const primaryImage = tour.images?.find((img) => img.isPrimary);
+  if (primaryImage) return primaryImage.url;
+  if (tour.images?.length > 0) return tour.images[0].url;
+  return tour.image || "";
+};
 
 interface TourContextType {
   tours: Tour[];
@@ -47,8 +66,33 @@ const INITIAL_TOURS: Tour[] = [
     duration: "2 Ngày",
     rating: 4.9,
     reviews: 124,
-    image:
-      "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
+    images: [
+      {
+        id: "img-1-1",
+        url: "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: true,
+        order: 0,
+        caption: "Vịnh Hạ Long lúc bình minh",
+        altText: "Toàn cảnh Vịnh Hạ Long với các núi đá vôi",
+      },
+      {
+        id: "img-1-2",
+        url: "https://images.unsplash.com/photo-1573790387438-4da905039392?q=80&w=2025&auto=format&fit=crop",
+        isPrimary: false,
+        order: 1,
+        caption: "Du thuyền 5 sao trên vịnh",
+        altText: "Du thuyền sang trọng trên Vịnh Hạ Long",
+      },
+      {
+        id: "img-1-3",
+        url: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2128&auto=format&fit=crop",
+        isPrimary: false,
+        order: 2,
+        caption: "Hoàng hôn trên vịnh",
+        altText: "Hoàng hôn vàng rực trên Vịnh Hạ Long",
+      },
+    ],
+    image: "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
     category: "Phiêu lưu",
     status: "Hoạt động",
     description:
@@ -65,8 +109,33 @@ const INITIAL_TOURS: Tour[] = [
     duration: "3 Ngày",
     rating: 4.8,
     reviews: 89,
-    image:
-      "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop",
+    images: [
+      {
+        id: "img-2-1",
+        url: "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: true,
+        order: 0,
+        caption: "Đại Nội Huế",
+        altText: "Cổng Ngọ Môn tại Đại Nội Huế",
+      },
+      {
+        id: "img-2-2",
+        url: "https://images.unsplash.com/photo-1580502304784-8985b7eb7260?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: false,
+        order: 1,
+        caption: "Chùa Thiên Mụ",
+        altText: "Tháp Phước Duyên tại chùa Thiên Mụ",
+      },
+      {
+        id: "img-2-3",
+        url: "https://images.unsplash.com/photo-1599708153386-56b7a3c22c47?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: false,
+        order: 2,
+        caption: "Sông Hương thơ mộng",
+        altText: "Hoàng hôn trên sông Hương",
+      },
+    ],
+    image: "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop",
     category: "Văn hóa",
     status: "Hoạt động",
     description:
@@ -83,8 +152,33 @@ const INITIAL_TOURS: Tour[] = [
     duration: "4 Ngày",
     rating: 5.0,
     reviews: 45,
-    image:
-      "https://images.unsplash.com/photo-1638793772999-8df79f0ef0b8?q=80&w=2070&auto=format&fit=crop",
+    images: [
+      {
+        id: "img-3-1",
+        url: "https://images.unsplash.com/photo-1638793772999-8df79f0ef0b8?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: true,
+        order: 0,
+        caption: "Bên trong Hang Sơn Đoòng",
+        altText: "Ánh sáng chiếu vào hang Sơn Đoòng",
+      },
+      {
+        id: "img-3-2",
+        url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop",
+        isPrimary: false,
+        order: 1,
+        caption: "Cắm trại trong hang",
+        altText: "Khu cắm trại bên trong hang",
+      },
+      {
+        id: "img-3-3",
+        url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: false,
+        order: 2,
+        caption: "Hành trình thám hiểm",
+        altText: "Đoàn thám hiểm trong hang",
+      },
+    ],
+    image: "https://images.unsplash.com/photo-1638793772999-8df79f0ef0b8?q=80&w=2070&auto=format&fit=crop",
     category: "Mạo hiểm",
     status: "Hoạt động",
     description:
@@ -101,8 +195,33 @@ const INITIAL_TOURS: Tour[] = [
     duration: "3 Ngày",
     rating: 4.7,
     reviews: 210,
-    image:
-      "https://images.unsplash.com/photo-1552310065-aad9ebece999?q=80&w=2070&auto=format&fit=crop",
+    images: [
+      {
+        id: "img-4-1",
+        url: "https://images.unsplash.com/photo-1552310065-aad9ebece999?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: true,
+        order: 0,
+        caption: "Thành phố Đà Lạt",
+        altText: "Toàn cảnh thành phố Đà Lạt",
+      },
+      {
+        id: "img-4-2",
+        url: "https://images.unsplash.com/photo-1586348943529-beaae6c28db9?q=80&w=2015&auto=format&fit=crop",
+        isPrimary: false,
+        order: 1,
+        caption: "Vườn hoa Đà Lạt",
+        altText: "Vườn hoa rực rỡ tại Đà Lạt",
+      },
+      {
+        id: "img-4-3",
+        url: "https://images.unsplash.com/photo-1510784722466-f2aa9c52fff6?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: false,
+        order: 2,
+        caption: "Hồ Xuân Hương",
+        altText: "Hồ Xuân Hương trong sương mù",
+      },
+    ],
+    image: "https://images.unsplash.com/photo-1552310065-aad9ebece999?q=80&w=2070&auto=format&fit=crop",
     category: "Nghỉ dưỡng",
     status: "Hoạt động",
     description:

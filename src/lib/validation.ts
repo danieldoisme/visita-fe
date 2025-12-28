@@ -81,6 +81,18 @@ export const editBookingSchema = z.object({
 
 export type EditBookingFormData = z.infer<typeof editBookingSchema>;
 
+// Tour image schema
+export const tourImageSchema = z.object({
+  id: z.string(),
+  url: z.string().url("URL không hợp lệ"),
+  isPrimary: z.boolean(),
+  order: z.number().min(0),
+  caption: z.string().optional(),
+  altText: z.string().optional(),
+});
+
+export type TourImageFormData = z.infer<typeof tourImageSchema>;
+
 // Tour form schema
 export const tourSchema = z.object({
   title: z.string().min(1, "Vui lòng nhập tên tour"),
@@ -91,7 +103,8 @@ export const tourSchema = z.object({
   duration: z.string().min(1, "Vui lòng nhập thời lượng"),
   category: z.string().optional(),
   status: z.enum(["Hoạt động", "Nháp", "Đã đóng"]),
-  image: z.string().optional(),
+  images: z.array(tourImageSchema),
+  image: z.string().optional(), // Legacy field for backwards compatibility
   description: z.string().optional(),
 });
 
