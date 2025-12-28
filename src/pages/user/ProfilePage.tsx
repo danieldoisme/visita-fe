@@ -7,7 +7,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useBooking, Booking } from "@/context/BookingContext";
 import { useTour } from "@/context/TourContext";
 import { useFavorites } from "@/context/FavoritesContext";
+import { useReview, ReviewStatus } from "@/context/ReviewContext";
 import { ContactModal } from "@/components/ContactModal";
+import { ReviewModal } from "@/components/ReviewModal";
 import { ContactType } from "@/context/ContactContext";
 import { profileSchema, ProfileFormData, changePasswordSchema, ChangePasswordFormData } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
@@ -35,17 +37,19 @@ import {
     Heart,
     Trash2,
     Star,
+    MessageSquare,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
-type TabType = "personal" | "bookings" | "favorites" | "security";
+type TabType = "personal" | "bookings" | "favorites" | "reviews" | "security";
 
 export default function ProfilePage() {
     const { user } = useAuth();
     const { bookings, cancelBooking } = useBooking();
     const { tours } = useTour();
     const { favorites, toggleFavorite } = useFavorites();
+    const { getUserReviews, hasReviewedBooking } = useReview();
     const navigate = useNavigate();
     const location = useLocation();
     const [activeTab, setActiveTab] = useState<TabType>(() => {
@@ -88,6 +92,26 @@ export default function ProfilePage() {
 
     const closeContactModal = () => {
         setContactModal((prev) => ({ ...prev, isOpen: false }));
+    };
+
+    // Review modal state
+    const [reviewModal, setReviewModal] = useState<{
+        isOpen: boolean;
+        booking: Booking | null;
+    }>({
+        isOpen: false,
+        booking: null,
+    });
+
+    const openReviewModal = (booking: Booking) => {
+        setReviewModal({
+            isOpen: true,
+            booking,
+        });
+    };
+
+    const closeReviewModal = () => {
+        setReviewModal((prev) => ({ ...prev, isOpen: false }));
     };
 
     const form = useForm<ProfileFormData>({
@@ -199,6 +223,48 @@ export default function ProfilePage() {
     // Get favorite tours
     const favoriteTours = tours.filter((tour) => favorites.includes(tour.id));
 
+    // Get user reviews
+    const userReviews = user ? getUserReviews(user.userId) : [];
+
+    // Get review status badge styling
+    const getReviewStatusBadge = (status: ReviewStatus) => {
+        switch (status) {
+            case "pending":
+                return (
+                    <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                        Chờ duyệt
+                    </Badge>
+                );
+            case "approved":
+                return (
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                        Đã duyệt
+                    </Badge>
+                );
+            case "hidden":
+                return (
+                    <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
+                        Đã ẩn
+                    </Badge>
+                );
+        }
+    };
+
+    // Render stars for reviews
+    const renderStars = (rating: number) => (
+        <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                    key={star}
+                    className={`h-4 w-4 ${star <= rating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
+                        }`}
+                />
+            ))}
+        </div>
+    );
+
     return (
         <>
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -278,6 +344,23 @@ export default function ProfilePage() {
                                     {favoriteTours.length > 0 && (
                                         <Badge variant="secondary" className="ml-1">
                                             {favoriteTours.length}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("reviews")}
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "reviews"
+                                    ? "border-primary text-primary"
+                                    : "border-transparent text-slate-500 hover:text-slate-700"
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4" />
+                                    Đánh giá của tôi
+                                    {userReviews.length > 0 && (
+                                        <Badge variant="secondary" className="ml-1">
+                                            {userReviews.length}
                                         </Badge>
                                     )}
                                 </div>
@@ -512,6 +595,20 @@ export default function ProfilePage() {
                                                                     </Button>
                                                                 </>
                                                             )}
+                                                            {booking.status === "completed" && !hasReviewedBooking(booking.id) && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={() => openReviewModal(booking)}
+                                                                >
+                                                                    <Star className="w-4 h-4 mr-1" />
+                                                                    Viết đánh giá
+                                                                </Button>
+                                                            )}
+                                                            {booking.status === "completed" && hasReviewedBooking(booking.id) && (
+                                                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                                                    Đã đánh giá
+                                                                </Badge>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -708,6 +805,82 @@ export default function ProfilePage() {
                             )}
                         </div>
                     )}
+
+                    {/* Reviews Tab */}
+                    {activeTab === "reviews" && (
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-semibold text-slate-900">
+                                    Danh gia cua toi
+                                </h2>
+                                <p className="text-sm text-slate-500">
+                                    {userReviews.length} danh gia
+                                </p>
+                            </div>
+
+                            {userReviews.length === 0 ? (
+                                /* Empty State */
+                                <Card>
+                                    <CardContent className="py-16 text-center">
+                                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
+                                            <MessageSquare className="w-8 h-8 text-slate-400" />
+                                        </div>
+                                        <h3 className="text-lg font-medium text-slate-900 mb-2">
+                                            Chua co danh gia nao
+                                        </h3>
+                                        <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                                            Sau khi hoan thanh tour, ban co the viet danh gia de chia se trai nghiem cua minh.
+                                        </p>
+                                        <Button onClick={() => setActiveTab("bookings")}>
+                                            Xem dat cho cua toi
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                /* Reviews List */
+                                <div className="space-y-4">
+                                    {userReviews.map((review) => (
+                                        <Card key={review.id}>
+                                            <CardContent className="p-6">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex-1 space-y-3">
+                                                        <div className="flex items-start justify-between">
+                                                            <div>
+                                                                <h3 className="font-semibold text-lg text-slate-900">
+                                                                    {review.tourTitle}
+                                                                </h3>
+                                                                <p className="text-sm text-slate-500">
+                                                                    {format(new Date(review.date), "dd/MM/yyyy", { locale: vi })}
+                                                                </p>
+                                                            </div>
+                                                            {getReviewStatusBadge(review.status)}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2">
+                                                            {renderStars(review.rating)}
+                                                        </div>
+
+                                                        <p className="text-slate-600">{review.comment}</p>
+
+                                                        {review.status === "pending" && (
+                                                            <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                                                                Danh gia cua ban dang cho quan tri vien xem xet truoc khi hien thi cong khai.
+                                                            </p>
+                                                        )}
+                                                        {review.status === "hidden" && (
+                                                            <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                                                                Danh gia nay da bi an va khong hien thi cong khai.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -719,6 +892,15 @@ export default function ProfilePage() {
                 bookingId={contactModal.bookingId}
                 tourTitle={contactModal.tourTitle}
             />
+
+            {/* Review Modal */}
+            {reviewModal.booking && (
+                <ReviewModal
+                    isOpen={reviewModal.isOpen}
+                    onClose={closeReviewModal}
+                    booking={reviewModal.booking}
+                />
+            )}
         </>
     );
 }

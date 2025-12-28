@@ -33,19 +33,10 @@ import {
 import { cn } from "@/lib/utils";
 
 // ============== Types ==============
-type ReviewStatus = "pending" | "approved" | "hidden";
+import { useReview, Review, ReviewStatus } from "@/context/ReviewContext";
+
 type ContactStatus = "new" | "read";
 type TabType = "reviews" | "contacts";
-
-interface Review {
-    id: number;
-    userName: string;
-    tourName: string;
-    rating: number;
-    comment: string;
-    date: string;
-    status: ReviewStatus;
-}
 
 interface ContactReply {
     id: number;
@@ -66,62 +57,7 @@ interface Contact {
 }
 
 // ============== Mock Data ==============
-const INITIAL_REVIEWS: Review[] = [
-    {
-        id: 1,
-        userName: "Nguyễn Văn A",
-        tourName: "Khám phá Đà Lạt 3N2Đ",
-        rating: 5,
-        comment: "Tour rất tuyệt vời! Hướng dẫn viên nhiệt tình, lịch trình hợp lý. Sẽ quay lại lần sau. Đặc biệt ấn tượng với cảnh đẹp ở Đồi Mộng Mơ và thác Datanla. Đồ ăn trong tour cũng rất ngon, đậm chất Đà Lạt.",
-        date: "2024-12-20T10:30:00",
-        status: "pending",
-    },
-    {
-        id: 2,
-        userName: "Trần Thị B",
-        tourName: "Phú Quốc Paradise 4N3Đ",
-        rating: 4,
-        comment: "Cảnh đẹp, đồ ăn ngon. Chỉ tiếc là thời tiết không được tốt lắm. Resort rất sang trọng, nhân viên phục vụ chu đáo. Sẽ giới thiệu cho bạn bè.",
-        date: "2024-12-18T14:15:00",
-        status: "approved",
-    },
-    {
-        id: 3,
-        userName: "Lê Hoàng C",
-        tourName: "Sapa Mây Trắng 2N1Đ",
-        rating: 2,
-        comment: "Dịch vụ tệ, không đúng như quảng cáo. Xe đón trễ 2 tiếng, khách sạn không giống hình. Rất thất vọng với chuyến đi này. Yêu cầu hoàn tiền.",
-        date: "2024-12-15T09:00:00",
-        status: "hidden",
-    },
-    {
-        id: 4,
-        userName: "Phạm Minh D",
-        tourName: "Hội An Cổ Kính 2N1Đ",
-        rating: 5,
-        comment: "Trải nghiệm tuyệt vời! Phố cổ rất đẹp vào ban đêm. Được thả đèn hoa đăng trên sông rất lãng mạn. Tour guide am hiểu lịch sử, kể chuyện hay.",
-        date: "2024-12-22T16:45:00",
-        status: "pending",
-    },
-    {
-        id: 5,
-        userName: "Hoàng Thị E",
-        tourName: "Nha Trang Biển Xanh 3N2Đ",
-        rating: 4,
-        comment: "Biển đẹp, resort sang trọng. Đáng giá tiền. Hoạt động lặn ngắm san hô rất thú vị.",
-        date: "2024-12-21T11:20:00",
-        status: "approved",
-    },
-    {
-        id: 6,
-        userName: "Vũ Đức F",
-        tourName: "Đà Nẵng - Bà Nà Hills 2N1Đ",
-        rating: 3,
-        comment: "Bà Nà đông quá, chờ cáp treo hơi lâu. Còn lại thì ổn. Cầu Vàng rất đẹp để chụp hình.",
-        date: "2024-12-19T08:30:00",
-        status: "pending",
-    },
-];
+
 
 const INITIAL_CONTACTS: Contact[] = [
     {
@@ -216,8 +152,10 @@ export default function InteractionManagementPage() {
     // Tab state
     const [activeTab, setActiveTab] = useState<TabType>("reviews");
 
+    // Context
+    const { reviews, approveReview, hideReview, deleteReview } = useReview();
+
     // Data state
-    const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
     const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
 
     // Search state
@@ -278,7 +216,7 @@ export default function InteractionManagementPage() {
         let result = reviews.filter(
             (r) =>
                 r.userName.toLowerCase().includes(search) ||
-                r.tourName.toLowerCase().includes(search) ||
+                r.tourTitle.toLowerCase().includes(search) ||
                 r.comment.toLowerCase().includes(search)
         );
 
@@ -396,30 +334,30 @@ export default function InteractionManagementPage() {
     };
 
     // ============== Review Actions ==============
-    const handleApproveReview = (id: number) => {
-        setReviews((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, status: "approved" as ReviewStatus } : r))
-        );
+    const handleApproveReview = async (id: number) => {
+        await approveReview(id);
         // Update selectedReview if it's the one being approved
         if (selectedReview?.id === id) {
-            setSelectedReview((prev) => prev ? { ...prev, status: "approved" as ReviewStatus } : null);
+            // Need to reload selected or just update efficiently
+            // Context will update 'reviews', but selectedReview is a copy.
+            // For simplicity we update it manually or close it.
+            // Let's manually update status.
+            setSelectedReview((prev) => prev ? { ...prev, status: "approved" } : null);
         }
         toast.success("Đã duyệt đánh giá!");
     };
 
-    const handleHideReview = (id: number) => {
-        setReviews((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, status: "hidden" as ReviewStatus } : r))
-        );
+    const handleHideReview = async (id: number) => {
+        await hideReview(id);
         // Update selectedReview if it's the one being hidden
         if (selectedReview?.id === id) {
-            setSelectedReview((prev) => prev ? { ...prev, status: "hidden" as ReviewStatus } : null);
+            setSelectedReview((prev) => prev ? { ...prev, status: "hidden" } : null);
         }
         toast.success("Đã ẩn đánh giá!");
     };
 
-    const executeDeleteReview = (id: number) => {
-        setReviews((prev) => prev.filter((r) => r.id !== id));
+    const executeDeleteReview = async (id: number) => {
+        await deleteReview(id);
         setSelectedReviews((prev) => {
             const newSet = new Set(prev);
             newSet.delete(id);
@@ -441,24 +379,28 @@ export default function InteractionManagementPage() {
     };
 
     // Bulk review actions
-    const handleBulkApproveReviews = () => {
-        setReviews((prev) =>
-            prev.map((r) => (selectedReviews.has(r.id) ? { ...r, status: "approved" as ReviewStatus } : r))
-        );
+    const handleBulkApproveReviews = async () => {
+        // Iterate and approve
+        // In a real app we would have a bulk API. Here we simulate.
+        for (const id of Array.from(selectedReviews)) {
+            await approveReview(id);
+        }
         setSelectedReviews(new Set());
         toast.success(`Đã duyệt ${selectedReviews.size} đánh giá!`);
     };
 
-    const handleBulkHideReviews = () => {
-        setReviews((prev) =>
-            prev.map((r) => (selectedReviews.has(r.id) ? { ...r, status: "hidden" as ReviewStatus } : r))
-        );
+    const handleBulkHideReviews = async () => {
+        for (const id of Array.from(selectedReviews)) {
+            await hideReview(id);
+        }
         setSelectedReviews(new Set());
         toast.success(`Đã ẩn ${selectedReviews.size} đánh giá!`);
     };
 
-    const executeBulkDeleteReviews = () => {
-        setReviews((prev) => prev.filter((r) => !selectedReviews.has(r.id)));
+    const executeBulkDeleteReviews = async () => {
+        for (const id of Array.from(selectedReviews)) {
+            await deleteReview(id);
+        }
         setSelectedReviews(new Set());
         toast.success(`Đã xóa ${selectedReviews.size} đánh giá!`);
     };
@@ -786,7 +728,7 @@ export default function InteractionManagementPage() {
                                                 />
                                             </TableCell>
                                             <TableCell className="font-medium">{review.userName}</TableCell>
-                                            <TableCell>{review.tourName}</TableCell>
+                                            <TableCell>{review.tourTitle}</TableCell>
                                             <TableCell>{renderStars(review.rating)}</TableCell>
                                             <TableCell className="max-w-[200px] truncate" title={review.comment}>
                                                 {review.comment}
@@ -1180,7 +1122,7 @@ export default function InteractionManagementPage() {
 
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">Tour</p>
-                            <p className="font-medium">{selectedReview.tourName}</p>
+                            <p className="font-medium">{selectedReview.tourTitle}</p>
                         </div>
 
                         <div>

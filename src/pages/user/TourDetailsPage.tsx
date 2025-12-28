@@ -11,16 +11,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Clock, Star, ArrowLeft, Calendar, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
+import { useReview } from "@/context/ReviewContext";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 export default function TourDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getTour } = useTour();
+  const { getReviewsByTour } = useReview();
   const { user } = useAuth();
   const [tour, setTour] = useState<Tour | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Get dynamic reviews
+  const reviews = tour ? getReviewsByTour(tour.id) : [];
+
+  // Calculate average rating from valid reviews
+  const averageRating = reviews.length > 0
+    ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1))
+    : tour?.rating || 0;
+
+  const reviewCount = reviews.length > 0 ? reviews.length : tour?.reviews || 0;
 
   const handleBookNow = () => {
     if (user) {
@@ -180,20 +194,20 @@ export default function TourDetailsPage() {
           {/* Customer Reviews Section */}
           <div className="bg-slate-50 rounded-xl p-6 mt-8">
             <h3 className="text-xl font-semibold mb-4">
-              Đánh giá từ khách hàng ({tour.reviews} đánh giá)
+              Đánh giá từ khách hàng ({reviewCount} đánh giá)
             </h3>
 
             {/* Rating Summary Banner */}
             <div className="bg-white rounded-lg p-4 mb-6 flex items-center gap-4 shadow-sm">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{tour.rating}</div>
+                <div className="text-3xl font-bold text-primary">{averageRating}</div>
                 <div className="text-sm text-gray-500">/5</div>
               </div>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`h-6 w-6 ${star <= Math.round(tour.rating)
+                    className={`h-6 w-6 ${star <= Math.round(averageRating)
                       ? "fill-yellow-400 text-yellow-400"
                       : "fill-gray-200 text-gray-200"
                       }`}
@@ -201,98 +215,49 @@ export default function TourDetailsPage() {
                 ))}
               </div>
               <div className="text-sm text-gray-600">
-                Dựa trên {tour.reviews} đánh giá
+                Dựa trên {reviewCount} đánh giá
               </div>
             </div>
 
-            {/* Mock Reviews List */}
+            {/* Dynamic Reviews List */}
             <div className="space-y-4">
-              {/* Review 1 */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                    PB
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium">Phạm Văn B</span>
-                      <span className="text-sm text-gray-500">12/10/2023</span>
+              {reviews.length > 0 ? (
+                reviews.map((review) => (
+                  <div key={review.id} className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                        {review.userName.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium">{review.userName}</span>
+                          <span className="text-sm text-gray-500">
+                            {format(new Date(review.date), "dd/MM/yyyy", { locale: vi })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 mb-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${star <= review.rating
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "fill-gray-200 text-gray-200"
+                                }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-gray-600 text-sm">
+                          {review.comment}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 mb-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`h-4 w-4 ${star <= 5
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "fill-gray-200 text-gray-200"
-                            }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      Tour rất tuyệt vời! Hướng dẫn viên nhiệt tình và am hiểu. Cảnh đẹp, dịch vụ tốt. Rất đáng để trải nghiệm!
-                    </p>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Chưa có đánh giá nào cho tour này. Hãy là người đầu tiên trải nghiệm và để lại đánh giá!
                 </div>
-              </div>
-
-              {/* Review 2 */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-semibold">
-                    NT
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium">Nguyễn Thị C</span>
-                      <span className="text-sm text-gray-500">28/09/2023</span>
-                    </div>
-                    <div className="flex items-center gap-1 mb-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`h-4 w-4 ${star <= 4
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "fill-gray-200 text-gray-200"
-                            }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      Chuyến đi rất ấn tượng, đồ ăn ngon, khách sạn sạch sẽ. Chỉ tiếc là thời gian hơi ngắn, ước gì có thêm 1 ngày nữa.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Review 3 */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-semibold">
-                    TH
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium">Trần Hoàng D</span>
-                      <span className="text-sm text-gray-500">15/08/2023</span>
-                    </div>
-                    <div className="flex items-center gap-1 mb-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`h-4 w-4 ${star <= 5
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "fill-gray-200 text-gray-200"
-                            }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      Đây là lần thứ 2 mình đi tour này và vẫn thấy rất hài lòng. Giá cả hợp lý, chất lượng dịch vụ ổn định. Sẽ giới thiệu cho bạn bè!
-                    </p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
