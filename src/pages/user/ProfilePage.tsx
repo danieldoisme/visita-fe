@@ -5,6 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useBooking, Booking } from "@/context/BookingContext";
+import { useTour } from "@/context/TourContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import { profileSchema, ProfileFormData, changePasswordSchema, ChangePasswordFormData } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,15 +29,20 @@ import {
     MapPin,
     Clock,
     Lock,
+    Heart,
+    Trash2,
+    Star,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
-type TabType = "personal" | "bookings" | "security";
+type TabType = "personal" | "bookings" | "favorites" | "security";
 
 export default function ProfilePage() {
     const { user } = useAuth();
     const { bookings, cancelBooking } = useBooking();
+    const { tours } = useTour();
+    const { favorites, toggleFavorite } = useFavorites();
     const navigate = useNavigate();
     const location = useLocation();
     const [activeTab, setActiveTab] = useState<TabType>(() => {
@@ -156,6 +163,9 @@ export default function ProfilePage() {
         toast.success("Đã hủy đặt chỗ thành công!");
     };
 
+    // Get favorite tours
+    const favoriteTours = tours.filter((tour) => favorites.includes(tour.id));
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             {/* Header Section */}
@@ -231,6 +241,23 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-2">
                                 <Lock className="w-4 h-4" />
                                 Bảo mật
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("favorites")}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "favorites"
+                                ? "border-primary text-primary"
+                                : "border-transparent text-slate-500 hover:text-slate-700"
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Heart className="w-4 h-4" />
+                                Yêu thích
+                                {favoriteTours.length > 0 && (
+                                    <Badge variant="secondary" className="ml-1">
+                                        {favoriteTours.length}
+                                    </Badge>
+                                )}
                             </div>
                         </button>
                     </nav>
@@ -543,6 +570,93 @@ export default function ProfilePage() {
                                 </Form>
                             </CardContent>
                         </Card>
+                    </div>
+                )}
+
+                {/* Favorites Tab */}
+                {activeTab === "favorites" && (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold text-slate-900">
+                                Tour yêu thích
+                            </h2>
+                            <p className="text-sm text-slate-500">
+                                {favoriteTours.length} tour
+                            </p>
+                        </div>
+
+                        {favoriteTours.length === 0 ? (
+                            /* Empty State */
+                            <Card>
+                                <CardContent className="py-16 text-center">
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+                                        <Heart className="w-8 h-8 text-red-300" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-slate-900 mb-2">
+                                        Chưa có tour yêu thích
+                                    </h3>
+                                    <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                                        Nhấn vào biểu tượng trái tim trên các tour để thêm vào danh sách yêu thích.
+                                    </p>
+                                    <Button asChild>
+                                        <a href="/tours">Khám phá tour</a>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            /* Favorites Grid */
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {favoriteTours.map((tour) => (
+                                    <Card
+                                        key={tour.id}
+                                        className="group overflow-hidden hover:shadow-md transition-shadow"
+                                    >
+                                        <div className="relative aspect-[4/3]">
+                                            <img
+                                                src={tour.image}
+                                                alt={tour.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            />
+                                            <button
+                                                onClick={() => toggleFavorite(tour.id)}
+                                                className="absolute top-3 right-3 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                                aria-label="Xóa khỏi yêu thích"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <CardContent className="p-4">
+                                            <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                                                {tour.title}
+                                            </h3>
+                                            <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+                                                <MapPin className="w-4 h-4" />
+                                                {tour.location}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
+                                                <Clock className="w-4 h-4" />
+                                                {tour.duration}
+                                                <span className="ml-auto flex items-center gap-1 text-yellow-500">
+                                                    <Star className="w-4 h-4 fill-current" />
+                                                    {tour.rating}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-3 border-t">
+                                                <div className="text-primary font-bold">
+                                                    {tour.price.toLocaleString("vi-VN")}₫
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => navigate(`/tours/${tour.id}`)}
+                                                >
+                                                    Xem chi tiết
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

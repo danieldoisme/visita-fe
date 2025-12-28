@@ -1,21 +1,42 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTour, Tour } from "@/context/TourContext";
+import { useAuth } from "@/context/AuthContext";
 import { BookingModal } from "@/components/BookingModal";
+import { AuthRequiredModal } from "@/components/AuthRequiredModal";
 import { TourImageGallery } from "@/components/TourImageGallery";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Clock, Star, ArrowLeft, Calendar, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 
 export default function TourDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getTour } = useTour();
+  const { user } = useAuth();
   const [tour, setTour] = useState<Tour | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const handleBookNow = () => {
+    if (user) {
+      // User is authenticated, open booking modal directly
+      setIsBookingModalOpen(true);
+    } else {
+      // User is not authenticated, show auth modal first
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    // After successful auth, open booking modal
+    setIsAuthModalOpen(false);
+    setIsBookingModalOpen(true);
+  };
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -305,7 +326,8 @@ export default function TourDetailsPage() {
               </div>
             </div>
 
-            <Button className="w-full h-12 text-lg" onClick={() => setIsBookingModalOpen(true)}>Đặt Tour Ngay</Button>
+            <Button className="w-full h-12 text-lg" onClick={handleBookNow}>Đặt Tour Ngay</Button>
+            <FavoriteButton tourId={tour.id} variant="inline" className="w-full mt-3" />
             <p className="text-xs text-center text-gray-500 mt-4">
               Không tính phí đặt chỗ. Xác nhận ngay lập tức.
             </p>
@@ -318,6 +340,15 @@ export default function TourDetailsPage() {
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
         tour={tour}
+      />
+
+      {/* Auth Required Modal */}
+      <AuthRequiredModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        title="Đăng nhập để đặt tour"
+        message="Vui lòng đăng nhập hoặc tạo tài khoản để đặt tour."
+        onSuccess={handleAuthSuccess}
       />
     </div>
   );

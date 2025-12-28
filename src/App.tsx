@@ -3,6 +3,8 @@ import { Toaster } from "sonner";
 import { TourProvider } from "@/context/TourContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { BookingProvider } from "@/context/BookingContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
+import { PromotionsProvider } from "@/context/PromotionsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import MainLayout from "@/layouts/MainLayout";
@@ -29,61 +31,65 @@ function App() {
   return (
     <AuthProvider>
       <BookingProvider>
-        <TourProvider>
-          <Toaster position="top-right" richColors />
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <ScrollToTop />
-            <Routes>
-              {/* Auth Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/admin/login" element={<AdminLoginPage />} />
-
-              {/* User Routes */}
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="destinations" element={<DestinationsPage />} />
-                <Route path="tours" element={<ToursPage />} />
-                <Route path="tours/:id" element={<TourDetailsPage />} />
-                <Route path="about" element={<AboutPage />} />
-                <Route
-                  path="profile"
-                  element={
-                    <ProtectedRoute blockedRoles={["admin"]} redirectTo="/admin">
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-              </Route>
-
-              {/* Admin Routes - Protected */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requiredRole="admin" adminLoginRedirect>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
+        <FavoritesProvider>
+          <PromotionsProvider>
+            <TourProvider>
+              <Toaster position="top-right" richColors />
+              <BrowserRouter
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
+                }}
               >
-                <Route index element={<DashboardPage />} />
-                <Route path="tours" element={<ToursManagementPage />} />
-                <Route path="users" element={<UsersPage />} />
-                <Route path="bookings" element={<BookingsManagementPage />} />
-                <Route path="interactions" element={<InteractionManagementPage />} />
-                <Route path="promotions" element={<PromotionsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-              </Route>
+                <ScrollToTop />
+                <Routes>
+                  {/* Auth Routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/admin/login" element={<AdminLoginPage />} />
 
-              {/* 404 */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </TourProvider>
+                  {/* User Routes */}
+                  <Route path="/" element={<MainLayout />}>
+                    <Route index element={<HomePage />} />
+                    <Route path="destinations" element={<DestinationsPage />} />
+                    <Route path="tours" element={<ToursPage />} />
+                    <Route path="tours/:id" element={<TourDetailsPage />} />
+                    <Route path="about" element={<AboutPage />} />
+                    <Route
+                      path="profile"
+                      element={
+                        <ProtectedRoute blockedRoles={["admin"]} redirectTo="/admin">
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
+
+                  {/* Admin Routes - Protected */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute requiredRole="admin" adminLoginRedirect>
+                        <AdminLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<DashboardPage />} />
+                    <Route path="tours" element={<ToursManagementPage />} />
+                    <Route path="users" element={<UsersPage />} />
+                    <Route path="bookings" element={<BookingsManagementPage />} />
+                    <Route path="interactions" element={<InteractionManagementPage />} />
+                    <Route path="promotions" element={<PromotionsPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                  </Route>
+
+                  {/* 404 */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </BrowserRouter>
+            </TourProvider>
+          </PromotionsProvider>
+        </FavoritesProvider>
       </BookingProvider>
     </AuthProvider>
   );

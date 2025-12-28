@@ -154,6 +154,7 @@ export default function LoginPage() {
                         <FormControl>
                           <Input
                             type={showPassword ? "text" : "password"}
+                            placeholder="Nhập mật khẩu"
                             autoComplete="current-password"
                             className="pl-10 pr-10 login-input"
                             {...field}

@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import {
   MapPin,
   Search,
@@ -24,7 +25,7 @@ import {
   Star,
   LayoutGrid,
   List,
-  Heart,
+
   Check,
   ChevronRight,
   SlidersHorizontal,
@@ -46,7 +47,10 @@ export default function ToursPage() {
   const [searchParams] = useSearchParams();
   const { tours, loading } = useTour();
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    const saved = localStorage.getItem("visita_tours_view_mode");
+    return saved === "list" ? "list" : "grid";
+  });
   const [priceRange, setPriceRange] = useState([0, 100000000]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -61,6 +65,11 @@ export default function ToursPage() {
       setSearchTerm(locationParam);
     }
   }, [searchParams]);
+
+  // Persist view mode to localStorage
+  useEffect(() => {
+    localStorage.setItem("visita_tours_view_mode", viewMode);
+  }, [viewMode]);
 
   // Get date filter params from URL
   const startDateParam = searchParams.get("startDate");
@@ -497,9 +506,7 @@ export default function ToursPage() {
                         </Badge>
                       ))}
                     </div>
-                    <button className="absolute top-3 right-3 p-2.5 rounded-full bg-black/20 text-white hover:bg-white hover:text-red-500 backdrop-blur-sm transition-all duration-300">
-                      <Heart className="h-4 w-4" />
-                    </button>
+                    <FavoriteButton tourId={tour.id} className="absolute top-3 right-3" />
                   </div>
 
                   {/* Content Section */}
