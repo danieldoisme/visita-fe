@@ -13,9 +13,13 @@ import {
     Clock,
     ArrowUpDown,
     Loader2,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+
+const ITEMS_PER_PAGE = 6;
 
 type SortField = "title" | "price" | "rating";
 type SortDirection = "asc" | "desc";
@@ -25,6 +29,7 @@ export default function StaffToursPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [sortField, setSortField] = useState<SortField>("title");
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Filter active tours only and apply search
     const filteredTours = useMemo(() => {
@@ -54,6 +59,13 @@ export default function StaffToursPage() {
                 return sortDirection === "asc" ? comparison : -comparison;
             });
     }, [tours, searchQuery, sortField, sortDirection]);
+
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredTours.length / ITEMS_PER_PAGE);
+    const paginatedTours = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredTours.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredTours, currentPage]);
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
@@ -85,9 +97,14 @@ export default function StaffToursPage() {
                 <div className="relative w-full sm:w-80">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                        id="tour-search"
+                        name="tour-search"
                         placeholder="Tìm kiếm tour..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // Reset to first page on search
+                        }}
                         className="pl-9"
                     />
                 </div>
@@ -131,7 +148,7 @@ export default function StaffToursPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredTours.map((tour) => (
+                    {paginatedTours.map((tour) => (
                         <div
                             key={tour.id}
                             className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow"
@@ -194,13 +211,13 @@ export default function StaffToursPage() {
                                 {/* Action Buttons */}
                                 <div className="flex gap-2 pt-2 border-t">
                                     <Link to={`/staff/booking/${tour.id}`} className="flex-1">
-                                        <Button className="w-full" size="sm">
+                                        <Button className="w-full" size="sm" title="Đặt tour cho khách">
                                             <Users className="h-4 w-4 mr-1" />
                                             Đặt tour
                                         </Button>
                                     </Link>
                                     <Link to={`/tours/${tour.id}`} target="_blank">
-                                        <Button variant="outline" size="sm">
+                                        <Button variant="outline" size="sm" title="Lịch trình">
                                             <Calendar className="h-4 w-4" />
                                         </Button>
                                     </Link>
@@ -212,8 +229,40 @@ export default function StaffToursPage() {
             )}
 
             {/* Summary */}
-            <div className="text-sm text-muted-foreground text-center">
-                Hiển thị {filteredTours.length} tour đang hoạt động
+            {/* Pagination & Summary */}
+            <div className="space-y-4">
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t pt-4">
+                        <div className="text-sm text-muted-foreground">
+                            Trang {currentPage} / {totalPages}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeft className="h-4 w-4 mr-1" />
+                                Trước
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                                }
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau
+                                <ChevronRight className="h-4 w-4 ml-1" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
+                <div className="text-sm text-muted-foreground text-center">
+                    Hiển thị {paginatedTours.length} trên tổng số {filteredTours.length} tour
+                </div>
             </div>
         </div>
     );

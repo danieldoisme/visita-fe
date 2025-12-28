@@ -219,6 +219,7 @@ export interface CreateUserData {
     email: string;
     fullName: string;
     phone: string;
+    password: string;
 }
 
 /**
@@ -237,7 +238,7 @@ export const createUserForStaff = (
         };
     }
 
-    // Create new user (no password - staff-created account)
+    // Create new user
     const userId = "user-" + Date.now();
     const newUser: User & { password: string } = {
         userId,
@@ -245,8 +246,8 @@ export const createUserForStaff = (
         fullName: data.fullName,
         phone: data.phone,
         role: "user" as UserRole,
-        isActive: true,
-        password: "", // Empty password - customer can set later via "forgot password"
+        isActive: true, // Auto-activate staff-created accounts
+        password: data.password,
     };
 
     registeredUsers[userId] = newUser;

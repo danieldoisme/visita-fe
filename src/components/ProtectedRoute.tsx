@@ -41,7 +41,12 @@ export default function ProtectedRoute({
     // Check if user's role is blocked from this route
     if (blockedRoles && user?.role && blockedRoles.includes(user.role)) {
         // Redirect to custom destination or role-appropriate default
-        const destination = redirectTo || (user.role === "admin" ? "/admin" : "/");
+        let destination = redirectTo;
+        if (!destination) {
+            if (user.role === "admin") destination = "/admin";
+            else if (user.role === "staff") destination = "/staff";
+            else destination = "/";
+        }
         return <Navigate to={destination} replace />;
     }
 

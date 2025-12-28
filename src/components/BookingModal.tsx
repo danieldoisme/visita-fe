@@ -38,7 +38,7 @@ interface BookingModalProps {
 }
 
 export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, isStaff } = useAuth();
     const { addBooking } = useBooking();
 
     const form = useForm<BookingFormData>({
@@ -164,6 +164,31 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                         </Button>
                         <Button onClick={() => window.location.href = "/admin"} className="w-full">
                             Về trang quản trị
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+        );
+    }
+
+    // Block staff users - redirect to staff booking page
+    if (isStaff) {
+        return (
+            <Modal isOpen={isOpen} onClose={onClose} title="Đặt tour" className="max-w-md">
+                <div className="text-center py-6">
+                    <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                        <Users className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">Đặt tour cho khách hàng</h3>
+                    <p className="text-gray-600 mb-6">
+                        Để đặt tour cho khách hàng tại quầy, vui lòng sử dụng trang đặt tour dành cho nhân viên.
+                    </p>
+                    <div className="space-y-3">
+                        <Button onClick={onClose} variant="outline" className="w-full">
+                            Đóng
+                        </Button>
+                        <Button onClick={() => window.location.href = `/staff/booking/${tour.id}`} className="w-full">
+                            Đặt tour cho khách hàng
                         </Button>
                     </div>
                 </div>

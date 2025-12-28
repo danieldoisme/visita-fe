@@ -47,7 +47,7 @@ export default function StaffLayout() {
             {/* Sidebar */}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r shadow-sm transition-transform duration-300 lg:static lg:translate-x-0",
+                    "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r shadow-sm transition-transform duration-300 lg:translate-x-0 flex flex-col",
                     isSidebarOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
@@ -57,7 +57,7 @@ export default function StaffLayout() {
                     </Link>
                 </div>
 
-                <div className="p-4 space-y-1">
+                <div className="p-4 space-y-1 flex-1 overflow-y-auto">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname.startsWith(item.path);
@@ -81,7 +81,7 @@ export default function StaffLayout() {
                     })}
                 </div>
 
-                <div className="absolute bottom-4 left-4 right-4">
+                <div className="p-4 border-t shrink-0">
                     <div className="p-3 bg-slate-50 rounded-lg mb-2 flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
                             {(user?.fullName || "S").substring(0, 2).toUpperCase()}
@@ -103,7 +103,7 @@ export default function StaffLayout() {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
                 <header className="bg-white border-b h-16 flex items-center justify-between px-4 lg:px-8">
                     <Button
                         variant="ghost"

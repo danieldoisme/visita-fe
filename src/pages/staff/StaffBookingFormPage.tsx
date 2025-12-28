@@ -5,22 +5,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useTour, getCoverImage } from "@/context/TourContext";
-import { useBooking, PaymentMethod } from "@/context/BookingContext";
+import { useBooking } from "@/context/BookingContext";
 import { useAuth } from "@/context/AuthContext";
 import { findUserByEmail, createUserForStaff } from "@/services/mockAuthService";
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+
 import {
     CalendarPlus,
     Search,
@@ -32,46 +26,47 @@ import {
     Check,
     Plus,
     Minus,
-    CreditCard,
     Banknote,
-    Smartphone,
-    Building,
-    Globe,
-    Calendar,
     Users,
     Mail,
     Phone,
     User,
+    X,
+    Calendar as CalendarIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
 
-// Form validation schemas
-const customerSchema = z.object({
+const cn = (...inputs: (string | undefined | null | false)[]) => inputs.filter(Boolean).join(" ");
+
+const baseCustomerSchema = z.object({
     email: z.string().email("Email không hợp lệ"),
     fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
     phone: z.string().min(10, "Số điện thoại không hợp lệ"),
+    password: z.string().optional(),
+});
+
+const newCustomerSchema = baseCustomerSchema.extend({
+    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
 });
 
 const bookingSchema = z.object({
-    selectedDate: z.string().min(1, "Vui lòng chọn ngày"),
+    selectedDate: z.any().refine((val): val is Date => val instanceof Date, {
+        message: "Vui lòng chọn ngày khởi hành",
+    }),
     adults: z.number().min(1, "Tối thiểu 1 người lớn"),
     children: z.number().min(0),
     specialRequest: z.string().optional(),
-    paymentMethod: z.enum(["cash", "bank_transfer", "credit_card", "momo", "paypal"]),
+    paymentMethod: z.literal("cash"), // Strict to 'cash'
 });
 
-type CustomerFormData = z.infer<typeof customerSchema>;
+type CustomerFormData = z.infer<typeof newCustomerSchema>;
 type BookingFormData = z.infer<typeof bookingSchema>;
 
 type Step = "customer" | "booking" | "confirmation";
 
-const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
-    { value: "cash", label: "Tiền mặt", icon: <Banknote className="h-4 w-4" /> },
-    { value: "bank_transfer", label: "Chuyển khoản", icon: <Building className="h-4 w-4" /> },
-    { value: "credit_card", label: "Thẻ tín dụng", icon: <CreditCard className="h-4 w-4" /> },
-    { value: "momo", label: "MoMo", icon: <Smartphone className="h-4 w-4" /> },
-    { value: "paypal", label: "PayPal", icon: <Globe className="h-4 w-4" /> },
-];
+// Removed unused PAYMENT_METHODS
 
 export default function StaffBookingFormPage() {
     const { tourId } = useParams();
@@ -81,6 +76,18 @@ export default function StaffBookingFormPage() {
     const { user } = useAuth();
 
     const [currentStep, setCurrentStep] = useState<Step>("customer");
+
+    // Persist last selected tour
+    useEffect(() => {
+        if (tourId) {
+            localStorage.setItem("lastStaffBookingTourId", tourId);
+        } else {
+            const lastId = localStorage.getItem("lastStaffBookingTourId");
+            if (lastId) {
+                navigate(`/staff/booking/${lastId}`, { replace: true });
+            }
+        }
+    }, [tourId, navigate]);
     const [isSearching, setIsSearching] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [existingUser, setExistingUser] = useState<{ userId: string; fullName: string; email: string; phone?: string } | null>(null);
@@ -91,11 +98,16 @@ export default function StaffBookingFormPage() {
 
     // Customer form
     const customerForm = useForm<CustomerFormData>({
-        resolver: zodResolver(customerSchema),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: ((values: any, context: any, options: any) => {
+            const schema = isNewCustomer ? newCustomerSchema : baseCustomerSchema;
+            return zodResolver(schema)(values, context, options);
+        }) as any, // Cast to any to handle schema switching type mismatch
         defaultValues: {
             email: "",
             fullName: "",
             phone: "",
+            password: "",
         },
     });
 
@@ -103,7 +115,7 @@ export default function StaffBookingFormPage() {
     const bookingForm = useForm<BookingFormData>({
         resolver: zodResolver(bookingSchema),
         defaultValues: {
-            selectedDate: "",
+            // selectedDate is undefined initially
             adults: 1,
             children: 0,
             specialRequest: "",
@@ -132,6 +144,7 @@ export default function StaffBookingFormPage() {
         await new Promise((resolve) => setTimeout(resolve, 300));
 
         const user = findUserByEmail(email);
+
         if (user) {
             setExistingUser({
                 userId: user.userId,
@@ -142,13 +155,17 @@ export default function StaffBookingFormPage() {
             setIsNewCustomer(false);
             customerForm.setValue("fullName", user.fullName);
             customerForm.setValue("phone", user.phone || "");
+            customerForm.setValue("password", ""); // Clear password if any
+            customerForm.clearErrors();
             toast.success(`Tìm thấy khách hàng: ${user.fullName}`);
         } else {
             setExistingUser(null);
             setIsNewCustomer(true);
+            // Don't clear email
             customerForm.setValue("fullName", "");
             customerForm.setValue("phone", "");
-            toast.info("Khách hàng mới - Vui lòng nhập thông tin");
+            customerForm.setValue("password", ""); // Ensure password field is clean
+            toast.info("Khách hàng mới - Vui lòng nhập thông tin tạo tài khoản");
         }
         setIsSearching(false);
     };
@@ -178,6 +195,7 @@ export default function StaffBookingFormPage() {
                     email: customerData.email,
                     fullName: customerData.fullName,
                     phone: customerData.phone,
+                    password: customerData.password || "123456", // Fallback shouldn't happen due to validation
                 });
 
                 if (!result.success || !result.user) {
@@ -198,7 +216,7 @@ export default function StaffBookingFormPage() {
                     tourId: tour.id,
                     tourTitle: tour.title,
                     tourPrice: tour.price,
-                    selectedDate: new Date(bookingData.selectedDate),
+                    selectedDate: bookingData.selectedDate,
                     adults: bookingData.adults,
                     children: bookingData.children,
                     contactInfo: {
@@ -206,13 +224,14 @@ export default function StaffBookingFormPage() {
                         email: customerData.email,
                         phone: customerData.phone,
                     },
-                    paymentMethod: bookingData.paymentMethod,
+                    paymentMethod: "cash",
                     totalPrice,
                 },
                 user.userId
             );
 
             toast.success("Đặt tour thành công!");
+            localStorage.removeItem("lastStaffBookingTourId");
             navigate("/staff/tours");
         } catch {
             toast.error("Có lỗi xảy ra, vui lòng thử lại");
@@ -253,7 +272,7 @@ export default function StaffBookingFormPage() {
 
     const steps = [
         { id: "customer", label: "Khách hàng", icon: User },
-        { id: "booking", label: "Chi tiết", icon: Calendar },
+        { id: "booking", label: "Chi tiết", icon: CalendarIcon },
         { id: "confirmation", label: "Xác nhận", icon: Check },
     ];
 
@@ -261,8 +280,15 @@ export default function StaffBookingFormPage() {
         <div className="max-w-4xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" onClick={() => navigate("/staff/tours")}>
-                    <ArrowLeft className="h-5 w-5" />
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                        localStorage.removeItem("lastStaffBookingTourId");
+                        navigate("/staff/tours");
+                    }}
+                >
+                    <X className="h-5 w-5" />
                 </Button>
                 <CalendarPlus className="h-7 w-7 text-primary" />
                 <h1 className="text-2xl font-bold">Đặt Tour cho Khách</h1>
@@ -334,6 +360,7 @@ export default function StaffBookingFormPage() {
                                         <Input
                                             id="customer-email"
                                             type="email"
+                                            autoComplete="email"
                                             placeholder="email@example.com"
                                             className="pl-9"
                                             {...customerForm.register("email")}
@@ -383,9 +410,10 @@ export default function StaffBookingFormPage() {
                                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="customer-name"
+                                            autoComplete="name"
                                             placeholder="Nguyễn Văn A"
                                             className="pl-9"
-                                            disabled={!!existingUser}
+                                            disabled={!isNewCustomer}
                                             {...customerForm.register("fullName")}
                                         />
                                     </div>
@@ -399,9 +427,10 @@ export default function StaffBookingFormPage() {
                                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="customer-phone"
+                                            autoComplete="tel"
                                             placeholder="0901234567"
                                             className="pl-9"
-                                            disabled={!!existingUser}
+                                            disabled={!isNewCustomer}
                                             {...customerForm.register("phone")}
                                         />
                                     </div>
@@ -409,6 +438,28 @@ export default function StaffBookingFormPage() {
                                         <p className="text-sm text-destructive">{customerForm.formState.errors.phone.message}</p>
                                     )}
                                 </div>
+                                {isNewCustomer && (
+                                    <div className="space-y-2 sm:col-span-2">
+                                        <Label htmlFor="customer-password">Mật khẩu (Tạo mới)</Label>
+                                        <div className="relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground flex items-center justify-center">***</div>
+                                            <Input
+                                                id="customer-password"
+                                                type="text"
+                                                autoComplete="new-password"
+                                                placeholder="Nhập mật khẩu cho khách..."
+                                                className="pl-9"
+                                                {...customerForm.register("password")}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            * Yêu cầu khách hàng ghi nhớ mật khẩu này để đăng nhập sau này.
+                                        </p>
+                                        {customerForm.formState.errors.password && (
+                                            <p className="text-sm text-destructive">{customerForm.formState.errors.password.message}</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -426,51 +477,42 @@ export default function StaffBookingFormPage() {
                     <form onSubmit={bookingForm.handleSubmit(handleBookingSubmit)} className="space-y-6">
                         <div>
                             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-                                <Calendar className="h-5 w-5 text-primary" />
+                                <CalendarIcon className="h-5 w-5 text-primary" />
                                 Chi tiết đặt tour
                             </h3>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 {/* Date Selection */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="booking-date">Ngày khởi hành</Label>
-                                    <Input
-                                        id="booking-date"
-                                        type="date"
-                                        min={new Date().toISOString().split("T")[0]}
-                                        {...bookingForm.register("selectedDate")}
-                                    />
+                                    <span className="text-sm font-medium">Ngày khởi hành</span>
+                                    <div className="border rounded-lg p-2 flex justify-center bg-white">
+                                        <Calendar
+                                            mode="single"
+                                            selected={bookingForm.watch("selectedDate")}
+                                            onSelect={(date) => bookingForm.setValue("selectedDate", date as Date)}
+                                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                            className="rounded-md border-0"
+                                            initialFocus
+                                        />
+                                    </div>
                                     {bookingForm.formState.errors.selectedDate && (
-                                        <p className="text-sm text-destructive">{bookingForm.formState.errors.selectedDate.message}</p>
+                                        <p className="text-sm text-destructive">{String(bookingForm.formState.errors.selectedDate.message)}</p>
                                     )}
                                 </div>
 
-                                {/* Payment Method */}
+                                {/* Payment Method - Fixed to Cash */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="payment-method">Phương thức thanh toán</Label>
-                                    <Select
-                                        value={bookingForm.watch("paymentMethod")}
-                                        onValueChange={(value) => bookingForm.setValue("paymentMethod", value as PaymentMethod)}
-                                    >
-                                        <SelectTrigger id="payment-method">
-                                            <SelectValue placeholder="Chọn phương thức" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {PAYMENT_METHODS.map((method) => (
-                                                <SelectItem key={method.value} value={method.value}>
-                                                    <div className="flex items-center gap-2">
-                                                        {method.icon}
-                                                        {method.label}
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <span className="text-sm font-medium">Phương thức thanh toán</span>
+                                    <div className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground cursor-not-allowed">
+                                        <Banknote className="mr-2 h-4 w-4" />
+                                        Tiền mặt
+                                    </div>
+                                    <input type="hidden" {...bookingForm.register("paymentMethod")} />
                                 </div>
 
                                 {/* Adults */}
                                 <div className="space-y-2">
-                                    <Label>Người lớn</Label>
+                                    <span className="text-sm font-medium">Người lớn</span>
                                     <div className="flex items-center gap-3">
                                         <Button
                                             type="button"
@@ -478,6 +520,7 @@ export default function StaffBookingFormPage() {
                                             size="icon"
                                             onClick={() => bookingForm.setValue("adults", Math.max(1, adults - 1))}
                                             disabled={adults <= 1}
+                                            aria-label="Giảm số lượng người lớn"
                                         >
                                             <Minus className="h-4 w-4" />
                                         </Button>
@@ -487,6 +530,7 @@ export default function StaffBookingFormPage() {
                                             variant="outline"
                                             size="icon"
                                             onClick={() => bookingForm.setValue("adults", adults + 1)}
+                                            aria-label="Tăng số lượng người lớn"
                                         >
                                             <Plus className="h-4 w-4" />
                                         </Button>
@@ -496,7 +540,7 @@ export default function StaffBookingFormPage() {
 
                                 {/* Children */}
                                 <div className="space-y-2">
-                                    <Label>Trẻ em (50% giá)</Label>
+                                    <span className="text-sm font-medium">Trẻ em (50% giá)</span>
                                     <div className="flex items-center gap-3">
                                         <Button
                                             type="button"
@@ -504,6 +548,7 @@ export default function StaffBookingFormPage() {
                                             size="icon"
                                             onClick={() => bookingForm.setValue("children", Math.max(0, children - 1))}
                                             disabled={children <= 0}
+                                            aria-label="Giảm số lượng trẻ em"
                                         >
                                             <Minus className="h-4 w-4" />
                                         </Button>
@@ -513,6 +558,7 @@ export default function StaffBookingFormPage() {
                                             variant="outline"
                                             size="icon"
                                             onClick={() => bookingForm.setValue("children", children + 1)}
+                                            aria-label="Tăng số lượng trẻ em"
                                         >
                                             <Plus className="h-4 w-4" />
                                         </Button>
@@ -586,18 +632,18 @@ export default function StaffBookingFormPage() {
                             {/* Booking Info */}
                             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                                 <h4 className="font-medium flex items-center gap-2">
-                                    <Calendar className="h-4 w-4" />
+                                    <CalendarIcon className="h-4 w-4" />
                                     Chi tiết
                                 </h4>
                                 <p className="text-sm">
-                                    Ngày: {formatDate(new Date(bookingForm.getValues("selectedDate")))}
+                                    Ngày: {format(bookingForm.getValues("selectedDate"), "dd/MM/yyyy", { locale: vi })}
                                 </p>
                                 <p className="text-sm flex items-center gap-1">
                                     <Users className="h-3 w-3" />
                                     {adults} người lớn{children > 0 ? ` + ${children} trẻ em` : ""}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    {PAYMENT_METHODS.find((m) => m.value === bookingForm.getValues("paymentMethod"))?.label}
+                                    Tiền mặt
                                 </p>
                             </div>
                         </div>

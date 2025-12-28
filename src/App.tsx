@@ -71,7 +71,7 @@ function App() {
                           <Route
                             path="profile"
                             element={
-                              <ProtectedRoute blockedRoles={["admin"]} redirectTo="/admin">
+                              <ProtectedRoute blockedRoles={["admin", "staff"]}>
                                 <ProfilePage />
                               </ProtectedRoute>
                             }
@@ -105,6 +105,7 @@ function App() {
                             </ProtectedRoute>
                           }
                         >
+                          <Route index element={<Navigate to="chat" replace />} />
                           <Route path="chat" element={<StaffChatPage />} />
                           <Route path="tours" element={<StaffToursPage />} />
                           <Route path="booking" element={<StaffBookingFormPage />} />
