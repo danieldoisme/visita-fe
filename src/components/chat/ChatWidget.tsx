@@ -3,7 +3,7 @@ import { useChat } from "@/context/ChatContext";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, X, MessageCircle, Minus, Paperclip, Headset } from "lucide-react";
+import { Send, X, MessageCircle, Minus, Paperclip, Headset, Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -11,64 +11,82 @@ import { vi } from "date-fns/locale";
 interface ChatWidgetProps {
     isOpen?: boolean;
     onClose?: () => void;
-    defaultOpen?: boolean;
 }
 
-export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose, defaultOpen = false }: ChatWidgetProps) {
-    const [isOpen, setIsOpen] = useState(defaultOpen);
-    const { user, isAuthenticated } = useAuth();
+export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }: ChatWidgetProps) {
+    const { user } = useAuth();
     const {
         currentSession,
         messages,
         createSession,
         sendMessage,
+        sessions,
         joinSession,
-        sessions
+        isWidgetOpen,
+        setWidgetOpen,
+        requestHuman
     } = useChat();
+
+    // Use context state for floating widget, or external for embedded mode
+    const isEmbedded = externalIsOpen !== undefined;
+    const isOpen = isEmbedded ? externalIsOpen : isWidgetOpen;
+
     const [messageInput, setMessageInput] = useState("");
     const [isMinimized, setIsMinimized] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const prevMessagesLengthRef = useRef(messages.length);
 
-    // Sync with external control if provided
+    // When opened via context, ensure not minimized
     useEffect(() => {
-        if (externalIsOpen !== undefined) {
-            setIsOpen(externalIsOpen);
-            if (externalIsOpen) setIsMinimized(false);
+        if (isWidgetOpen) {
+            setIsMinimized(false);
         }
-    }, [externalIsOpen]);
+    }, [isWidgetOpen]);
 
-    // Internal toggle connection
+    // Internal toggle
     const handleToggle = () => {
-        if (externalOnClose && isOpen) {
+        if (isEmbedded && externalOnClose && isOpen) {
             externalOnClose();
         } else {
-            setIsOpen(!isOpen);
+            setWidgetOpen(!isWidgetOpen);
             setIsMinimized(false);
         }
     };
 
-    // Auto-scroll to bottom
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
+    // Scroll to bottom when new messages arrive (received)
     useEffect(() => {
-        scrollToBottom();
-    }, [messages, isOpen]);
+        if (isOpen && messages.length > prevMessagesLengthRef.current) {
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+        }
+        prevMessagesLengthRef.current = messages.length;
+    }, [isOpen, messages.length]);
 
-    // Check if user has an existing active session on open
+    // Scroll to bottom when chat opens or expands from minimized
     useEffect(() => {
-        if (isOpen && isAuthenticated && !currentSession && sessions.length > 0) {
-            // Find most recent active or pending session
-            const recentSession = [...sessions].sort((a, b) =>
-                new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
-            )[0];
+        if (isOpen && !isMinimized) {
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+        }
+    }, [isOpen, isMinimized]);
 
-            if (recentSession) {
-                joinSession(recentSession.id);
+    // Auto-rejoin active/pending session when widget opens
+    useEffect(() => {
+        if (isOpen && !currentSession && sessions.length > 0) {
+            // Find most recent active or pending session (not closed)
+            const activeSession = [...sessions]
+                .filter(s => s.status !== "closed")
+                .sort((a, b) =>
+                    new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
+                )[0];
+
+            if (activeSession) {
+                joinSession(activeSession.id);
             }
         }
-    }, [isOpen, isAuthenticated, sessions, currentSession, joinSession]);
+    }, [isOpen, sessions, currentSession, joinSession]);
 
 
     const handleSend = async () => {
@@ -81,6 +99,11 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose, d
         }
 
         setMessageInput("");
+
+        // Scroll to bottom after sending
+        setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
     };
 
     if (!user || user.role !== "user") return null; // Only for normal users
@@ -110,25 +133,49 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose, d
                         externalIsOpen ? "relative bottom-auto right-auto w-full max-w-full h-full shadow-none border-0" : ""
                     )}
                 >
-                    {/* Header */}
+                    {/* Header - Default to AI mode styling */}
                     <div
-                        className="p-4 bg-primary text-white flex items-center justify-between cursor-pointer"
+                        className={cn(
+                            "p-4 text-white flex items-center justify-between cursor-pointer",
+                            currentSession?.mode === "human" ? "bg-primary" : "bg-gradient-to-r from-violet-600 to-indigo-600"
+                        )}
                         onClick={() => !externalIsOpen && setIsMinimized(!isMinimized)}
                     >
                         <div className="flex items-center gap-3">
                             <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                                <Headset className="h-5 w-5 text-white" />
+                                {currentSession?.mode === "human" ? (
+                                    <Headset className="h-5 w-5 text-white" />
+                                ) : (
+                                    <Bot className="h-5 w-5 text-white" />
+                                )}
                             </div>
                             <div>
-                                <h3 className="font-bold text-sm">Hỗ trợ trực tuyến</h3>
-                                <p className="text-xs text-primary-foreground/80 flex items-center gap-1">
+                                <h3 className="font-bold text-sm">
+                                    {currentSession?.mode === "human" ? "Hỗ trợ trực tuyến" : "Trợ lý AI"}
+                                </h3>
+                                <p className="text-xs text-white/80 flex items-center gap-1">
                                     <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                                    Sẵn sàng hỗ trợ
+                                    {currentSession?.mode === "human" ? "Sẵn sàng hỗ trợ" : "Trả lời tức thì"}
                                 </p>
                             </div>
                         </div>
 
-                        {!externalIsOpen && (
+                        <div className="flex items-center gap-1">
+                            {/* Talk to Human button (only in bot mode and when session exists) */}
+                            {currentSession && currentSession.mode === "bot" && !isMinimized && (
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 text-xs text-white hover:bg-white/20 rounded-full px-3"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        requestHuman();
+                                    }}
+                                >
+                                    <User className="h-3 w-3 mr-1" />
+                                    Nhân viên
+                                </Button>
+                            )}
                             <div className="flex items-center gap-1">
                                 <Button
                                     size="icon"
@@ -147,34 +194,51 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose, d
                                     className="h-8 w-8 text-white hover:bg-white/20 rounded-full"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setIsOpen(false);
+                                        setWidgetOpen(false);
                                     }}
                                 >
                                     <X className="h-5 w-5" />
                                 </Button>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* Chat Area */}
                     {!isMinimized && (
                         <>
-                            <div className="flex-1 bg-slate-50 p-4 overflow-y-auto space-y-4">
+                            <div className={cn(
+                                "flex-1 bg-slate-50 p-4 space-y-4",
+                                messages.length > 0 ? "overflow-y-auto" : "overflow-hidden"
+                            )}>
                                 {!currentSession && messages.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-center space-y-4 p-6">
-                                        <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center text-4xl">
-                                            👋
+                                        <div className="h-16 w-16 bg-gradient-to-br from-violet-100 to-indigo-100 rounded-full flex items-center justify-center">
+                                            <Bot className="h-8 w-8 text-violet-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-900">Xin chào, {user.fullName}!</h4>
+                                            <h4 className="font-bold text-slate-900">Xin chào, {user.fullName}! 👋</h4>
                                             <p className="text-sm text-slate-500 mt-2">
-                                                Bạn cần tư vấn về tour nào? Hãy nhắn tin cho chúng tôi nhé!
+                                                Tôi là trợ lý AI của Visita. Hãy hỏi tôi về tour, đặt chỗ, hoặc thanh toán nhé!
                                             </p>
                                         </div>
                                     </div>
                                 ) : (
                                     messages.map((msg) => {
                                         const isMyMessage = msg.senderId === user.userId;
+                                        const isBot = msg.senderRole === "bot";
+                                        const isSystem = msg.senderRole === "system";
+
+                                        // System messages (centered)
+                                        if (isSystem) {
+                                            return (
+                                                <div key={msg.id} className="flex justify-center">
+                                                    <div className="bg-slate-200 text-slate-600 text-xs px-3 py-1.5 rounded-full">
+                                                        {msg.content}
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
                                         return (
                                             <div
                                                 key={msg.id}
@@ -188,10 +252,18 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose, d
                                                         "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm",
                                                         isMyMessage
                                                             ? "bg-primary text-white rounded-tr-none"
-                                                            : "bg-white text-slate-800 border border-slate-100 rounded-tl-none"
+                                                            : isBot
+                                                                ? "bg-gradient-to-br from-violet-100 to-indigo-100 text-slate-800 border border-violet-200 rounded-tl-none"
+                                                                : "bg-white text-slate-800 border border-slate-100 rounded-tl-none"
                                                     )}
                                                 >
-                                                    <p>{msg.content}</p>
+                                                    {isBot && (
+                                                        <div className="text-[10px] font-medium text-violet-600 mb-1 flex items-center gap-1">
+                                                            <Bot className="h-3 w-3" />
+                                                            Trợ lý AI
+                                                        </div>
+                                                    )}
+                                                    <p className="whitespace-pre-wrap">{msg.content}</p>
                                                     <div
                                                         className={cn(
                                                             "text-[10px] mt-1 opacity-70",
@@ -211,23 +283,29 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose, d
                             {/* Input Area */}
                             <div className="p-4 bg-white border-t border-slate-100">
                                 <div className="flex items-center gap-2">
-                                    <Button size="icon" variant="ghost" className="text-slate-400 hover:text-slate-600">
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="text-slate-400 hover:text-slate-600"
+                                        disabled={currentSession?.status === "closed"}
+                                    >
                                         <Paperclip className="h-5 w-5" />
                                     </Button>
                                     <Input
                                         id="chat-input"
                                         name="chat-input"
                                         autoFocus
-                                        placeholder="Nhập tin nhắn..."
+                                        placeholder={currentSession?.status === "closed" ? "Cuộc hội thoại đã kết thúc" : "Nhập tin nhắn..."}
                                         value={messageInput}
                                         onChange={(e) => setMessageInput(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                                        disabled={currentSession?.status === "closed"}
                                         className="flex-1 bg-slate-50 border-0 focus-visible:ring-1 focus-visible:ring-primary/20"
                                     />
                                     <Button
                                         size="icon"
                                         onClick={handleSend}
-                                        disabled={!messageInput.trim()}
+                                        disabled={!messageInput.trim() || currentSession?.status === "closed"}
                                         className="bg-primary hover:bg-primary/90 text-white rounded-xl"
                                     >
                                         <Send className="h-4 w-4" />

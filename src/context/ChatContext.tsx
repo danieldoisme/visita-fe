@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { getBotResponse, shouldEscalate, getBotGreeting } from "@/services/mockBotService";
 
 export type MessageType = "text" | "image";
 
@@ -8,7 +9,7 @@ export interface ChatMessage {
     sessionId: string;
     senderId: string;
     senderName: string;
-    senderRole: "user" | "staff" | "admin" | "system";
+    senderRole: "user" | "staff" | "admin" | "system" | "bot";
     content: string;
     timestamp: string;
     type: MessageType;
@@ -20,6 +21,8 @@ export interface ChatSession {
     userName: string;
     staffId?: string; // Assigned staff
     status: "active" | "closed" | "pending";
+    mode: "bot" | "human"; // NEW: tracks if bot or human is handling
+    botFailCount: number; // NEW: tracks failed bot responses
     lastMessage?: string;
     lastMessageTime: string;
     unreadCountClient: number;
@@ -34,12 +37,15 @@ interface ChatContextType {
     loading: boolean;
     createSession: (initialMessage?: string) => Promise<string>;
     joinSession: (sessionId: string) => void;
+    leaveSession: () => void;
     sendMessage: (content: string, type?: MessageType) => Promise<void>;
     closeSession: (sessionId: string) => void;
     // For Staff
     acceptSession: (sessionId: string) => void;
     getStaffSessions: () => ChatSession[];
 
+    // Bot escalation
+    requestHuman: () => void;
     // UI State
     isWidgetOpen: boolean;
     setWidgetOpen: (open: boolean) => void;
@@ -97,11 +103,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             id: `session_${Date.now()}`,
             userId: user.userId,
             userName: user.fullName,
-            status: "pending",
+            status: "active",
+            mode: "bot", // Start with bot handling
+            botFailCount: 0,
             lastMessage: initialMessage || "Bắt đầu cuộc trò chuyện",
             lastMessageTime: new Date().toISOString(),
             unreadCountClient: 0,
-            unreadCountStaff: 1, // Staff sees 1 unread
+            unreadCountStaff: 0,
             createdAt: new Date().toISOString(),
         };
 
@@ -109,8 +117,21 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         setSessions(newSessions);
         setCurrentSessionId(newSession.id);
 
+        // Add bot greeting
+        const greetingMsg: ChatMessage = {
+            id: `msg_${Date.now()}_greeting`,
+            sessionId: newSession.id,
+            senderId: "bot",
+            senderName: "Trợ lý AI",
+            senderRole: "bot",
+            content: getBotGreeting(user.fullName),
+            timestamp: new Date().toISOString(),
+            type: "text"
+        };
+        setMessages(prev => [...prev, greetingMsg]);
+
         if (initialMessage) {
-            await sendMessageInternal(newSession.id, initialMessage, "text");
+            await sendMessageInternal(newSession.id, initialMessage, "text", newSessions);
         }
 
         return newSession.id;
@@ -131,7 +152,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }));
     };
 
-    const sendMessageInternal = async (sessionId: string, content: string, type: MessageType) => {
+    const leaveSession = () => {
+        setCurrentSessionId(null);
+    };
+
+    const sendMessageInternal = async (sessionId: string, content: string, type: MessageType, currentSessions?: ChatSession[]) => {
         if (!user) return;
 
         const newMessage: ChatMessage = {
@@ -139,7 +164,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             sessionId,
             senderId: user.userId,
             senderName: user.fullName,
-            senderRole: user.role as any,
+            senderRole: user.role as "user" | "staff" | "admin",
             content,
             timestamp: new Date().toISOString(),
             type
@@ -147,22 +172,99 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
         setMessages(prev => [...prev, newMessage]);
 
-        // Update session
+        // Get session from param or state
+        const sessionsToCheck = currentSessions || sessions;
+        const session = sessionsToCheck.find(s => s.id === sessionId);
+
+        // Update session (only if not closed)
         setSessions(prev => prev.map(s => {
             if (s.id === sessionId) {
+                // Don't update unread counts for closed sessions
+                if (s.status === "closed") {
+                    return s;
+                }
                 return {
                     ...s,
                     lastMessage: type === "image" ? "[Hình ảnh]" : content,
                     lastMessageTime: new Date().toISOString(),
-                    unreadCountStaff: user.role === "user" ? s.unreadCountStaff + 1 : s.unreadCountStaff,
-                    unreadCountClient: (user.role === "staff" || user.role === "admin") ? s.unreadCountClient + 1 : s.unreadCountClient
+                    // Increment unread for the other party, reset for sender
+                    unreadCountStaff: user.role === "user" ? s.unreadCountStaff + 1 : 0,
+                    unreadCountClient: (user.role === "staff" || user.role === "admin") ? s.unreadCountClient + 1 : 0
                 };
             }
             return s;
         }));
 
-        // Auto-reply simulation if no staff assigned yet (optional)
-        // For now, we wait for real staff
+        // Bot auto-reply (if session in bot mode and user is sending)
+        if (session?.mode === "bot" && user.role === "user") {
+            // Check escalation triggers
+            if (shouldEscalate(content, session.botFailCount)) {
+                escalateToHuman(sessionId);
+                return;
+            }
+
+            // Simulate typing delay then respond
+            setTimeout(() => {
+                const botReply = getBotResponse(content, session.botFailCount);
+                addBotMessage(sessionId, botReply.message, botReply.success);
+            }, 800 + Math.random() * 800);
+        }
+    };
+
+    const addBotMessage = (sessionId: string, content: string, success: boolean) => {
+        const botMsg: ChatMessage = {
+            id: `msg_${Date.now()}_bot`,
+            sessionId,
+            senderId: "bot",
+            senderName: "Trợ lý AI",
+            senderRole: "bot",
+            content,
+            timestamp: new Date().toISOString(),
+            type: "text"
+        };
+        setMessages(prev => [...prev, botMsg]);
+
+        // Update session (increment fail count if not successful)
+        setSessions(prev => prev.map(s => {
+            if (s.id === sessionId) {
+                return {
+                    ...s,
+                    lastMessage: content,
+                    lastMessageTime: new Date().toISOString(),
+                    unreadCountClient: s.unreadCountClient + 1,
+                    botFailCount: success ? s.botFailCount : s.botFailCount + 1
+                };
+            }
+            return s;
+        }));
+    };
+
+    const escalateToHuman = (sessionId: string) => {
+        // Add system message
+        const systemMsg: ChatMessage = {
+            id: `msg_${Date.now()}_system`,
+            sessionId,
+            senderId: "system",
+            senderName: "Hệ thống",
+            senderRole: "system",
+            content: "Đang chuyển bạn đến nhân viên hỗ trợ. Vui lòng chờ trong giây lát...",
+            timestamp: new Date().toISOString(),
+            type: "text"
+        };
+        setMessages(prev => [...prev, systemMsg]);
+
+        // Update session to human mode and pending status
+        setSessions(prev => prev.map(s =>
+            s.id === sessionId
+                ? { ...s, mode: "human" as const, status: "pending" as const, unreadCountStaff: s.unreadCountStaff + 1 }
+                : s
+        ));
+    };
+
+    const requestHuman = () => {
+        if (currentSessionId) {
+            escalateToHuman(currentSessionId);
+        }
     };
 
     const sendMessage = async (content: string, type: MessageType = "text") => {
@@ -171,6 +273,19 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const closeSession = (sessionId: string) => {
+        // Add system message to notify the session is closed
+        const systemMsg: ChatMessage = {
+            id: `msg_${Date.now()}_close`,
+            sessionId,
+            senderId: "system",
+            senderName: "Hệ thống",
+            senderRole: "system",
+            content: "Cuộc hội thoại đã được kết thúc bởi nhân viên hỗ trợ.",
+            timestamp: new Date().toISOString(),
+            type: "text"
+        };
+        setMessages(prev => [...prev, systemMsg]);
+
         setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, status: "closed" } : s));
     };
 
@@ -194,10 +309,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
                 loading,
                 createSession,
                 joinSession,
+                leaveSession,
                 sendMessage,
                 closeSession,
                 acceptSession,
                 getStaffSessions,
+                requestHuman,
                 isWidgetOpen,
                 setWidgetOpen
             }}

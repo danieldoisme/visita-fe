@@ -14,7 +14,8 @@ import {
     Clock,
     MessageSquare,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    Bot
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,31 +43,65 @@ export default function StaffChatPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const filteredSessions = sessions.filter(session => {
+        // Only show sessions that need human attention (mode === "human")
+        if (session.mode === "bot") return false;
+
         const matchesSearch = session.userName.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = activeFilter === "all"
-            ? true
-            : activeFilter === "pending"
-                ? session.status === "pending"
-                : session.status === "active" && session.staffId === user?.userId;
+
+        // Filter by tab:
+        // - "all" shows all human sessions (including closed for history)
+        // - "pending" shows only pending sessions
+        // - "active" shows only active sessions assigned to current staff
+        let matchesFilter = false;
+        if (activeFilter === "all") {
+            matchesFilter = true; // Show all including closed
+        } else if (activeFilter === "pending") {
+            matchesFilter = session.status === "pending";
+        } else {
+            // "active" tab - only active sessions for this staff
+            matchesFilter = session.status === "active" && session.staffId === user?.userId;
+        }
 
         return matchesSearch && matchesFilter;
     }).sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
 
+    // Scroll to bottom only when switching to a new session OR when new messages arrive
+    const prevMessagesLengthRef = useRef(messages.length);
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+        if (currentSession) {
+            // Scroll on new messages (received)
+            if (messages.length > prevMessagesLengthRef.current) {
+                setTimeout(() => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+            }
+            prevMessagesLengthRef.current = messages.length;
+        }
+    }, [currentSession, messages.length]);
+
+    // Also scroll when switching sessions
+    useEffect(() => {
+        if (currentSession) {
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+        }
+    }, [currentSession?.id]);
 
     const handleSend = async () => {
         if (!messageInput.trim() || !currentSession) return;
 
-        // If session is pending and I reply, should I auto-accept?
-        // ChatContext doesn't auto-accept in sendMessage, so let's check.
         if (currentSession.status === "pending") {
             acceptSession(currentSession.id);
         }
 
         await sendMessage(messageInput);
         setMessageInput("");
+
+        // Scroll to bottom after sending
+        setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
     };
 
     return (
@@ -81,6 +116,8 @@ export default function StaffChatPage() {
                     <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
+                            id="staff-chat-search"
+                            name="staff-chat-search"
                             placeholder="Tìm khách hàng..."
                             className="pl-9 bg-slate-50"
                             value={searchTerm}
@@ -121,43 +158,47 @@ export default function StaffChatPage() {
                                         currentSession?.id === session.id && "bg-blue-50/50 hover:bg-blue-50/50"
                                     )}
                                 >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <div className="font-semibold text-sm truncate pr-2 max-w-[140px]">
+                                    <div className="flex justify-between items-start mb-1 pr-6">
+                                        <div className={cn(
+                                            "text-sm truncate max-w-[160px]",
+                                            session.unreadCountStaff > 0 ? "font-semibold text-slate-900" : "text-slate-600"
+                                        )}>
                                             {session.userName}
                                         </div>
-                                        <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                        <span className="text-[10px] text-slate-400 whitespace-nowrap ml-2">
                                             {format(new Date(session.lastMessageTime), "HH:mm")}
                                         </span>
                                     </div>
                                     <p className={cn(
-                                        "text-xs truncate mb-2",
+                                        "text-xs mb-2 line-clamp-1",
                                         session.unreadCountStaff > 0 ? "font-semibold text-slate-900" : "text-slate-500"
                                     )}>
                                         {session.lastMessage}
                                     </p>
-                                    <div className="flex items-center gap-2">
-                                        {session.status === "pending" && (
-                                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 h-5 px-1.5 text-[10px]">
-                                                Chờ hỗ trợ
-                                            </Badge>
-                                        )}
-                                        {session.status === "active" && (
-                                            <Badge variant="secondary" className="bg-green-100 text-green-700 h-5 px-1.5 text-[10px]">
-                                                Đang hoạt động
-                                            </Badge>
-                                        )}
-                                        {session.status === "closed" && (
-                                            <Badge variant="outline" className="text-slate-400 h-5 px-1.5 text-[10px]">
-                                                Đã kết thúc
-                                            </Badge>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            {session.status === "pending" && (
+                                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 h-5 px-1.5 text-[10px]">
+                                                    Chờ hỗ trợ
+                                                </Badge>
+                                            )}
+                                            {session.status === "active" && (
+                                                <Badge variant="secondary" className="bg-green-100 text-green-700 h-5 px-1.5 text-[10px]">
+                                                    Đang hoạt động
+                                                </Badge>
+                                            )}
+                                            {session.status === "closed" && (
+                                                <Badge variant="outline" className="text-slate-400 h-5 px-1.5 text-[10px]">
+                                                    Đã kết thúc
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        {session.unreadCountStaff > 0 && (
+                                            <span className="h-5 min-w-[20px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                                {session.unreadCountStaff}
+                                            </span>
                                         )}
                                     </div>
-
-                                    {session.unreadCountStaff > 0 && (
-                                        <span className="absolute top-4 right-4 h-5 w-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                                            {session.unreadCountStaff}
-                                        </span>
-                                    )}
                                 </button>
                             ))
                         )}
@@ -212,11 +253,12 @@ export default function StaffChatPage() {
                             {messages.map((msg) => {
                                 const isStaff = msg.senderRole === "staff" || msg.senderRole === "admin";
                                 const isSystem = msg.senderRole === "system";
+                                const isBot = msg.senderRole === "bot";
 
                                 if (isSystem) {
                                     return (
                                         <div key={msg.id} className="flex justify-center my-4">
-                                            <span className="text-xs bg-slate-100 text-slate-500 px-3 py-1 rounded-full">
+                                            <span className="text-xs bg-slate-200 text-slate-600 px-3 py-1.5 rounded-full">
                                                 {msg.content}
                                             </span>
                                         </div>
@@ -231,24 +273,35 @@ export default function StaffChatPage() {
                                             isStaff ? "justify-end" : "justify-start"
                                         )}
                                     >
-                                        <div className={cn("flex flex-col max-w-[70%]", isStaff ? "items-end" : "items-start")}>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs font-medium text-slate-600">
+                                        <div
+                                            className={cn(
+                                                "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm",
+                                                isStaff
+                                                    ? "bg-primary text-white rounded-tr-none"
+                                                    : isBot
+                                                        ? "bg-gradient-to-br from-violet-100 to-indigo-100 text-slate-800 border border-violet-200 rounded-tl-none"
+                                                        : "bg-white text-slate-800 border border-slate-100 rounded-tl-none"
+                                            )}
+                                        >
+                                            {isBot && (
+                                                <div className="text-[10px] font-medium text-violet-600 mb-1 flex items-center gap-1">
+                                                    <Bot className="h-3 w-3" />
+                                                    Trợ lý AI
+                                                </div>
+                                            )}
+                                            {!isStaff && !isBot && (
+                                                <div className="text-[10px] font-medium text-slate-500 mb-1">
                                                     {msg.senderName}
-                                                </span>
-                                                <span className="text-[10px] text-slate-400">
-                                                    {format(new Date(msg.timestamp), "HH:mm")}
-                                                </span>
-                                            </div>
+                                                </div>
+                                            )}
+                                            <p className="whitespace-pre-wrap">{msg.content}</p>
                                             <div
                                                 className={cn(
-                                                    "px-4 py-3 text-sm shadow-sm",
-                                                    isStaff
-                                                        ? "bg-primary text-white rounded-2xl rounded-tr-none"
-                                                        : "bg-white text-slate-800 border border-slate-100 rounded-2xl rounded-tl-none"
+                                                    "text-[10px] mt-1 opacity-70",
+                                                    isStaff ? "text-primary-foreground" : "text-slate-400"
                                                 )}
                                             >
-                                                {msg.content}
+                                                {format(new Date(msg.timestamp), "HH:mm")}
                                             </div>
                                         </div>
                                     </div>
@@ -260,6 +313,8 @@ export default function StaffChatPage() {
                         <div className="p-4 bg-white border-t">
                             <div className="flex gap-2">
                                 <Input
+                                    id="staff-chat-input"
+                                    name="staff-chat-input"
                                     placeholder={currentSession.status === "closed" ? "Cuộc hội thoại đã kết thúc" : "Nhập tin nhắn..."}
                                     value={messageInput}
                                     onChange={(e) => setMessageInput(e.target.value)}
