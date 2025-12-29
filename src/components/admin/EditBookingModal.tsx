@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
     Select,
@@ -50,6 +51,7 @@ export function EditBookingModal({ isOpen, onClose, booking, onSave }: EditBooki
             email: "",
             phone: "",
             status: "pending",
+            specialRequest: "",
         },
     });
 
@@ -74,6 +76,7 @@ export function EditBookingModal({ isOpen, onClose, booking, onSave }: EditBooki
                 email: booking.contactInfo.email,
                 phone: booking.contactInfo.phone,
                 status: booking.status,
+                specialRequest: booking.specialRequest || "",
             });
         }
     }, [isOpen, booking, form]);
@@ -91,6 +94,7 @@ export function EditBookingModal({ isOpen, onClose, booking, onSave }: EditBooki
                 phone: data.phone,
             },
             status: data.status,
+            specialRequest: data.specialRequest,
             totalPrice,
         });
         onClose();
@@ -252,6 +256,26 @@ export function EditBookingModal({ isOpen, onClose, booking, onSave }: EditBooki
                             )}
                         />
                     </div>
+
+                    {/* Special Request */}
+                    <FormField
+                        control={form.control}
+                        name="specialRequest"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel htmlFor="edit-specialRequest">Yêu cầu đặc biệt</FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                        id="edit-specialRequest"
+                                        placeholder="Ghi chú thêm (tùy chọn)..."
+                                        rows={3}
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     {/* Status Selection */}
                     <FormField

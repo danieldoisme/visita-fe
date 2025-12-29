@@ -12,3 +12,4 @@ export {
     type StatusConfig,
 } from "./StatusBadge";
 export { TourImageManager } from "./TourImageManager";
+export { BookingDetailsModal } from "./BookingDetailsModal";

@@ -12,7 +12,8 @@ export interface ContactInfo {
   phone: string;
 }
 
-export type PaymentMethod = "bank_transfer" | "credit_card" | "momo" | "paypal" | "cash";
+export type PaymentMethod = "momo" | "paypal" | "cash";
+export type PaymentStatus = "pending" | "success" | "failed" | "refunded";
 
 export interface Booking {
   id: number;
@@ -27,7 +28,9 @@ export interface Booking {
   children: number;
   contactInfo: ContactInfo;
   paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
   totalPrice: number;
+  specialRequest?: string;
   status: "pending" | "confirmed" | "cancelled" | "completed";
   createdAt: Date;
 }
@@ -35,10 +38,10 @@ export interface Booking {
 interface BookingContextType {
   bookings: Booking[];
   addBooking: (
-    booking: Omit<Booking, "id" | "status" | "createdAt">
+    booking: Omit<Booking, "id" | "status" | "createdAt" | "paymentStatus">
   ) => Promise<Booking>;
   addStaffBooking: (
-    booking: Omit<Booking, "id" | "status" | "createdAt">,
+    booking: Omit<Booking, "id" | "status" | "createdAt" | "paymentStatus">,
     staffId: string
   ) => Promise<Booking>;
   getBookings: () => Booking[];
@@ -48,6 +51,7 @@ interface BookingContextType {
   confirmBooking: (id: number) => Promise<void>;
   completeBooking: (id: number) => Promise<void>;
   updateBooking: (id: number, data: Partial<Booking>) => Promise<void>;
+  updatePaymentStatus: (id: number, status: PaymentStatus) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -69,7 +73,8 @@ const MOCK_BOOKINGS: Booking[] = [
       email: "nguyenvanan@gmail.com",
       phone: "0901234567",
     },
-    paymentMethod: "bank_transfer",
+    paymentMethod: "momo",
+    paymentStatus: "success",
     totalPrice: 11250000,
     status: "confirmed",
     createdAt: new Date("2024-12-20"),
@@ -87,8 +92,10 @@ const MOCK_BOOKINGS: Booking[] = [
       email: "tranthib@gmail.com",
       phone: "0912345678",
     },
-    paymentMethod: "credit_card",
+    paymentMethod: "paypal",
+    paymentStatus: "pending",
     totalPrice: 20800000,
+    specialRequest: "Cần phòng view biển",
     status: "pending",
     createdAt: new Date("2024-12-25"),
   },
@@ -106,6 +113,7 @@ const MOCK_BOOKINGS: Booking[] = [
       phone: "0923456789",
     },
     paymentMethod: "momo",
+    paymentStatus: "success",
     totalPrice: 23400000,
     status: "confirmed",
     createdAt: new Date("2024-12-22"),
@@ -124,6 +132,7 @@ const MOCK_BOOKINGS: Booking[] = [
       phone: "0934567890",
     },
     paymentMethod: "cash",
+    paymentStatus: "success",
     totalPrice: 3200000,
     status: "completed",
     createdAt: new Date("2024-12-15"),
@@ -142,6 +151,7 @@ const MOCK_BOOKINGS: Booking[] = [
       phone: "0945678901",
     },
     paymentMethod: "paypal",
+    paymentStatus: "refunded",
     totalPrice: 9800000,
     status: "cancelled",
     createdAt: new Date("2024-12-18"),
@@ -159,7 +169,8 @@ const MOCK_BOOKINGS: Booking[] = [
       email: "vovanphong@gmail.com",
       phone: "0956789012",
     },
-    paymentMethod: "bank_transfer",
+    paymentMethod: "cash",
+    paymentStatus: "pending",
     totalPrice: 9000000,
     status: "pending",
     createdAt: new Date("2024-12-27"),
@@ -200,14 +211,23 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   }, [bookings]);
 
   const addBooking = async (
-    bookingData: Omit<Booking, "id" | "status" | "createdAt">
+    bookingData: Omit<Booking, "id" | "status" | "createdAt" | "paymentStatus">
   ): Promise<Booking> => {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
+    // Determine initial payment status based on payment method
+    // MoMo/PayPal: Assume gateway handshake succeeded (handled in UI before calling this)
+    // Cash: Payment pending until received at tour
+    const paymentStatus: PaymentStatus =
+      bookingData.paymentMethod === "momo" || bookingData.paymentMethod === "paypal"
+        ? "success"
+        : "pending";
+
     const newBooking: Booking = {
       ...bookingData,
       id: Math.max(...bookings.map((b) => b.id), 0) + 1,
+      paymentStatus,
       status: "pending",
       createdAt: new Date(),
     };
@@ -218,7 +238,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
   // Staff booking - automatically confirmed (paid upfront at office)
   const addStaffBooking = async (
-    bookingData: Omit<Booking, "id" | "status" | "createdAt">,
+    bookingData: Omit<Booking, "id" | "status" | "createdAt" | "paymentStatus">,
     staffId: string
   ): Promise<Booking> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -227,6 +247,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       ...bookingData,
       id: Math.max(...bookings.map((b) => b.id), 0) + 1,
       staffId,
+      paymentStatus: "success", // Staff bookings are paid upfront
       status: "confirmed", // Auto-confirmed for staff bookings
       createdAt: new Date(),
     };
@@ -291,9 +312,18 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const updatePaymentStatus = async (id: number, status: PaymentStatus) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setBookings((prev) =>
+      prev.map((booking) =>
+        booking.id === id ? { ...booking, paymentStatus: status } : booking
+      )
+    );
+  };
+
   return (
     <BookingContext.Provider
-      value={{ bookings, addBooking, addStaffBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking, confirmBooking, completeBooking, updateBooking }}
+      value={{ bookings, addBooking, addStaffBooking, getBookings, getUserBookings, claimGuestBookings, cancelBooking, confirmBooking, completeBooking, updateBooking, updatePaymentStatus }}
     >
       {children}
     </BookingContext.Provider>

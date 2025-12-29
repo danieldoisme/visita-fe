@@ -69,8 +69,9 @@ export const bookingSchema = z.object({
     .string()
     .min(1, "Vui lòng nhập số điện thoại")
     .regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ (10-11 số)"),
-  paymentMethod: z.enum(["bank_transfer", "credit_card", "momo", "paypal", "cash"]),
+  paymentMethod: z.enum(["momo", "paypal", "cash"]),
   promoCode: z.string().optional(),
+  specialRequest: z.string().max(500, "Yêu cầu đặc biệt không quá 500 ký tự").optional(),
 });
 
 export type BookingFormData = z.infer<typeof bookingSchema>;
@@ -85,6 +86,7 @@ export const editBookingSchema = z.object({
   phone: z.string().min(1, "Vui lòng nhập số điện thoại")
     .regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ (10-11 số)"),
   status: z.enum(["pending", "confirmed", "cancelled", "completed"]),
+  specialRequest: z.string().max(500, "Yêu cầu đặc biệt không quá 500 ký tự").optional(),
 });
 
 export type EditBookingFormData = z.infer<typeof editBookingSchema>;

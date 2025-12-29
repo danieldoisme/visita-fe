@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { useBooking, Booking } from "@/context/BookingContext";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, StatusBadge, bookingStatusConfig, PaginationControls, ITEMS_PER_PAGE, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, StatusBadge, bookingStatusConfig, PaginationControls, ITEMS_PER_PAGE, type BulkAction, BookingDetailsModal } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,7 +27,6 @@ const BULK_CONFIRM_KEY = "bulk_confirm_booking";
 const BULK_CANCEL_KEY = "bulk_cancel_booking";
 
 export default function BookingsManagementPage() {
-    const navigate = useNavigate();
     const { bookings, confirmBooking, cancelBooking, updateBooking } = useBooking();
     const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
 
@@ -36,6 +34,7 @@ export default function BookingsManagementPage() {
     const [loading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+    const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
 
     // Sorting state
     const { sort, toggleSort, sortData } = useSorting<Booking>({
@@ -254,9 +253,9 @@ export default function BookingsManagementPage() {
 
     const dialogContent = getDialogContent();
 
-    // Navigate to booking details (tour page for now)
+    // Open booking details modal
     const handleViewDetails = (booking: Booking) => {
-        navigate(`/tours/${booking.tourId}`);
+        setViewingBooking(booking);
     };
 
     // Clear search filter
@@ -515,6 +514,13 @@ export default function BookingsManagementPage() {
                 onClose={() => setEditingBooking(null)}
                 booking={editingBooking}
                 onSave={handleSaveBooking}
+            />
+
+            {/* Booking Details Modal */}
+            <BookingDetailsModal
+                isOpen={viewingBooking !== null}
+                onClose={() => setViewingBooking(null)}
+                booking={viewingBooking}
             />
         </div>
     );

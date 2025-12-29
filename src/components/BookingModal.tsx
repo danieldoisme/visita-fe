@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { useBooking, PaymentMethod } from "@/context/BookingContext";
 import { Tour } from "@/context/TourContext";
@@ -52,6 +53,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
             phone: "",
             paymentMethod: "cash",
             promoCode: "",
+            specialRequest: "",
         },
     });
 
@@ -63,6 +65,17 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
     const adults = watch("adults");
     const children = watch("children");
     const isSuccess = form.formState.isSubmitSuccessful;
+
+    // Ref for date section to scroll into view on error
+    const dateSectionRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to first error field on validation failure
+    useEffect(() => {
+        const errors = form.formState.errors;
+        if (errors.selectedDate && dateSectionRef.current) {
+            dateSectionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }, [form.formState.errors]);
 
     // Pre-fill contact info if logged in
     useEffect(() => {
@@ -83,6 +96,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 email: user?.email || "",
                 phone: "",
                 paymentMethod: "cash",
+                specialRequest: "",
             });
             setAppliedDiscount(null);
         }
@@ -119,6 +133,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 },
                 paymentMethod: data.paymentMethod,
                 totalPrice,
+                specialRequest: data.specialRequest,
                 // Include promo code if applied
                 ...(appliedDiscount && { promoCode: appliedDiscount.code }),
                 // Always link to authenticated user
@@ -251,7 +266,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                         control={form.control}
                         name="selectedDate"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem ref={dateSectionRef}>
                                 <p className="flex items-center gap-2 text-sm font-medium mb-2">
                                     <CalendarDays className="w-4 h-4" />
                                     Chọn ngày khởi hành
@@ -396,6 +411,28 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                             />
                         </div>
                     </div>
+
+                    {/* Special Request */}
+                    <FormField
+                        control={form.control}
+                        name="specialRequest"
+                        render={({ field }) => (
+                            <FormItem>
+                                <label htmlFor="specialRequest" className="text-sm font-medium mb-2 block">
+                                    Yêu cầu đặc biệt (tùy chọn)
+                                </label>
+                                <FormControl>
+                                    <Textarea
+                                        id="specialRequest"
+                                        placeholder="Ghi chú thêm cho tour..."
+                                        rows={3}
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     {/* Promo Code */}
                     <PromoCodeInput
