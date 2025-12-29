@@ -8,7 +8,6 @@ export interface UserDetails {
     id: number;
     email: string;
     name: string;
-    username?: string;
     phone?: string;
     dob?: string;
     gender?: "male" | "female" | "other";
@@ -53,9 +52,6 @@ export function UserDetailsModal({ user, isOpen, onClose }: UserDetailsModalProp
                     </div>
                     <div className="flex-1">
                         <p className="font-semibold text-lg">{user.name}</p>
-                        {user.username && (
-                            <p className="text-sm text-muted-foreground">@{user.username}</p>
-                        )}
                     </div>
                 </div>
 
