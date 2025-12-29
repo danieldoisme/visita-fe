@@ -33,6 +33,10 @@ function Calendar({
         chevron: `${defaultClassNames.chevron} fill-primary`,
         ...classNames,
       }}
+      labels={{
+        labelMonthDropdown: () => "Chọn tháng",
+        labelYearDropdown: () => "Chọn năm",
+      }}
       {...props}
     />
   );

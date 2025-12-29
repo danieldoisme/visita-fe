@@ -4,11 +4,11 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { UserDetailsModal, UserDetails } from "@/components/UserDetailsModal";
 import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Modal } from "@/components/ui/modal";
 import {
   Table,
   TableBody,
@@ -17,14 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Lock, Unlock, KeyRound, Trash2, Users } from "lucide-react";
+import { Search, Lock, Unlock, Eye, Trash2, Users } from "lucide-react";
 
-interface UserData {
-  id: number;
-  email: string;
-  name: string;
-  role: "user" | "admin";
-  status: "active" | "locked";
+interface UserData extends UserDetails {
   avatar?: string;
 }
 
@@ -34,6 +29,7 @@ const initialUsers: UserData[] = [
     id: 1,
     email: "admin@visita.com",
     name: "Admin",
+    username: "admin",
     role: "admin",
     status: "active",
   },
@@ -41,6 +37,10 @@ const initialUsers: UserData[] = [
     id: 2,
     email: "user@visita.com",
     name: "Nguyen Van A",
+    username: "nguyenvana",
+    phone: "0901234567",
+    dob: "1995-05-15",
+    gender: "male",
     role: "user",
     status: "active",
   },
@@ -48,6 +48,10 @@ const initialUsers: UserData[] = [
     id: 3,
     email: "tran.binh@email.com",
     name: "Trần Thị Bình",
+    username: "tranthib",
+    phone: "0912345678",
+    dob: "1990-03-20",
+    gender: "female",
     role: "user",
     status: "active",
   },
@@ -55,6 +59,9 @@ const initialUsers: UserData[] = [
     id: 4,
     email: "le.cuong@email.com",
     name: "Lê Hoàng Cường",
+    username: "lehoangc",
+    phone: "0923456789",
+    gender: "male",
     role: "user",
     status: "locked",
   },
@@ -62,6 +69,9 @@ const initialUsers: UserData[] = [
     id: 5,
     email: "pham.duy@email.com",
     name: "Phạm Minh Duy",
+    username: "phamminhd",
+    dob: "1998-12-01",
+    gender: "male",
     role: "user",
     status: "active",
   },
@@ -78,9 +88,8 @@ const BULK_UNLOCK_USER_KEY = "bulk_unlock_user";
 export default function UsersPage() {
   const [users, setUsers] = useState<UserData[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
-  const [resetSuccess, setResetSuccess] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const loading = false; // Simulated loading state for skeleton demo
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -337,22 +346,15 @@ export default function UsersPage() {
 
   const dialogContent = getDialogContent();
 
-  // Reset password handlers
-  const handleOpenResetModal = (user: UserData) => {
+  // View details handlers
+  const handleViewDetails = (user: UserData) => {
     setSelectedUser(user);
-    setResetSuccess(false);
-    setIsResetModalOpen(true);
+    setIsDetailsModalOpen(true);
   };
 
-  const handleResetPassword = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setResetSuccess(true);
-  };
-
-  const handleCloseResetModal = () => {
-    setIsResetModalOpen(false);
+  const handleCloseDetails = () => {
+    setIsDetailsModalOpen(false);
     setSelectedUser(null);
-    setResetSuccess(false);
   };
 
   // Clear search filter
@@ -522,35 +524,27 @@ export default function UsersPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          onClick={() => handleViewDetails(user)}
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleToggleLockClick(user)}
                           disabled={user.role === "admin"}
                           title={user.status === "active" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
                         >
                           {user.status === "active" ? (
-                            <>
-                              <Lock className="h-4 w-4 mr-1" />
-                              Khóa
-                            </>
+                            <Lock className="h-4 w-4" />
                           ) : (
-                            <>
-                              <Unlock className="h-4 w-4 mr-1" />
-                              Mở khóa
-                            </>
+                            <Unlock className="h-4 w-4" />
                           )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenResetModal(user)}
-                          disabled={user.role === "admin"}
-                          title="Reset mật khẩu"
-                        >
-                          <KeyRound className="h-4 w-4 mr-1" />
-                          Reset MK
                         </Button>
                         <Button
                           variant="ghost"
@@ -573,46 +567,12 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* Reset Password Modal */}
-      <Modal
-        isOpen={isResetModalOpen}
-        onClose={handleCloseResetModal}
-        title="Đặt lại mật khẩu"
-      >
-        {!resetSuccess ? (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Bạn có chắc chắn muốn đặt lại mật khẩu cho người dùng{" "}
-              <strong>{selectedUser?.name}</strong> ({selectedUser?.email})?
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Một email chứa liên kết đặt lại mật khẩu sẽ được gửi đến địa chỉ
-              email của người dùng.
-            </p>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={handleCloseResetModal}>
-                Hủy
-              </Button>
-              <Button onClick={handleResetPassword}>Xác nhận</Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-center py-4">
-              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                <KeyRound className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-            <p className="text-center text-sm text-muted-foreground">
-              Đã gửi email đặt lại mật khẩu đến{" "}
-              <strong>{selectedUser?.email}</strong>.
-            </p>
-            <div className="flex justify-center pt-4">
-              <Button onClick={handleCloseResetModal}>Đóng</Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* User Details Modal */}
+      <UserDetailsModal
+        user={selectedUser}
+        isOpen={isDetailsModalOpen}
+        onClose={handleCloseDetails}
+      />
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog

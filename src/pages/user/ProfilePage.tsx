@@ -16,6 +16,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Form,
     FormControl,
@@ -26,7 +39,7 @@ import {
 } from "@/components/ui/form";
 import {
     User,
-    Calendar,
+    Calendar as CalendarIcon,
     Users,
     Camera,
     Save,
@@ -38,9 +51,11 @@ import {
     Trash2,
     Star,
     MessageSquare,
+    Phone,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 type TabType = "personal" | "bookings" | "favorites" | "reviews" | "security";
 
@@ -119,6 +134,9 @@ export default function ProfilePage() {
         defaultValues: {
             name: user?.fullName || "",
             email: user?.email || "",
+            phone: "",
+            dob: null,
+            gender: null,
         },
     });
 
@@ -132,12 +150,14 @@ export default function ProfilePage() {
         },
     });
 
-    // Update form when user data changes
     useEffect(() => {
         if (user) {
             form.reset({
                 name: user.fullName,
                 email: user.email,
+                phone: "",
+                dob: null,
+                gender: null,
             });
         }
     }, [user, form]);
@@ -322,7 +342,7 @@ export default function ProfilePage() {
                                     }`}
                             >
                                 <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4" />
+                                    <CalendarIcon className="w-4 h-4" />
                                     Đặt chỗ của tôi
                                     {userBookings.length > 0 && (
                                         <Badge variant="secondary" className="ml-1">
@@ -451,6 +471,99 @@ export default function ProfilePage() {
                                                     </FormItem>
                                                 )}
                                             />
+                                            <FormField
+                                                control={form.control}
+                                                name="phone"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel htmlFor="phone">Số điện thoại</FormLabel>
+                                                        <div className="relative">
+                                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                                            <FormControl>
+                                                                <Input
+                                                                    id="phone"
+                                                                    type="tel"
+                                                                    placeholder="0901234567"
+                                                                    autoComplete="tel"
+                                                                    className="pl-10"
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                        </div>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="dob"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-col">
+                                                            <FormLabel htmlFor="dob">Ngày sinh</FormLabel>
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                    <Button
+                                                                        id="dob"
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        className={cn(
+                                                                            "w-full pl-3 text-left font-normal",
+                                                                            !field.value && "text-muted-foreground"
+                                                                        )}
+                                                                    >
+                                                                        {field.value ? (
+                                                                            format(field.value, "dd/MM/yyyy", { locale: vi })
+                                                                        ) : (
+                                                                            <span>Chọn ngày sinh</span>
+                                                                        )}
+                                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                    </Button>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-auto p-0" align="start">
+                                                                    <Calendar
+                                                                        mode="single"
+                                                                        selected={field.value || undefined}
+                                                                        onSelect={field.onChange}
+                                                                        disabled={(date) =>
+                                                                            date > new Date() || date < new Date("1900-01-01")
+                                                                        }
+                                                                        initialFocus
+                                                                        captionLayout="dropdown"
+                                                                        fromYear={1940}
+                                                                        toYear={new Date().getFullYear()}
+                                                                    />
+                                                                </PopoverContent>
+                                                            </Popover>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="gender"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-col">
+                                                            <FormLabel htmlFor="gender">Giới tính</FormLabel>
+                                                            <Select
+                                                                name="gender"
+                                                                onValueChange={field.onChange}
+                                                                value={field.value ?? ""}
+                                                            >
+                                                                <SelectTrigger id="gender">
+                                                                    <SelectValue placeholder="Chọn giới tính" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="male">Nam</SelectItem>
+                                                                    <SelectItem value="female">Nữ</SelectItem>
+                                                                    <SelectItem value="other">Khác</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
 
                                             {/* Save Button */}
                                             <div className="flex items-center gap-4 pt-4 border-t">
@@ -492,7 +605,7 @@ export default function ProfilePage() {
                                 <Card>
                                     <CardContent className="py-16 text-center">
                                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
-                                            <Calendar className="w-8 h-8 text-slate-400" />
+                                            <CalendarIcon className="w-8 h-8 text-slate-400" />
                                         </div>
                                         <h3 className="text-lg font-medium text-slate-900 mb-2">
                                             Chưa có đặt chỗ nào
@@ -532,7 +645,7 @@ export default function ProfilePage() {
 
                                                         <div className="flex flex-wrap gap-4 text-sm text-slate-600">
                                                             <div className="flex items-center gap-1.5">
-                                                                <Calendar className="w-4 h-4 text-slate-400" />
+                                                                <CalendarIcon className="w-4 h-4 text-slate-400" />
                                                                 {format(new Date(booking.selectedDate), "dd/MM/yyyy", {
                                                                     locale: vi,
                                                                 })}
