@@ -414,11 +414,17 @@ export default function InteractionManagementPage() {
     };
 
     // ============== Contact Actions ==============
-    const handleMarkAsRead = (id: number) => {
+    const handleMarkAsRead = (id: number, silent = false) => {
         setContacts((prev) =>
             prev.map((c) => (c.id === id ? { ...c, status: "read" as ContactStatus } : c))
         );
-        toast.success("Đã đánh dấu đã đọc!");
+        // Update selectedContact if it's the one being marked
+        if (selectedContact?.id === id) {
+            setSelectedContact((prev) => prev ? { ...prev, status: "read" as ContactStatus } : null);
+        }
+        if (!silent) {
+            toast.success("Đã đánh dấu đã đọc!");
+        }
     };
 
     const handleMarkAsUnread = (id: number) => {
@@ -487,13 +493,15 @@ export default function InteractionManagementPage() {
         }
     };
 
-    // Open contact detail and auto-mark as read
+    // Open contact detail and auto-mark as read (silently)
     const handleOpenContact = (contact: Contact) => {
-        setSelectedContact(contact);
         if (contact.status === "new") {
-            setContacts((prev) =>
-                prev.map((c) => (c.id === contact.id ? { ...c, status: "read" as ContactStatus } : c))
-            );
+            // Set selectedContact with updated status immediately
+            setSelectedContact({ ...contact, status: "read" as ContactStatus });
+            // Update contacts array silently
+            handleMarkAsRead(contact.id, true);
+        } else {
+            setSelectedContact(contact);
         }
     };
 
@@ -992,7 +1000,7 @@ export default function InteractionManagementPage() {
                                     Quay lại danh sách
                                 </Button>
                                 <div className="flex items-center gap-2">
-                                    {selectedContact.status === "read" && (
+                                    {selectedContact.status === "read" ? (
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -1001,6 +1009,16 @@ export default function InteractionManagementPage() {
                                         >
                                             <MailOpen className="h-4 w-4 mr-1" />
                                             Đánh dấu chưa đọc
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                            onClick={() => handleMarkAsRead(selectedContact.id)}
+                                        >
+                                            <Eye className="h-4 w-4 mr-1" />
+                                            Đánh dấu đã đọc
                                         </Button>
                                     )}
                                     <Button
