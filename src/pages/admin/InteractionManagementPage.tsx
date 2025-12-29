@@ -20,7 +20,7 @@ import {
     Star,
     Check,
     EyeOff,
-    Trash,
+    Trash2,
     CheckCircle,
     MessageSquare,
     Mail,
@@ -654,7 +654,7 @@ export default function InteractionManagementPage() {
                                     },
                                     {
                                         label: "Xóa tất cả",
-                                        icon: <Trash className="h-4 w-4 mr-1" />,
+                                        icon: <Trash2 className="h-4 w-4 mr-1" />,
                                         onClick: handleBulkDeleteReviewsClick,
                                         variant: "destructive",
                                     },
@@ -782,7 +782,7 @@ export default function InteractionManagementPage() {
                                                         title="Xóa"
                                                         onClick={() => handleDeleteReviewClick(review.id)}
                                                     >
-                                                        <Trash className="h-4 w-4" />
+                                                        <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </div>
                                             </TableCell>
@@ -841,7 +841,7 @@ export default function InteractionManagementPage() {
                                             },
                                             {
                                                 label: "Xóa tất cả",
-                                                icon: <Trash className="h-4 w-4 mr-1" />,
+                                                icon: <Trash2 className="h-4 w-4 mr-1" />,
                                                 onClick: handleBulkDeleteContactsClick,
                                                 variant: "destructive",
                                             },
@@ -968,7 +968,7 @@ export default function InteractionManagementPage() {
                                                                 title="Xóa"
                                                                 onClick={() => handleDeleteContactClick(contact.id)}
                                                             >
-                                                                <Trash className="h-4 w-4" />
+                                                                <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </div>
                                                     </TableCell>
@@ -1029,7 +1029,7 @@ export default function InteractionManagementPage() {
                                             handleDeleteContactClick(selectedContact.id);
                                         }}
                                     >
-                                        <Trash className="h-4 w-4 mr-1" />
+                                        <Trash2 className="h-4 w-4 mr-1" />
                                         Xóa
                                     </Button>
                                 </div>
@@ -1181,7 +1181,7 @@ export default function InteractionManagementPage() {
                                 variant="destructive"
                                 onClick={() => handleDeleteReviewClick(selectedReview.id)}
                             >
-                                <Trash className="h-4 w-4 mr-2" />
+                                <Trash2 className="h-4 w-4 mr-2" />
                                 Xóa
                             </Button>
                         </div>
