@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useTour } from "@/context/TourContext";
 import { useChat } from "@/context/ChatContext";
 import { matchesDateRange } from "@/utils/dateUtils";
@@ -8,8 +8,6 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import {
   Popover,
@@ -17,19 +15,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
-import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { AuthRequiredModal } from "@/components/AuthRequiredModal";
+import { TourCard } from "@/components/TourCard";
 import { useAuth } from "@/context/AuthContext";
 import {
   MapPin,
   Search,
   Calendar as CalendarIcon,
-  Clock,
   Star,
   LayoutGrid,
   List,
-
-  Check,
   ChevronRight,
   SlidersHorizontal,
   X,
@@ -483,100 +478,11 @@ export default function ToursPage() {
                 }`}
             >
               {filteredTours.map((tour) => (
-                <Card
+                <TourCard
                   key={tour.id}
-                  className={`group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-white rounded-2xl ${viewMode === "list"
-                    ? "flex flex-col md:flex-row"
-                    : "flex flex-col"
-                    }`}
-                >
-                  {/* Image Section */}
-                  <div
-                    className={`relative overflow-hidden ${viewMode === "list"
-                      ? "w-full md:w-[320px] h-[240px] md:h-auto"
-                      : "aspect-[4/3] w-full"
-                      }`}
-                  >
-                    <img
-                      src={tour.image}
-                      alt={tour.title}
-                      className="object-cover w-full h-full hover:scale-110 transition-transform duration-700"
-                    />
-                    <div className="absolute top-3 left-3 flex flex-col gap-2">
-                      {tour.tags?.map((tag, i) => (
-                        <Badge
-                          key={i}
-                          className="bg-white/90 text-slate-900 hover:bg-white shadow-sm backdrop-blur-sm border-0 font-semibold"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <FavoriteButton tourId={tour.id} className="absolute top-3 right-3" />
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="flex flex-col flex-1 p-5">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        <MapPin className="h-3.5 w-3.5 mr-1 text-primary" />
-                        {tour.location}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-bold text-slate-900">
-                          {tour.rating}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          ({tour.reviews})
-                        </span>
-                      </div>
-                    </div>
-
-                    <h3 className="font-bold text-lg mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                      {tour.title}
-                    </h3>
-
-                    <div className="flex flex-wrap gap-3 mb-4">
-                      <div className="flex items-center text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
-                        <Clock className="h-3.5 w-3.5 mr-1.5" />
-                        {tour.duration}
-                      </div>
-                      {tour.features?.slice(0, 2).map((feature, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md"
-                        >
-                          <Check className="h-3 w-3 mr-1.5 text-green-600" />
-                          {feature}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-auto pt-4 border-t border-slate-100 flex items-end justify-between">
-                      <div className="flex flex-col">
-                        {tour.originalPrice && (
-                          <span className="text-xs text-muted-foreground line-through mb-0.5">
-                            {tour.originalPrice.toLocaleString("vi-VN")}đ
-                          </span>
-                        )}
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-xs text-muted-foreground font-medium">
-                            Từ
-                          </span>
-                          <span className="text-xl font-bold text-primary">
-                            {tour.price.toLocaleString("vi-VN")}đ
-                          </span>
-                        </div>
-                      </div>
-                      <Link to={`/tours/${tour.id}`}>
-                        <Button className="rounded-xl px-6 font-semibold shadow-none hover:shadow-md transition-all">
-                          Xem chi tiết
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
+                  tour={tour}
+                  layout={viewMode}
+                />
               ))}
             </div>
 

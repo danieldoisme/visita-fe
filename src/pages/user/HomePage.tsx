@@ -7,7 +7,6 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import {
@@ -18,19 +17,19 @@ import {
 import {
   MapPin,
   Calendar as CalendarIcon,
-  Star,
   Search,
   Users,
   ArrowRight,
   Shield,
   Globe,
-  Clock,
   CheckCircle2,
   X,
   Minus,
   Plus,
 } from "lucide-react";
 import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
+import { TourCard } from "@/components/TourCard";
+import { Tour } from "@/context/TourContext";
 
 const TRENDING_DESTINATIONS = [
   "Hạ Long, Quảng Ninh",
@@ -43,7 +42,7 @@ const TRENDING_DESTINATIONS = [
   "Huế",
 ];
 
-const FEATURED_TOURS = [
+const FEATURED_TOURS: Tour[] = [
   {
     id: 1,
     title: "Khám phá Vịnh Hạ Long",
@@ -52,9 +51,9 @@ const FEATURED_TOURS = [
     duration: "2 Ngày",
     rating: 4.9,
     reviews: 124,
-    image:
-      "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
-    tag: "Bán chạy",
+    images: [{ id: "f1", url: "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
+    tags: ["Bán chạy"],
+    status: "Hoạt động",
   },
   {
     id: 2,
@@ -64,9 +63,9 @@ const FEATURED_TOURS = [
     duration: "3 Ngày",
     rating: 4.8,
     reviews: 89,
-    image:
-      "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop",
-    tag: "Văn hóa",
+    images: [{ id: "f2", url: "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
+    tags: ["Văn hóa"],
+    status: "Hoạt động",
   },
   {
     id: 3,
@@ -76,9 +75,9 @@ const FEATURED_TOURS = [
     duration: "4 Ngày",
     rating: 4.9,
     reviews: 210,
-    image:
-      "https://images.unsplash.com/photo-1730714103959-5d5a30acf547?q=80&w=2938&auto=format&fit=crop",
-    tag: "Lãng mạn",
+    images: [{ id: "f3", url: "https://images.unsplash.com/photo-1730714103959-5d5a30acf547?q=80&w=2938&auto=format&fit=crop", isPrimary: true, order: 0 }],
+    tags: ["Lãng mạn"],
+    status: "Hoạt động",
   },
 ];
 
@@ -110,7 +109,7 @@ const POPULAR_DESTINATIONS = [
 ];
 
 // Mock AI-recommended tours based on user history (thesis: Recommendation System)
-const AI_RECOMMENDED_TOURS = [
+const AI_RECOMMENDED_TOURS: Tour[] = [
   {
     id: 101,
     title: "Khám phá Hang Sơn Đoòng",
@@ -119,9 +118,9 @@ const AI_RECOMMENDED_TOURS = [
     duration: "4 Ngày",
     rating: 4.9,
     reviews: 56,
-    image:
-      "https://images.unsplash.com/photo-1638793772999-8df79f0ef0b8?q=80&w=2070&auto=format&fit=crop",
-    tag: "Phiêu lưu",
+    images: [{ id: "ai1", url: "https://images.unsplash.com/photo-1638793772999-8df79f0ef0b8?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
+    tags: ["Phiêu lưu"],
+    status: "Hoạt động",
   },
   {
     id: 102,
@@ -131,9 +130,9 @@ const AI_RECOMMENDED_TOURS = [
     duration: "3 Ngày",
     rating: 4.8,
     reviews: 92,
-    image:
-      "https://images.unsplash.com/photo-1686755660203-55781dbc2f24?q=80&w=2070&auto=format&fit=crop",
-    tag: "Trekking",
+    images: [{ id: "ai2", url: "https://images.unsplash.com/photo-1686755660203-55781dbc2f24?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
+    tags: ["Trekking"],
+    status: "Hoạt động",
   },
   {
     id: 103,
@@ -143,9 +142,9 @@ const AI_RECOMMENDED_TOURS = [
     duration: "3 Ngày",
     rating: 4.9,
     reviews: 78,
-    image:
-      "https://images.unsplash.com/photo-1725433734976-9be2e772d0bc?q=80&w=2070&auto=format&fit=crop",
-    tag: "Biển đảo",
+    images: [{ id: "ai3", url: "https://images.unsplash.com/photo-1725433734976-9be2e772d0bc?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
+    tags: ["Biển đảo"],
+    status: "Hoạt động",
   },
 ];
 
@@ -462,58 +461,13 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {AI_RECOMMENDED_TOURS.map((tour) => (
-                <Card
+                <TourCard
                   key={tour.id}
-                  className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden rounded-2xl bg-white/80 backdrop-blur-sm"
-                >
-                  <div className="relative h-[240px] overflow-hidden">
-                    <img
-                      src={tour.image}
-                      alt={tour.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <Badge className="absolute top-4 right-4 bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 font-semibold shadow-sm border-0">
-                      {tour.tag}
-                    </Badge>
-                    <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center">
-                      <MapPin className="h-3 w-3 mr-1" /> {tour.location}
-                    </div>
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-bold text-xl line-clamp-1 group-hover:text-purple-600 transition-colors">
-                        {tour.title}
-                      </h3>
-                    </div>
-
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1.5 text-purple-500" />
-                        {tour.duration}
-                      </div>
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 mr-1.5 text-yellow-500 fill-yellow-500" />
-                        {tour.rating} ({tour.reviews})
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase font-semibold">
-                          Từ
-                        </p>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {tour.price.toLocaleString("vi-VN")}đ
-                        </p>
-                      </div>
-                      <Link to={`/tours/${tour.id}`}>
-                        <Button className="rounded-full px-6 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600">
-                          Xem chi tiết
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
+                  tour={tour}
+                  variant="recommended"
+                  accentColor="purple"
+                  showFavorite={false}
+                />
               ))}
             </div>
           </div>
@@ -615,56 +569,12 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {FEATURED_TOURS.map((tour) => (
-              <Card
+              <TourCard
                 key={tour.id}
-                className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden rounded-2xl"
-              >
-                <div className="relative h-[240px] overflow-hidden">
-                  <img
-                    src={tour.image}
-                    alt={tour.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <Badge className="absolute top-4 right-4 bg-white/90 text-black hover:bg-white font-semibold shadow-sm">
-                    {tour.tag}
-                  </Badge>
-                  <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium flex items-center">
-                    <MapPin className="h-3 w-3 mr-1" /> {tour.location}
-                  </div>
-                </div>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-bold text-xl line-clamp-1 group-hover:text-primary transition-colors">
-                      {tour.title}
-                    </h3>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-1.5 text-primary" />
-                      {tour.duration}
-                    </div>
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 mr-1.5 text-yellow-500 fill-yellow-500" />
-                      {tour.rating} ({tour.reviews})
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase font-semibold">
-                        Từ
-                      </p>
-                      <p className="text-2xl font-bold text-primary">
-                        {tour.price.toLocaleString("vi-VN")}đ
-                      </p>
-                    </div>
-                    <Link to={`/tours/${tour.id}`}>
-                      <Button className="rounded-full px-6">Xem chi tiết</Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+                tour={tour}
+                variant="featured"
+                showFavorite={false}
+              />
             ))}
           </div>
 

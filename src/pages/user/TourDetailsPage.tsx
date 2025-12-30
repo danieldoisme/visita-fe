@@ -5,26 +5,36 @@ import { useAuth } from "@/context/AuthContext";
 import { BookingModal } from "@/components/BookingModal";
 import { AuthRequiredModal } from "@/components/AuthRequiredModal";
 import { TourImageGallery } from "@/components/TourImageGallery";
+import { TourCard } from "@/components/TourCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, Star, ArrowLeft, Calendar, Users } from "lucide-react";
+import { MapPin, Clock, Star, ArrowLeft, Calendar, Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { useReview } from "@/context/ReviewContext";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
+const TOURS_PER_PAGE = 2;
+
 export default function TourDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getTour } = useTour();
+  const { getTour, getRecommendedTours } = useTour();
   const { getReviewsByTour } = useReview();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isAdmin, isStaff } = useAuth();
+
+  // Only show recommendations for logged in regular users (not admin/staff)
+  const showRecommendations = isAuthenticated && !isAdmin && !isStaff;
   const [tour, setTour] = useState<Tour | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Recommended tours state
+  const [recommendedTours, setRecommendedTours] = useState<Tour[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Get dynamic reviews
   const reviews = tour ? getReviewsByTour(tour.id) : [];
@@ -62,6 +72,25 @@ export default function TourDetailsPage() {
     };
     fetchTour();
   }, [id, getTour]);
+
+  // Fetch recommended tours when tour is loaded
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (tour) {
+        const recommendations = await getRecommendedTours(tour.id, tour.category);
+        setRecommendedTours(recommendations);
+        setCurrentPage(0); // Reset pagination when tour changes
+      }
+    };
+    fetchRecommendations();
+  }, [tour, getRecommendedTours]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(recommendedTours.length / TOURS_PER_PAGE);
+  const paginatedTours = recommendedTours.slice(
+    currentPage * TOURS_PER_PAGE,
+    (currentPage + 1) * TOURS_PER_PAGE
+  );
 
   if (loading) {
     return (
@@ -262,40 +291,84 @@ export default function TourDetailsPage() {
           </div>
         </div>
 
-        {/* Sidebar Booking Card */}
+        {/* Sidebar - Sticky container for both booking and recommendations */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl border shadow-sm p-6 sticky top-24">
-            <div className="mb-6">
-              <span className="text-gray-500">Giá từ</span>
-              <div className="text-3xl font-bold text-primary">
-                {formatCurrency(tour.price)}
+          <div className="sticky top-24 space-y-6">
+            {/* Booking Card */}
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <div className="mb-6">
+                <span className="text-gray-500">Giá từ</span>
+                <div className="text-3xl font-bold text-primary">
+                  {formatCurrency(tour.price)}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-4 mb-6">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-gray-500" />
-                <div>
-                  <div className="text-sm font-medium">Ngày khởi hành</div>
-                  <div className="text-xs text-gray-500">
-                    Liên hệ để biết chi tiết
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Calendar className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="text-sm font-medium">Ngày khởi hành</div>
+                    <div className="text-xs text-gray-500">
+                      Liên hệ để biết chi tiết
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Users className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="text-sm font-medium">Số lượng khách</div>
+                    <div className="text-xs text-gray-500">Không giới hạn</div>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Users className="h-5 w-5 text-gray-500" />
-                <div>
-                  <div className="text-sm font-medium">Số lượng khách</div>
-                  <div className="text-xs text-gray-500">Không giới hạn</div>
-                </div>
-              </div>
+
+              <Button className="w-full h-12 text-lg" onClick={handleBookNow}>Đặt Tour Ngay</Button>
+              <FavoriteButton tourId={tour.id} variant="inline" className="w-full mt-3" />
+              <p className="text-xs text-center text-gray-500 mt-4">
+                Không tính phí đặt chỗ. Xác nhận ngay lập tức.
+              </p>
             </div>
 
-            <Button className="w-full h-12 text-lg" onClick={handleBookNow}>Đặt Tour Ngay</Button>
-            <FavoriteButton tourId={tour.id} variant="inline" className="w-full mt-3" />
-            <p className="text-xs text-center text-gray-500 mt-4">
-              Không tính phí đặt chỗ. Xác nhận ngay lập tức.
-            </p>
+            {/* Recommended Tours Section - Only shown for logged in regular users */}
+            {showRecommendations && recommendedTours.length > 0 && (
+              <div className="bg-white rounded-xl border shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-lg">Tour tương tự</h3>
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                        disabled={currentPage === 0}
+                        className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Trang trước"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <span className="text-xs text-gray-500 min-w-[3rem] text-center">
+                        {currentPage + 1}/{totalPages}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                        disabled={currentPage >= totalPages - 1}
+                        className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Trang sau"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {paginatedTours.map((recommendedTour) => (
+                    <TourCard
+                      key={recommendedTour.id}
+                      tour={recommendedTour}
+                      variant="compact"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

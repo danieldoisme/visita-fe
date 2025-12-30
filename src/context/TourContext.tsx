@@ -50,6 +50,7 @@ interface TourContextType {
   tours: Tour[];
   loading: boolean;
   getTour: (id: number) => Promise<Tour | undefined>;
+  getRecommendedTours: (currentTourId: number, category?: string) => Promise<Tour[]>;
   addTour: (tour: Omit<Tour, "id" | "rating" | "reviews">) => Promise<void>;
   updateTour: (id: number, tour: Partial<Tour>) => Promise<void>;
   deleteTour: (id: number) => Promise<void>;
@@ -240,9 +241,99 @@ const INITIAL_TOURS: Tour[] = [
     startDate: "2025-03-10",
     endDate: "2025-03-12",
   },
+  // Beach/Ocean tours similar to Hạ Long for recommendation demonstration
+  {
+    id: 5,
+    title: "Khám phá Đảo Cát Bà & Vịnh Lan Hạ",
+    location: "Hải Phòng",
+    price: 2800000,
+    originalPrice: 3200000,
+    duration: "2 Ngày",
+    rating: 4.8,
+    reviews: 98,
+    images: [
+      {
+        id: "img-5-1",
+        url: "https://images.unsplash.com/photo-1643029891412-92f9a81a8c16?q=80&w=2073&auto=format&fit=crop",
+        isPrimary: true,
+        order: 0,
+        caption: "Vịnh Lan Hạ",
+        altText: "Toàn cảnh Vịnh Lan Hạ",
+      },
+    ],
+    image: "https://images.unsplash.com/photo-1643029891412-92f9a81a8c16?q=80&w=2073&auto=format&fit=crop",
+    category: "Phiêu lưu",
+    status: "Hoạt động",
+    description:
+      "Khám phá Đảo Cát Bà và Vịnh Lan Hạ - viên ngọc ẩn mình của Việt Nam. Kayak xuyên các hang động, tắm biển và ngắm hoàng hôn trên vịnh.",
+    features: ["Kayak", "Tắm biển", "Du thuyền"],
+    tags: ["Biển đảo", "Thiên nhiên"],
+    difficulty: "Dễ",
+    startDate: "2025-01-20",
+    endDate: "2025-01-21",
+  },
+  {
+    id: 6,
+    title: "Du thuyền Bái Tử Long & Đảo Quan Lạn",
+    location: "Quảng Ninh",
+    price: 4200000,
+    originalPrice: 4800000,
+    duration: "3 Ngày",
+    rating: 4.9,
+    reviews: 156,
+    images: [
+      {
+        id: "img-6-1",
+        url: "https://images.unsplash.com/photo-1690038718228-fbfd02d30984?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: true,
+        order: 0,
+        caption: "Vịnh Bái Tử Long",
+        altText: "Du thuyền trên Vịnh Bái Tử Long",
+      },
+    ],
+    image: "https://images.unsplash.com/photo-1690038718228-fbfd02d30984?q=80&w=2070&auto=format&fit=crop",
+    category: "Phiêu lưu",
+    status: "Hoạt động",
+    description:
+      "Khám phá Vịnh Bái Tử Long hoang sơ và Đảo Quan Lạn với bãi biển cát trắng. Lặn ngắm san hô và thưởng thức hải sản tươi sống.",
+    features: ["Du thuyền 4 sao", "Lặn biển", "Hải sản"],
+    tags: ["Biển đảo", "Cao cấp"],
+    difficulty: "Dễ",
+    startDate: "2025-02-05",
+    endDate: "2025-02-07",
+  },
+  {
+    id: 7,
+    title: "Đảo Cô Tô - Thiên đường biển hoang sơ",
+    location: "Quảng Ninh",
+    price: 3500000,
+    duration: "3 Ngày",
+    rating: 4.7,
+    reviews: 89,
+    images: [
+      {
+        id: "img-7-1",
+        url: "https://images.unsplash.com/photo-1566571940313-a2c6a9d0ff88?q=80&w=2070&auto=format&fit=crop",
+        isPrimary: true,
+        order: 0,
+        caption: "Bãi biển Cô Tô",
+        altText: "Bãi biển hoang sơ Cô Tô",
+      },
+    ],
+    image: "https://images.unsplash.com/photo-1566571940313-a2c6a9d0ff88?q=80&w=2070&auto=format&fit=crop",
+    category: "Phiêu lưu",
+    status: "Hoạt động",
+    description:
+      "Đắm mình trong vẻ đẹp hoang sơ của Đảo Cô Tô. Tắm biển, câu cá, ngắm bình minh và thưởng thức hải sản tươi ngon.",
+    features: ["Tắm biển", "Câu cá", "Homestay"],
+    tags: ["Biển đảo", "Hoang sơ"],
+    difficulty: "Dễ",
+    startDate: "2025-01-25",
+    endDate: "2025-01-27",
+  },
 ];
 
-const STORAGE_KEY = "visita_tours_data_v2"; // Bumped to v2 to include startDate/endDate fields
+const STORAGE_KEY = "visita_tours_data_v3"; // Bumped to v3 to include new adventure tours
 
 export const TourProvider = ({ children }: { children: ReactNode }) => {
   const [tours, setTours] = useState<Tour[]>([]);
@@ -287,6 +378,32 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     return tours.find((t) => t.id === id);
   };
 
+  // Get recommended tours by category (excludes current tour)
+  // Ready for backend integration - async signature for API calls
+  const getRecommendedTours = async (currentTourId: number, category?: string): Promise<Tour[]> => {
+    await new Promise((resolve) => setTimeout(resolve, 200)); // Simulate API delay
+
+    // First, try to get tours in the same category
+    const sameCategoryTours = tours.filter((tour) => {
+      if (tour.id === currentTourId) return false;
+      if (tour.status !== "Hoạt động") return false;
+      if (category && tour.category !== category) return false;
+      return true;
+    });
+
+    // If we have tours in the same category, return those
+    if (sameCategoryTours.length > 0) {
+      return sameCategoryTours;
+    }
+
+    // Fallback: return all other active tours (different categories)
+    return tours.filter((tour) => {
+      if (tour.id === currentTourId) return false;
+      if (tour.status !== "Hoạt động") return false;
+      return true;
+    });
+  };
+
   const addTour = async (tourData: Omit<Tour, "id" | "rating" | "reviews">) => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     const newTour: Tour = {
@@ -312,7 +429,7 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <TourContext.Provider
-      value={{ tours, loading, getTour, addTour, updateTour, deleteTour }}
+      value={{ tours, loading, getTour, getRecommendedTours, addTour, updateTour, deleteTour }}
     >
       {children}
     </TourContext.Provider>
