@@ -153,17 +153,18 @@ export function TourCard({
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            <div>
+          <div className="flex flex-wrap items-end justify-between gap-3 pt-4 border-t border-slate-100">
+            <div className="min-w-0">
               <p className="text-xs text-muted-foreground uppercase font-semibold">Từ</p>
-              <p className={cn("text-2xl font-bold", isPurple ? "text-purple-600" : "text-primary")}>
+              <p className={cn("text-xl sm:text-2xl font-bold", isPurple ? "text-purple-600" : "text-primary")}>
                 {tour.price.toLocaleString("vi-VN")}đ
               </p>
             </div>
-            <Link to={`/tours/${tour.id}`}>
+            <Link to={`/tours/${tour.id}`} className="flex-shrink-0">
               <Button
+                size="sm"
                 className={cn(
-                  "rounded-full px-6",
+                  "rounded-full px-4 sm:px-6",
                   isPurple && "bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
                 )}
               >

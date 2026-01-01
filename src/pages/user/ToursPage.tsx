@@ -19,7 +19,6 @@ import { AuthRequiredModal } from "@/components/AuthRequiredModal";
 import { TourCard } from "@/components/TourCard";
 import { useAuth } from "@/context/AuthContext";
 import {
-  MapPin,
   Search,
   Calendar as CalendarIcon,
   Star,
