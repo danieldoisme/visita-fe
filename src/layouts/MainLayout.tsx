@@ -298,20 +298,49 @@ export default function MainLayout() {
               <div className="border-t my-2"></div>
               {isAuthenticated ? (
                 <>
+                  {/* User Info Header */}
+                  <div className="px-4 py-3 mb-1">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-sm font-semibold">
+                        {getInitials(user?.fullName || "U")}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-slate-900 truncate">{user?.fullName}</p>
+                          {isAdmin && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                              <Shield className="w-3 h-3" />
+                              Admin
+                            </span>
+                          )}
+                          {isStaff && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                              <User className="w-3 h-3" />
+                              Nhân viên
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t my-2"></div>
                   {isAdmin ? (
                     <Link
                       to="/admin"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
                     >
+                      <Shield className="w-4 h-4" />
                       Trang quản trị
                     </Link>
                   ) : isStaff ? (
                     <Link
                       to="/staff"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
                     >
+                      <User className="w-4 h-4" />
                       Trang nhân viên
                     </Link>
                   ) : (
@@ -320,25 +349,46 @@ export default function MainLayout() {
                         to="/profile"
                         state={{ tab: "personal" }}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
                       >
+                        <User className="w-4 h-4" />
                         Trang cá nhân
                       </Link>
                       <Link
                         to="/profile"
                         state={{ tab: "bookings" }}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
                       >
+                        <Calendar className="w-4 h-4" />
                         Đặt chỗ của tôi
                       </Link>
                       <Link
                         to="/profile"
                         state={{ tab: "reviews" }}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
                       >
+                        <MessageSquare className="w-4 h-4" />
                         Đánh giá của tôi
+                      </Link>
+                      <Link
+                        to="/profile"
+                        state={{ tab: "favorites" }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                      >
+                        <Heart className="w-4 h-4" />
+                        Yêu thích
+                      </Link>
+                      <Link
+                        to="/profile"
+                        state={{ tab: "security" }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted"
+                      >
+                        <Lock className="w-4 h-4" />
+                        Bảo mật
                       </Link>
                     </>
                   )}
@@ -347,8 +397,9 @@ export default function MainLayout() {
                       setIsMobileMenuOpen(false);
                       handleLogout();
                     }}
-                    className="px-4 py-3 rounded-lg text-sm font-medium text-red-600 transition-colors hover:bg-red-50 text-left"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 transition-colors hover:bg-red-50 text-left w-full"
                   >
+                    <LogOut className="w-4 h-4" />
                     Đăng xuất
                   </button>
                 </>
