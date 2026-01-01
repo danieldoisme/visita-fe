@@ -290,11 +290,11 @@ export default function ProfilePage() {
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
                 {/* Header Section */}
                 <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-                    <div className="container py-12">
-                        <div className="flex items-center gap-6">
+                    <div className="container px-4 md:px-8 py-8 md:py-12">
+                        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 text-center md:text-left">
                             {/* Avatar */}
                             <div className="relative">
-                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-3xl font-semibold shadow-lg">
+                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-2xl md:text-3xl font-semibold shadow-lg">
                                     {getInitials(user?.fullName || "U")}
                                 </div>
                                 <button
@@ -306,7 +306,7 @@ export default function ProfilePage() {
                             </div>
                             {/* User Info */}
                             <div>
-                                <h1 className="text-3xl font-bold text-slate-900">
+                                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
                                     {user?.fullName}
                                 </h1>
                                 <p className="text-slate-600">{user?.email}</p>
@@ -320,30 +320,32 @@ export default function ProfilePage() {
 
                 {/* Tabs Navigation */}
                 <div className="border-b bg-white sticky top-16 z-40">
-                    <div className="container">
-                        <nav className="flex gap-8">
+                    <div className="container px-4 md:px-8">
+                        <nav className="flex gap-4 md:gap-8 overflow-x-auto scrollbar-hide">
                             <button
                                 onClick={() => setActiveTab("personal")}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "personal"
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "personal"
                                     ? "border-primary text-primary"
                                     : "border-transparent text-slate-500 hover:text-slate-700"
                                     }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <User className="w-4 h-4" />
-                                    Thông tin cá nhân
+                                    <span className="hidden sm:inline">Thông tin cá nhân</span>
+                                    <span className="sm:hidden">Cá nhân</span>
                                 </div>
                             </button>
                             <button
                                 onClick={() => setActiveTab("bookings")}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "bookings"
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "bookings"
                                     ? "border-primary text-primary"
                                     : "border-transparent text-slate-500 hover:text-slate-700"
                                     }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <CalendarIcon className="w-4 h-4" />
-                                    Đặt chỗ của tôi
+                                    <span className="hidden sm:inline">Đặt chỗ của tôi</span>
+                                    <span className="sm:hidden">Đặt chỗ</span>
                                     {userBookings.length > 0 && (
                                         <Badge variant="secondary" className="ml-1">
                                             {userBookings.length}
@@ -353,14 +355,15 @@ export default function ProfilePage() {
                             </button>
                             <button
                                 onClick={() => setActiveTab("reviews")}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "reviews"
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "reviews"
                                     ? "border-primary text-primary"
                                     : "border-transparent text-slate-500 hover:text-slate-700"
                                     }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <MessageSquare className="w-4 h-4" />
-                                    Đánh giá của tôi
+                                    <span className="hidden sm:inline">Đánh giá của tôi</span>
+                                    <span className="sm:hidden">Đánh giá</span>
                                     {userReviews.length > 0 && (
                                         <Badge variant="secondary" className="ml-1">
                                             {userReviews.length}
@@ -370,7 +373,7 @@ export default function ProfilePage() {
                             </button>
                             <button
                                 onClick={() => setActiveTab("favorites")}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "favorites"
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "favorites"
                                     ? "border-primary text-primary"
                                     : "border-transparent text-slate-500 hover:text-slate-700"
                                     }`}
@@ -387,7 +390,7 @@ export default function ProfilePage() {
                             </button>
                             <button
                                 onClick={() => setActiveTab("security")}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "security"
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "security"
                                     ? "border-primary text-primary"
                                     : "border-transparent text-slate-500 hover:text-slate-700"
                                     }`}
@@ -402,10 +405,10 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="container py-8">
+                <div className="container px-4 md:px-8 py-6 md:py-8">
                     {/* Personal Info Tab */}
                     {activeTab === "personal" && (
-                        <div className="max-w-2xl">
+                        <div className="max-w-2xl w-full">
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-xl">
