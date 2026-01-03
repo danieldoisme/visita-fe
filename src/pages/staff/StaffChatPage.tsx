@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { PaginationControls, ITEMS_PER_PAGE } from "@/components/admin";
 import {
     Search,
     Send,
@@ -50,6 +51,7 @@ export default function StaffChatPage() {
     const [activeFilter, setActiveFilter] = useState<"all" | "pending" | "active">("all");
     const [messageInput, setMessageInput] = useState("");
     const [showChatOnMobile, setShowChatOnMobile] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const filteredSessions = sessions.filter(session => {
@@ -74,6 +76,18 @@ export default function StaffChatPage() {
 
         return matchesSearch && matchesFilter;
     }).sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
+
+    // Pagination calculations
+    const totalPages = Math.max(1, Math.ceil(filteredSessions.length / ITEMS_PER_PAGE));
+    const paginatedSessions = filteredSessions.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    // Reset page to 1 when filter or search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, activeFilter]);
 
     // Scroll to bottom only when switching to a new session OR when new messages arrive
     const prevMessagesLengthRef = useRef(messages.length);
@@ -176,7 +190,7 @@ export default function StaffChatPage() {
                                 Không tìm thấy cuộc hội thoại nào
                             </div>
                         ) : (
-                            filteredSessions.map(session => (
+                            paginatedSessions.map(session => (
                                 <button
                                     key={session.id}
                                     onClick={() => handleSelectSession(session.id)}
@@ -231,6 +245,13 @@ export default function StaffChatPage() {
                         )}
                     </div>
                 </ScrollArea>
+
+                {/* Pagination Controls */}
+                <PaginationControls
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                />
             </Card>
 
             {/* Chat Area */}
