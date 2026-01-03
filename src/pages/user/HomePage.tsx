@@ -178,7 +178,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative h-[85vh] min-h-[600px] flex items-center justify-center">
+      <section className="relative min-h-screen md:h-[85vh] md:min-h-[600px] flex items-center justify-center py-8 md:py-0">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent z-10" />
@@ -211,8 +211,8 @@ export default function HomePage() {
 
           {/* Search Widget */}
           <div className="w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200 fill-mode-both">
-            <div className="bg-white rounded-3xl md:rounded-full shadow-2xl p-2 md:p-3">
-              <div className="grid grid-cols-1 md:grid-cols-[1.5fr,1fr,1fr,1fr,auto] gap-2 md:gap-0 md:divide-x divide-slate-100">
+            <div className="bg-white rounded-3xl lg:rounded-full shadow-2xl p-3 md:p-4 lg:p-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.5fr,2fr,1fr,auto] gap-3 md:gap-4 lg:gap-0 lg:divide-x divide-slate-100">
                 {/* Location Input */}
                 <Popover open={showDestinations} onOpenChange={setShowDestinations}>
                   <div
@@ -255,7 +255,7 @@ export default function HomePage() {
                       </div>
                     </PopoverAnchor>
                     <PopoverContent
-                      className="w-[--radix-popover-trigger-width] p-0 rounded-2xl overflow-hidden"
+                      className="w-[--radix-popover-trigger-width] min-w-[280px] p-0 rounded-2xl overflow-hidden"
                       align="start"
                       side="bottom"
                       avoidCollisions={false}
@@ -302,7 +302,7 @@ export default function HomePage() {
                 </Popover>
 
                 {/* Date Range Picker */}
-                <div className="col-span-2 relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors">
+                <div className="relative group px-4 py-3 md:py-2 hover:bg-slate-50 rounded-2xl transition-colors">
                   <label
                     htmlFor="date-range-picker"
                     className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
@@ -348,7 +348,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Guests */}
-                <div className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors">
+                <div className="relative group px-4 py-3 md:py-2 hover:bg-slate-50 rounded-2xl transition-colors">
                   <label
                     htmlFor="guest-selector"
                     className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
@@ -431,11 +431,11 @@ export default function HomePage() {
                 </div>
 
                 {/* Search Button */}
-                <div className="flex items-center justify-center md:justify-end p-2">
+                <div className="flex items-center justify-center md:col-span-2 lg:col-span-1 lg:justify-end p-2">
                   <Button
                     size="lg"
                     onClick={handleSearch}
-                    className="w-full md:w-auto h-12 md:h-14 px-6 md:px-8 rounded-full bg-primary hover:bg-primary/90 text-base font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+                    className="w-full lg:w-auto h-12 lg:h-14 px-6 lg:px-8 rounded-full bg-primary hover:bg-primary/90 text-base font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
                   >
                     <Search className="mr-2 h-5 w-5" /> Tìm kiếm
                   </Button>
