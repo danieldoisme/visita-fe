@@ -49,7 +49,7 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
     // If no images at all, show placeholder
     if (!mainImageUrl) {
         return (
-            <div className={`relative h-[400px] rounded-xl overflow-hidden bg-muted ${className}`}>
+            <div className={`relative h-[250px] sm:h-[350px] md:h-[400px] rounded-xl overflow-hidden bg-muted ${className}`}>
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                     <span>Không có hình ảnh</span>
                 </div>
@@ -60,9 +60,9 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
     return (
         <>
             {/* Main Image */}
-            <div className={`relative ${className}`}>
+            <div className={`relative max-w-full ${className}`}>
                 <div
-                    className="relative h-[400px] rounded-xl overflow-hidden cursor-pointer group"
+                    className="relative h-[250px] sm:h-[350px] md:h-[400px] rounded-xl overflow-hidden cursor-pointer group"
                     onClick={() => hasImages && setIsLightboxOpen(true)}
                 >
                     <img
@@ -114,7 +114,7 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
 
                 {/* Thumbnail strip (only if multiple images) */}
                 {hasImages && sortedImages.length > 1 && (
-                    <div className="flex gap-2 mt-4 overflow-x-auto p-1">
+                    <div className="flex gap-2 mt-4 overflow-x-auto p-1 max-w-full">
                         {sortedImages.map((image, index) => (
                             <button
                                 key={image.id}

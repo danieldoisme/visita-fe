@@ -46,7 +46,7 @@ export function TourCard({
   // Compact variant for sidebar recommendations - Purple themed
   if (variant === "compact") {
     return (
-      <div className={cn("group bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl p-3 border border-purple-100 hover:border-purple-200 transition-all", className)}>
+      <div className={cn("group bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl p-3 border border-purple-100 hover:border-purple-200 transition-all overflow-hidden", className)}>
         <div className="flex gap-3">
           <Link to={`/tours/${tour.id}`} className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
             <img
@@ -61,19 +61,18 @@ export function TourCard({
                 {tour.title}
               </h4>
             </Link>
-            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+            <div className="flex flex-col gap-0.5 mt-1 text-xs text-muted-foreground">
               <div className="flex items-center gap-0.5">
-                <MapPin className="h-3 w-3 text-purple-500" />
-                <span className="truncate max-w-[80px]">{tour.location}</span>
+                <MapPin className="h-3 w-3 text-purple-500 flex-shrink-0" />
+                <span className="truncate">{tour.location}</span>
               </div>
-              <span className="text-purple-300">•</span>
               <div className="flex items-center gap-0.5">
-                <Clock className="h-3 w-3 text-purple-500" />
+                <Clock className="h-3 w-3 text-purple-500 flex-shrink-0" />
                 <span>{tour.duration}</span>
               </div>
             </div>
-            <div className="flex items-center justify-between mt-auto pt-2">
-              <div>
+            <div className="flex flex-col gap-2 mt-auto pt-2">
+              <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium">{tour.rating}</span>
@@ -83,10 +82,10 @@ export function TourCard({
                   {formatCurrency(tour.price)}
                 </p>
               </div>
-              <Link to={`/tours/${tour.id}`}>
+              <Link to={`/tours/${tour.id}`} className="w-full">
                 <Button
                   size="sm"
-                  className="h-7 px-3 text-xs rounded-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
+                  className="h-7 w-full text-xs rounded-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
                 >
                   Xem chi tiết
                 </Button>
