@@ -631,22 +631,20 @@ export default function ProfilePage() {
                                             className="hover:shadow-md transition-shadow"
                                         >
                                             <CardContent className="p-6">
-                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div className="flex flex-col gap-4">
                                                     {/* Booking Info */}
                                                     <div className="flex-1 space-y-3">
-                                                        <div className="flex items-start justify-between">
-                                                            <div>
-                                                                <h3 className="font-semibold text-lg text-slate-900">
-                                                                    {booking.tourTitle}
-                                                                </h3>
-                                                                <p className="text-sm text-slate-500">
-                                                                    Mã đặt chỗ: #{booking.id.toString().padStart(6, "0")}
-                                                                </p>
-                                                            </div>
+                                                        <div className="space-y-2">
+                                                            <h3 className="font-semibold text-lg text-slate-900">
+                                                                {booking.tourTitle}
+                                                            </h3>
+                                                            <p className="text-sm text-slate-500">
+                                                                Mã đặt chỗ: #{booking.id.toString().padStart(6, "0")}
+                                                            </p>
                                                             {getStatusBadge(booking.status)}
                                                         </div>
 
-                                                        <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+                                                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600">
                                                             <div className="flex items-center gap-1.5">
                                                                 <CalendarIcon className="w-4 h-4 text-slate-400" />
                                                                 {format(new Date(booking.selectedDate), "dd/MM/yyyy", {
@@ -670,14 +668,14 @@ export default function ProfilePage() {
                                                     </div>
 
                                                     {/* Price & Actions */}
-                                                    <div className="flex flex-col items-end gap-2">
-                                                        <div className="text-right">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-slate-100">
+                                                        <div>
                                                             <p className="text-sm text-slate-500">Tổng tiền</p>
                                                             <p className="text-xl font-bold text-primary">
                                                                 {booking.totalPrice.toLocaleString("vi-VN")}₫
                                                             </p>
                                                         </div>
-                                                        <div className="flex gap-2">
+                                                        <div className="flex flex-wrap gap-2">
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
