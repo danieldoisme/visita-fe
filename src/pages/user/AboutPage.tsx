@@ -99,7 +99,7 @@ export default function AboutPage() {
               </div>
 
               <div className="pt-4">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
                   <div className="flex -space-x-4">
                     {[1, 2, 3, 4].map((i) => (
                       <img
@@ -130,12 +130,12 @@ export default function AboutPage() {
               <div className="grid grid-cols-2 gap-4">
                 <img
                   src="https://images.unsplash.com/photo-1573270689103-d7a4e42b609a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                  alt="Tràng An - Ninh Bình"
+                  alt="Vịnh Hạ Long - Quảng Ninh"
                   className="rounded-2xl shadow-2xl w-full h-64 object-cover translate-y-8"
                 />
                 <img
                   src="https://images.unsplash.com/photo-1557750255-c76072a7aad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                  alt="Chợ nổi Miền Tây"
+                  alt="Tràng An - Ninh Bình"
                   className="rounded-2xl shadow-2xl w-full h-64 object-cover"
                 />
               </div>
