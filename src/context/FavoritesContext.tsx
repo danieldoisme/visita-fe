@@ -23,6 +23,10 @@ interface FavoritesContextType {
 // ============== LocalStorage Key ==============
 const FAVORITES_STORAGE_KEY = "visita_favorites";
 
+// ============== Mock Favorites for user-001 ==============
+// Pre-populate with a few favorite tours for testing
+const MOCK_FAVORITES: number[] = [1, 3, 4]; // Hạ Long, Sơn Đoòng, Đà Lạt
+
 // ============== Mock API Functions ==============
 // These will be replaced with real API calls when backend is ready
 const mockDelay = () => new Promise((resolve) => setTimeout(resolve, 300));
@@ -54,33 +58,44 @@ interface FavoritesProviderProps {
 export function FavoritesProvider({ children }: FavoritesProviderProps) {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Pending favorite for auth-gated flow
   const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(null);
 
-  // Load favorites from LocalStorage on mount
+  // Load favorites from LocalStorage on mount, or use mock data
   useEffect(() => {
     try {
       const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           setFavorites(parsed);
+        } else {
+          // Empty array in storage, use mock data
+          setFavorites(MOCK_FAVORITES);
         }
+      } else {
+        // No stored favorites, use mock data
+        setFavorites(MOCK_FAVORITES);
       }
     } catch (error) {
       console.error("Failed to load favorites from LocalStorage:", error);
+      // Fallback to mock data on error
+      setFavorites(MOCK_FAVORITES);
     }
+    setIsInitialized(true);
   }, []);
 
-  // Save favorites to LocalStorage whenever they change
+  // Save favorites to LocalStorage whenever they change (only after initialization)
   useEffect(() => {
+    if (!isInitialized) return;
     try {
       localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
     } catch (error) {
       console.error("Failed to save favorites to LocalStorage:", error);
     }
-  }, [favorites]);
+  }, [favorites, isInitialized]);
 
   const isFavorite = (tourId: number): boolean => {
     return favorites.includes(tourId);

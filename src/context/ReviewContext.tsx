@@ -39,43 +39,59 @@ const ReviewContext = createContext<ReviewContextType | undefined>(undefined);
 
 const REVIEW_STORAGE_KEY = "visita_reviews";
 
-// Mock data for demonstration
+// Mock data for user-001 (Nguyễn Văn A) - reviews linked to completed bookings
 const MOCK_REVIEWS: Review[] = [
+    // Review for booking ID 1 - Vịnh Hạ Long (completed)
     {
         id: 1,
-        bookingId: 4, // Matches "completed" booking in BookingContext
-        tourId: 4,
-        tourTitle: "Sapa trekking 3 ngày 2 đêm",
-        userId: "user-1",
-        userName: "Phạm Minh Đức",
-        rating: 5,
-        comment: "Tour rất tuyệt vời! Hướng dẫn viên nhiệt tình và am hiểu. Cảnh đẹp, dịch vụ tốt. Rất đáng để trải nghiệm!",
-        date: "2024-12-20T10:30:00",
-        status: "approved",
-    },
-    {
-        id: 2,
-        bookingId: 100, // Mock booking
+        bookingId: 1,
         tourId: 1,
         tourTitle: "Khám phá Vịnh Hạ Long & Hang Sửng Sốt",
-        userId: "user-2",
+        userId: "user-001",
         userName: "Nguyễn Văn A",
-        rating: 4,
-        comment: "Chuyến đi rất ấn tượng, đồ ăn ngon, khách sạn sạch sẽ. Chỉ tiếc là thời gian hơi ngắn, ước gì có thêm 1 ngày nữa.",
-        date: "2024-12-18T14:15:00",
-        status: "pending",
+        rating: 5,
+        comment: "Chuyến đi tuyệt vời! Cảnh đẹp như tranh vẽ, hướng dẫn viên nhiệt tình và am hiểu. Đồ ăn trên du thuyền rất ngon. Sẽ quay lại lần nữa!",
+        date: "2024-10-20T10:30:00",
+        status: "approved",
     },
+    // Review for booking ID 2 - Huế (completed)
     {
-        id: 3,
-        bookingId: 101,
+        id: 2,
+        bookingId: 2,
         tourId: 2,
         tourTitle: "Văn hóa Cố đô Huế & Thưởng thức Nhã nhạc",
-        userId: "user-3",
-        userName: "Trần Thị B",
-        rating: 5,
-        comment: "Đây là lần thứ 2 mình đi tour này và vẫn thấy rất hài lòng. Giá cả hợp lý, chất lượng dịch vụ ổn định. Sẽ giới thiệu cho bạn bè!",
-        date: "2024-12-15T09:00:00",
+        userId: "user-001",
+        userName: "Nguyễn Văn A",
+        rating: 4,
+        comment: "Tour văn hóa rất ý nghĩa. Được tìm hiểu nhiều về lịch sử triều Nguyễn. Chỉ tiếc là thời gian hơi gấp, muốn có thêm thời gian thăm Đại Nội.",
+        date: "2024-11-10T14:15:00",
         status: "approved",
+    },
+    // Review for booking ID 3 - Đà Lạt (completed) - pending review
+    {
+        id: 3,
+        bookingId: 3,
+        tourId: 4,
+        tourTitle: "Đà Lạt Mộng Mơ",
+        userId: "user-001",
+        userName: "Nguyễn Văn A",
+        rating: 5,
+        comment: "Đà Lạt quá đẹp! Thời tiết mát mẻ, các điểm tham quan được sắp xếp hợp lý. Khách sạn 4 sao rất sạch sẽ và tiện nghi. Trẻ con rất thích!",
+        date: "2024-11-25T09:00:00",
+        status: "pending",
+    },
+    // Review for booking ID 4 - Cát Bà (completed) - hidden status for testing
+    {
+        id: 4,
+        bookingId: 4,
+        tourId: 5,
+        tourTitle: "Khám phá Đảo Cát Bà & Vịnh Lan Hạ",
+        userId: "user-001",
+        userName: "Nguyễn Văn A",
+        rating: 3,
+        comment: "Tour ổn nhưng thời gian di chuyển hơi dài. Vịnh Lan Hạ đẹp, kayak rất vui. Dịch vụ ăn uống cần cải thiện thêm.",
+        date: "2024-12-05T16:30:00",
+        status: "hidden",
     },
 ];
 
