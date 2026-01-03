@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Pagination, usePagination } from "@/components/ui/Pagination";
 import { useSearchParams } from "react-router-dom";
 import { useTour } from "@/context/TourContext";
 import { useChat } from "@/context/ChatContext";
@@ -39,6 +40,7 @@ const CATEGORIES = [
 ];
 const DURATIONS = ["1-3 Ngày", "4-7 Ngày", "8-14 Ngày", "15+ Ngày"];
 const RATINGS = [5, 4, 3];
+const TOURS_PER_PAGE = 6;
 
 export default function ToursPage() {
   const [searchParams] = useSearchParams();
@@ -57,6 +59,7 @@ export default function ToursPage() {
   const [selectedDurations, setSelectedDurations] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [sortOption, setSortOption] = useState<string>("Đề xuất");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Read location from URL query params on mount
   useEffect(() => {
@@ -149,6 +152,15 @@ export default function ToursPage() {
           return 0; // "Đề xuất" - keep original order
       }
     });
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, dateRange, selectedCategories, selectedDurations, minRating, priceRange, sortOption]);
+
+  // Pagination
+  const toursPagination = usePagination(filteredTours, TOURS_PER_PAGE);
+  const paginatedTours = toursPagination.getPaginatedItems(currentPage);
 
   if (loading) {
     return (
@@ -476,7 +488,7 @@ export default function ToursPage() {
                 : "grid-cols-1"
                 }`}
             >
-              {filteredTours.map((tour) => (
+              {paginatedTours.map((tour) => (
                 <TourCard
                   key={tour.id}
                   tour={tour}
@@ -486,28 +498,12 @@ export default function ToursPage() {
             </div>
 
             {/* Pagination */}
-            <div className="mt-12 flex justify-center">
-              <div className="flex items-center gap-2 bg-white p-2 rounded-xl border shadow-sm">
-                <Button variant="ghost" disabled className="rounded-lg">
-                  Trước
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="w-10 h-10 p-0 rounded-lg font-bold bg-primary/10 text-primary hover:bg-primary/20"
-                >
-                  1
-                </Button>
-                <Button variant="ghost" className="w-10 h-10 p-0 rounded-lg">
-                  2
-                </Button>
-                <Button variant="ghost" className="w-10 h-10 p-0 rounded-lg">
-                  3
-                </Button>
-                <span className="text-muted-foreground px-2">...</span>
-                <Button variant="ghost" className="rounded-lg">
-                  Sau
-                </Button>
-              </div>
+            <div className="mt-12">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={toursPagination.totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
           </div>
         </div>

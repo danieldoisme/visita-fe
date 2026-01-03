@@ -334,7 +334,7 @@ export default function HomePage() {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0" align={isMobile ? "center" : "start"}>
                       <CalendarPicker
                         mode="range"
                         defaultMonth={date?.from}

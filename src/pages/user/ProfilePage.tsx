@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Pagination, usePagination } from "@/components/ui/Pagination";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -60,6 +61,8 @@ import { cn } from "@/lib/utils";
 
 type TabType = "personal" | "bookings" | "favorites" | "reviews" | "security";
 
+const ITEMS_PER_PAGE = 6;
+
 export default function ProfilePage() {
     const { user } = useAuth();
     const { bookings, cancelBooking } = useBooking();
@@ -81,6 +84,18 @@ export default function ProfilePage() {
             setActiveTab(state.tab);
         }
     }, [location.state]);
+
+    // Pagination state for each tab
+    const [bookingsPage, setBookingsPage] = useState(1);
+    const [reviewsPage, setReviewsPage] = useState(1);
+    const [favoritesPage, setFavoritesPage] = useState(1);
+
+    // Reset pagination when switching tabs
+    useEffect(() => {
+        setBookingsPage(1);
+        setReviewsPage(1);
+        setFavoritesPage(1);
+    }, [activeTab]);
 
     // Form setup with react-hook-form
     const [isSaving, setIsSaving] = useState(false);
@@ -247,6 +262,15 @@ export default function ProfilePage() {
 
     // Get user reviews
     const userReviews = user ? getUserReviews(user.userId) : [];
+
+    // Pagination for each list
+    const bookingsPagination = usePagination(userBookings, ITEMS_PER_PAGE);
+    const reviewsPagination = usePagination(userReviews, ITEMS_PER_PAGE);
+    const favoritesPagination = usePagination(favoriteTours, ITEMS_PER_PAGE);
+
+    const paginatedBookings = bookingsPagination.getPaginatedItems(bookingsPage);
+    const paginatedReviews = reviewsPagination.getPaginatedItems(reviewsPage);
+    const paginatedFavorites = favoritesPagination.getPaginatedItems(favoritesPage);
 
     // Get review status badge styling
     const getReviewStatusBadge = (status: ReviewStatus) => {
@@ -626,112 +650,121 @@ export default function ProfilePage() {
                                 </Card>
                             ) : (
                                 /* Bookings List */
-                                <div className="space-y-4">
-                                    {userBookings.map((booking) => (
-                                        <Card
-                                            key={booking.id}
-                                            className="hover:shadow-md transition-shadow"
-                                        >
-                                            <CardContent className="p-6">
-                                                <div className="flex flex-col gap-4">
-                                                    {/* Booking Info */}
-                                                    <div className="flex-1 space-y-3">
-                                                        <div className="space-y-2">
-                                                            <h3 className="font-semibold text-lg text-slate-900">
-                                                                {booking.tourTitle}
-                                                            </h3>
-                                                            <p className="text-sm text-slate-500">
-                                                                Mã đặt chỗ: #{booking.id.toString().padStart(6, "0")}
-                                                            </p>
-                                                            {getStatusBadge(booking.status)}
+                                <>
+                                    <div className="space-y-4">
+                                        {paginatedBookings.map((booking) => (
+                                            <Card
+                                                key={booking.id}
+                                                className="hover:shadow-md transition-shadow"
+                                            >
+                                                <CardContent className="p-6">
+                                                    <div className="flex flex-col gap-4">
+                                                        {/* Booking Info */}
+                                                        <div className="flex-1 space-y-3">
+                                                            <div className="space-y-2">
+                                                                <h3 className="font-semibold text-lg text-slate-900">
+                                                                    {booking.tourTitle}
+                                                                </h3>
+                                                                <p className="text-sm text-slate-500">
+                                                                    Mã đặt chỗ: #{booking.id.toString().padStart(6, "0")}
+                                                                </p>
+                                                                {getStatusBadge(booking.status)}
+                                                            </div>
+
+                                                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <CalendarIcon className="w-4 h-4 text-slate-400" />
+                                                                    {format(new Date(booking.selectedDate), "dd/MM/yyyy", {
+                                                                        locale: vi,
+                                                                    })}
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <Users className="w-4 h-4 text-slate-400" />
+                                                                    {booking.adults} người lớn
+                                                                    {booking.children > 0 &&
+                                                                        `, ${booking.children} trẻ em`}
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <Clock className="w-4 h-4 text-slate-400" />
+                                                                    Đặt ngày{" "}
+                                                                    {format(new Date(booking.createdAt), "dd/MM/yyyy", {
+                                                                        locale: vi,
+                                                                    })}
+                                                                </div>
+                                                            </div>
                                                         </div>
 
-                                                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <CalendarIcon className="w-4 h-4 text-slate-400" />
-                                                                {format(new Date(booking.selectedDate), "dd/MM/yyyy", {
-                                                                    locale: vi,
-                                                                })}
+                                                        {/* Price & Actions */}
+                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-slate-100">
+                                                            <div>
+                                                                <p className="text-sm text-slate-500">Tổng tiền</p>
+                                                                <p className="text-xl font-bold text-primary">
+                                                                    {booking.totalPrice.toLocaleString("vi-VN")}₫
+                                                                </p>
                                                             </div>
-                                                            <div className="flex items-center gap-1.5">
-                                                                <Users className="w-4 h-4 text-slate-400" />
-                                                                {booking.adults} người lớn
-                                                                {booking.children > 0 &&
-                                                                    `, ${booking.children} trẻ em`}
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5">
-                                                                <Clock className="w-4 h-4 text-slate-400" />
-                                                                Đặt ngày{" "}
-                                                                {format(new Date(booking.createdAt), "dd/MM/yyyy", {
-                                                                    locale: vi,
-                                                                })}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Price & Actions */}
-                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-slate-100">
-                                                        <div>
-                                                            <p className="text-sm text-slate-500">Tổng tiền</p>
-                                                            <p className="text-xl font-bold text-primary">
-                                                                {booking.totalPrice.toLocaleString("vi-VN")}₫
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => navigate(`/tours/${booking.tourId}`)}
-                                                            >
-                                                                <MapPin className="w-4 h-4 mr-1" />
-                                                                Chi tiết
-                                                            </Button>
-                                                            {booking.status !== "cancelled" && booking.status !== "completed" && (
-                                                                <>
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={() =>
-                                                                            openChangeRequestModal(
-                                                                                booking.id,
-                                                                                booking.tourTitle
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <Pencil className="w-4 h-4 mr-1" />
-                                                                        Yêu cầu thay đổi
-                                                                    </Button>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                                        onClick={() => handleCancelBooking(booking.id)}
-                                                                    >
-                                                                        Hủy đặt chỗ
-                                                                    </Button>
-                                                                </>
-                                                            )}
-                                                            {booking.status === "completed" && !hasReviewedBooking(booking.id) && (
+                                                            <div className="flex flex-wrap gap-2">
                                                                 <Button
+                                                                    variant="outline"
                                                                     size="sm"
-                                                                    onClick={() => openReviewModal(booking)}
+                                                                    onClick={() => navigate(`/tours/${booking.tourId}`)}
                                                                 >
-                                                                    <Star className="w-4 h-4 mr-1" />
-                                                                    Viết đánh giá
+                                                                    <MapPin className="w-4 h-4 mr-1" />
+                                                                    Chi tiết
                                                                 </Button>
-                                                            )}
-                                                            {booking.status === "completed" && hasReviewedBooking(booking.id) && (
-                                                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                                                                    Đã đánh giá
-                                                                </Badge>
-                                                            )}
+                                                                {booking.status !== "cancelled" && booking.status !== "completed" && (
+                                                                    <>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                                openChangeRequestModal(
+                                                                                    booking.id,
+                                                                                    booking.tourTitle
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <Pencil className="w-4 h-4 mr-1" />
+                                                                            Yêu cầu thay đổi
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                            onClick={() => handleCancelBooking(booking.id)}
+                                                                        >
+                                                                            Hủy đặt chỗ
+                                                                        </Button>
+                                                                    </>
+                                                                )}
+                                                                {booking.status === "completed" && !hasReviewedBooking(booking.id) && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        onClick={() => openReviewModal(booking)}
+                                                                    >
+                                                                        <Star className="w-4 h-4 mr-1" />
+                                                                        Viết đánh giá
+                                                                    </Button>
+                                                                )}
+                                                                {booking.status === "completed" && hasReviewedBooking(booking.id) && (
+                                                                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                                                        Đã đánh giá
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                    <div className="mt-8">
+                                        <Pagination
+                                            currentPage={bookingsPage}
+                                            totalPages={bookingsPagination.totalPages}
+                                            onPageChange={setBookingsPage}
+                                        />
+                                    </div>
+                                </>
                             )}
                         </div>
                     )}
@@ -867,57 +900,66 @@ export default function ProfilePage() {
                                 </Card>
                             ) : (
                                 /* Favorites Grid */
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {favoriteTours.map((tour) => (
-                                        <Card
-                                            key={tour.id}
-                                            className="group overflow-hidden hover:shadow-md transition-shadow"
-                                        >
-                                            <div className="relative aspect-[4/3]">
-                                                <img
-                                                    src={tour.image}
-                                                    alt={tour.title}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                />
-                                                <button
-                                                    onClick={() => toggleFavorite(tour.id)}
-                                                    className="absolute top-3 right-3 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
-                                                    aria-label="Xóa khỏi yêu thích"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                            <CardContent className="p-4">
-                                                <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                                                    {tour.title}
-                                                </h3>
-                                                <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                                                    <MapPin className="w-4 h-4" />
-                                                    {tour.location}
-                                                </div>
-                                                <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
-                                                    <Clock className="w-4 h-4" />
-                                                    {tour.duration}
-                                                    <span className="ml-auto flex items-center gap-1 text-yellow-500">
-                                                        <Star className="w-4 h-4 fill-current" />
-                                                        {tour.rating}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between pt-3 border-t">
-                                                    <div className="text-primary font-bold">
-                                                        {tour.price.toLocaleString("vi-VN")}₫
-                                                    </div>
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() => navigate(`/tours/${tour.id}`)}
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {paginatedFavorites.map((tour) => (
+                                            <Card
+                                                key={tour.id}
+                                                className="group overflow-hidden hover:shadow-md transition-shadow"
+                                            >
+                                                <div className="relative aspect-[4/3]">
+                                                    <img
+                                                        src={tour.image}
+                                                        alt={tour.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                    <button
+                                                        onClick={() => toggleFavorite(tour.id)}
+                                                        className="absolute top-3 right-3 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                                        aria-label="Xóa khỏi yêu thích"
                                                     >
-                                                        Xem chi tiết
-                                                    </Button>
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
                                                 </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
+                                                <CardContent className="p-4">
+                                                    <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                                                        {tour.title}
+                                                    </h3>
+                                                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+                                                        <MapPin className="w-4 h-4" />
+                                                        {tour.location}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
+                                                        <Clock className="w-4 h-4" />
+                                                        {tour.duration}
+                                                        <span className="ml-auto flex items-center gap-1 text-yellow-500">
+                                                            <Star className="w-4 h-4 fill-current" />
+                                                            {tour.rating}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between pt-3 border-t">
+                                                        <div className="text-primary font-bold">
+                                                            {tour.price.toLocaleString("vi-VN")}₫
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => navigate(`/tours/${tour.id}`)}
+                                                        >
+                                                            Xem chi tiết
+                                                        </Button>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                    <div className="mt-8">
+                                        <Pagination
+                                            currentPage={favoritesPage}
+                                            totalPages={favoritesPagination.totalPages}
+                                            onPageChange={setFavoritesPage}
+                                        />
+                                    </div>
+                                </>
                             )}
                         </div>
                     )}
@@ -954,43 +996,52 @@ export default function ProfilePage() {
                                 </Card>
                             ) : (
                                 /* Reviews List */
-                                <div className="space-y-4">
-                                    {userReviews.map((review) => (
-                                        <Card key={review.id} className="hover:shadow-md transition-shadow">
-                                            <CardContent className="p-6">
-                                                <div className="flex flex-col gap-4">
-                                                    {/* Review Info */}
-                                                    <div className="flex-1 space-y-3">
-                                                        <div className="space-y-2">
-                                                            <h3 className="font-semibold text-lg text-slate-900">
-                                                                {review.tourTitle}
-                                                            </h3>
-                                                            <p className="text-sm text-slate-500">
-                                                                {format(new Date(review.date), "dd/MM/yyyy", { locale: vi })}
-                                                            </p>
-                                                            {getReviewStatusBadge(review.status)}
+                                <>
+                                    <div className="space-y-4">
+                                        {paginatedReviews.map((review) => (
+                                            <Card key={review.id} className="hover:shadow-md transition-shadow">
+                                                <CardContent className="p-6">
+                                                    <div className="flex flex-col gap-4">
+                                                        {/* Review Info */}
+                                                        <div className="flex-1 space-y-3">
+                                                            <div className="space-y-2">
+                                                                <h3 className="font-semibold text-lg text-slate-900">
+                                                                    {review.tourTitle}
+                                                                </h3>
+                                                                <p className="text-sm text-slate-500">
+                                                                    {format(new Date(review.date), "dd/MM/yyyy", { locale: vi })}
+                                                                </p>
+                                                                {getReviewStatusBadge(review.status)}
+                                                            </div>
+
+                                                            {renderStars(review.rating)}
+
+                                                            <p className="text-slate-600">{review.comment}</p>
+
+                                                            {review.status === "pending" && (
+                                                                <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                                                                    Đánh giá của bạn đang chờ quản trị viên xem xét trước khi hiển thị công khai.
+                                                                </p>
+                                                            )}
+                                                            {review.status === "hidden" && (
+                                                                <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                                                                    Đánh giá này đã bị ẩn và không hiển thị công khai.
+                                                                </p>
+                                                            )}
                                                         </div>
-
-                                                        {renderStars(review.rating)}
-
-                                                        <p className="text-slate-600">{review.comment}</p>
-
-                                                        {review.status === "pending" && (
-                                                            <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                                                                Đánh giá của bạn đang chờ quản trị viên xem xét trước khi hiển thị công khai.
-                                                            </p>
-                                                        )}
-                                                        {review.status === "hidden" && (
-                                                            <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                                                                Đánh giá này đã bị ẩn và không hiển thị công khai.
-                                                            </p>
-                                                        )}
                                                     </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                    <div className="mt-8">
+                                        <Pagination
+                                            currentPage={reviewsPage}
+                                            totalPages={reviewsPagination.totalPages}
+                                            onPageChange={setReviewsPage}
+                                        />
+                                    </div>
+                                </>
                             )}
                         </div>
                     )}
