@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -213,47 +214,63 @@ export default function HomePage() {
             <div className="bg-white rounded-3xl md:rounded-full shadow-2xl p-2 md:p-3">
               <div className="grid grid-cols-1 md:grid-cols-[1.5fr,1fr,1fr,1fr,auto] gap-2 md:gap-0 md:divide-x divide-slate-100">
                 {/* Location Input */}
-                <div className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors">
-                  <label
-                    htmlFor="location-input"
-                    className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
+                <Popover open={showDestinations} onOpenChange={setShowDestinations}>
+                  <div
+                    data-search-widget
+                    className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors"
                   >
-                    Địa điểm
-                  </label>
-                  <div className="relative flex items-center">
-                    <MapPin className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                    <input
-                      id="location-input"
-                      name="location-input"
-                      type="text"
-                      placeholder="Bạn muốn đi đâu?"
-                      className="flex-1 bg-transparent border-0 p-0 text-base font-medium placeholder:text-muted-foreground/70 focus:ring-0 focus:outline-none"
-                      value={locationQuery}
-                      onChange={(e) => setLocationQuery(e.target.value)}
-                      onFocus={() => setShowDestinations(true)}
-                      onBlur={() =>
-                        setTimeout(() => setShowDestinations(false), 200)
-                      }
-                    />
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <VoiceSearchButton
-                        onResult={(text) => setLocationQuery(text)}
-                        size="sm"
-                      />
-                      {locationQuery && (
-                        <button
-                          onClick={() => setLocationQuery("")}
-                          className="p-1 hover:bg-slate-200 rounded-full text-muted-foreground"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  {showDestinations && (
-                    <div className="absolute top-full left-0 right-0 mt-4 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <label
+                      htmlFor="location-input"
+                      className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
+                    >
+                      Địa điểm
+                    </label>
+                    <PopoverAnchor asChild>
+                      <div className="relative flex items-center">
+                        <MapPin className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
+                        <input
+                          id="location-input"
+                          name="location-input"
+                          type="text"
+                          placeholder="Bạn muốn đi đâu?"
+                          className="flex-1 bg-transparent border-0 p-0 text-base font-medium placeholder:text-muted-foreground/70 focus:ring-0 focus:outline-none"
+                          value={locationQuery}
+                          onChange={(e) => setLocationQuery(e.target.value)}
+                          onFocus={() => setShowDestinations(true)}
+                        />
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <VoiceSearchButton
+                            onResult={(text) => setLocationQuery(text)}
+                            size="sm"
+                          />
+                          {locationQuery && (
+                            <button
+                              onClick={() => setLocationQuery("")}
+                              className="p-1 hover:bg-slate-200 rounded-full text-muted-foreground"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </PopoverAnchor>
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0 rounded-2xl overflow-hidden"
+                      align="start"
+                      side="bottom"
+                      avoidCollisions={false}
+                      sideOffset={16}
+                      onOpenAutoFocus={(e) => e.preventDefault()}
+                      onInteractOutside={(e) => {
+                        // Prevent closing when clicking inside the search widget
+                        const target = e.target as HTMLElement;
+                        if (target.closest("[data-search-widget]")) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
                       <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-slate-50">
-                        {locationQuery ? "Gợi ý" : "Điểm đến phổ biến"}
+                        Điểm đến
                       </div>
                       <ul className="py-2 max-h-[300px] overflow-y-auto">
                         {filteredDestinations.length > 0 ? (
@@ -280,9 +297,9 @@ export default function HomePage() {
                           </div>
                         )}
                       </ul>
-                    </div>
-                  )}
-                </div>
+                    </PopoverContent>
+                  </div>
+                </Popover>
 
                 {/* Date Range Picker */}
                 <div className="col-span-2 relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors">
