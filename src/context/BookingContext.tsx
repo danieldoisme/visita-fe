@@ -142,6 +142,27 @@ const MOCK_BOOKINGS: Booking[] = [
     status: "completed",
     createdAt: new Date("2024-11-15"),
   },
+  {
+    id: 13,
+    userId: "user-001",
+    tourId: 7,
+    tourTitle: "Phố cổ Hội An & Làng rau Trà Quế",
+    tourPrice: 1800000,
+    selectedDate: new Date("2024-12-10"),
+    adults: 2,
+    children: 1,
+    contactInfo: {
+      fullName: "Nguyễn Văn A",
+      email: "user@visita.com",
+      phone: "0901234567",
+    },
+    paymentMethod: "momo",
+    paymentStatus: "success",
+    totalPrice: 4500000,
+    specialRequest: "Muốn tham gia làm đèn lồng",
+    status: "completed",
+    createdAt: new Date("2024-11-25"),
+  },
   // ========== CONFIRMED BOOKINGS (3) ==========
   {
     id: 5,
