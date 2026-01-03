@@ -447,8 +447,8 @@ export default function ToursPage() {
                 </span>{" "}
                 kết quả tìm thấy
               </p>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm flex-shrink-0">
                   <button
                     onClick={() => setViewMode("grid")}
                     className={`p-2 rounded-md transition-all ${viewMode === "grid"
@@ -472,7 +472,7 @@ export default function ToursPage() {
                   name="sort"
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
-                  className="h-10 rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer"
+                  className="h-10 rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 cursor-pointer min-w-0 flex-1 sm:flex-initial sm:w-auto"
                 >
                   <option>Đề xuất</option>
                   <option>Giá: Thấp đến Cao</option>

@@ -160,11 +160,11 @@ export function TourCard({
                 {tour.price.toLocaleString("vi-VN")}đ
               </p>
             </div>
-            <Link to={`/tours/${tour.id}`} className="flex-shrink-0">
+            <Link to={`/tours/${tour.id}`} className="flex-shrink-0 w-full xs:w-auto">
               <Button
                 size="sm"
                 className={cn(
-                  "rounded-full px-4 sm:px-6",
+                  "rounded-full px-4 sm:px-6 w-full xs:w-auto",
                   isPurple && "bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
                 )}
               >
@@ -248,7 +248,7 @@ export function TourCard({
             ))}
         </div>
 
-        <div className="mt-auto pt-4 border-t border-slate-100 flex items-end justify-between">
+        <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col xs:flex-row xs:items-end xs:justify-between gap-3">
           <div className="flex flex-col">
             {tour.originalPrice && (
               <span className="text-xs text-muted-foreground line-through mb-0.5">
@@ -262,8 +262,8 @@ export function TourCard({
               </span>
             </div>
           </div>
-          <Link to={`/tours/${tour.id}`}>
-            <Button className="rounded-xl px-6 font-semibold shadow-none hover:shadow-md transition-all">
+          <Link to={`/tours/${tour.id}`} className="w-full xs:w-auto">
+            <Button className="rounded-xl px-6 font-semibold shadow-none hover:shadow-md transition-all w-full xs:w-auto">
               Xem chi tiết
             </Button>
           </Link>
