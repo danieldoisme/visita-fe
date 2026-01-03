@@ -157,7 +157,6 @@ export default function HomePage() {
   const [date, setDate] = useState<DateRange | undefined>();
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
-  const [showGuestSelector, setShowGuestSelector] = useState(false);
   const isMobile = useIsMobile();
 
   const handleSearch = () => {
@@ -332,91 +331,86 @@ export default function HomePage() {
                 </div>
 
                 {/* Guests */}
-                <div className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer">
+                <div className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors">
                   <label
                     htmlFor="guest-selector"
                     className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1"
                   >
                     Khách
                   </label>
-                  <button
-                    id="guest-selector"
-                    type="button"
-                    className="flex items-center w-full bg-transparent p-0 border-0 focus:outline-none"
-                    onClick={() => setShowGuestSelector(!showGuestSelector)}
-                  >
-                    <Users className="h-5 w-5 text-primary mr-2" />
-                    <span className="text-base font-medium text-slate-700">
-                      {adults + children} Khách
-                    </span>
-                  </button>
-
-                  {showGuestSelector && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowGuestSelector(false)}
-                      />
-                      <div className="absolute top-full right-0 mt-4 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 p-4 animate-in fade-in zoom-in-95 duration-200">
-                        {/* Adults */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <p className="font-semibold">Người lớn</p>
-                            <p className="text-xs text-muted-foreground">
-                              Từ 12 tuổi
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => setAdults(Math.max(1, adults - 1))}
-                              disabled={adults <= 1}
-                              className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="w-4 text-center font-medium">
-                              {adults}
-                            </span>
-                            <button
-                              onClick={() => setAdults(adults + 1)}
-                              className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="guest-selector"
+                        variant="ghost"
+                        className="w-full justify-start text-left font-medium p-0 h-auto hover:bg-transparent text-base text-slate-700"
+                      >
+                        <Users className="h-5 w-5 text-primary mr-2" />
+                        {adults + children} Khách
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-72 p-4 rounded-2xl"
+                      align={isMobile ? "center" : "start"}
+                    >
+                      {/* Adults */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="font-semibold">Người lớn</p>
+                          <p className="text-xs text-muted-foreground">
+                            Từ 12 tuổi
+                          </p>
                         </div>
-                        {/* Children */}
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-semibold">Trẻ em</p>
-                            <p className="text-xs text-muted-foreground">
-                              Dưới 12 tuổi
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() =>
-                                setChildren(Math.max(0, children - 1))
-                              }
-                              disabled={children <= 0}
-                              className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="w-4 text-center font-medium">
-                              {children}
-                            </span>
-                            <button
-                              onClick={() => setChildren(children + 1)}
-                              className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => setAdults(Math.max(1, adults - 1))}
+                            disabled={adults <= 1}
+                            className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="w-4 text-center font-medium">
+                            {adults}
+                          </span>
+                          <button
+                            onClick={() => setAdults(adults + 1)}
+                            className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
-                    </>
-                  )}
+                      {/* Children */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold">Trẻ em</p>
+                          <p className="text-xs text-muted-foreground">
+                            Dưới 12 tuổi
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() =>
+                              setChildren(Math.max(0, children - 1))
+                            }
+                            disabled={children <= 0}
+                            className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="w-4 text-center font-medium">
+                            {children}
+                          </span>
+                          <button
+                            onClick={() => setChildren(children + 1)}
+                            className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Search Button */}
