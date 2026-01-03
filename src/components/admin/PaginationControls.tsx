@@ -15,8 +15,6 @@ export function PaginationControls({
     totalPages,
     onPageChange,
 }: PaginationControlsProps) {
-    if (totalPages <= 1) return null;
-
     return (
         <div className="flex items-center justify-between px-4 py-3 border-t">
             <p className="text-sm text-muted-foreground">
