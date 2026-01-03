@@ -330,7 +330,7 @@ export default function DashboardPage() {
       </div>
 
       {/* New Users + Booked Tours Charts */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* New Users Line Chart */}
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
