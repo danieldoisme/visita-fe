@@ -9,6 +9,8 @@ export {
     promotionStatusConfig,
     reviewStatusConfig,
     contactStatusConfig,
+    tourStatusConfig,
+    userStatusConfig,
     type StatusConfig,
 } from "./StatusBadge";
 export { TourImageManager } from "./TourImageManager";

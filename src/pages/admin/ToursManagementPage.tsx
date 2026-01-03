@@ -8,11 +8,11 @@ import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, TourImageManager, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, TourImageManager, StatusBadge, tourStatusConfig, type BulkAction } from "@/components/admin";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+
 import { Modal } from "@/components/ui/modal";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
@@ -37,17 +37,7 @@ import { Plus, Search, Pencil, Trash2, Check, FileText, XCircle, Map } from "luc
 const DELETE_TOUR_KEY = "delete_tour";
 const BULK_DELETE_TOUR_KEY = "bulk_delete_tour";
 
-// Helper function to render status badge with appropriate styling
-const getStatusBadge = (status: string) => {
-  const variant =
-    status === "Hoạt động"
-      ? "default"
-      : status === "Nháp"
-        ? "secondary"
-        : "outline";
 
-  return <Badge variant={variant}>{status}</Badge>;
-};
 
 export default function ToursManagementPage() {
   const { tours, loading, addTour, updateTour, deleteTour } = useTour();
@@ -433,7 +423,12 @@ export default function ToursManagementPage() {
                     <TableCell>
                       {formatCurrency(tour.price)}
                     </TableCell>
-                    <TableCell>{getStatusBadge(tour.status)}</TableCell>
+                    <TableCell>
+                      <StatusBadge
+                        status={tour.status as "Hoạt động" | "Nháp" | "Đã đóng"}
+                        config={tourStatusConfig}
+                      />
+                    </TableCell>
                     <TableCell>{tour.bookings || 0}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

@@ -5,10 +5,10 @@ import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { UserDetailsModal, UserDetails } from "@/components/UserDetailsModal";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, type BulkAction } from "@/components/admin";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, StatusBadge, userStatusConfig, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Table,
   TableBody,
@@ -503,20 +503,16 @@ export default function UsersPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                    <TableCell className="whitespace-nowrap">
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${user.role === "admin" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
                         {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
-                      </Badge>
+                      </span>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={user.status === "active" ? "outline" : "destructive"}
-                        className={
-                          user.status === "active" ? "border-green-500 text-green-600" : ""
-                        }
-                      >
-                        {user.status === "active" ? "Hoạt động" : "Đã khóa"}
-                      </Badge>
+                      <StatusBadge
+                        status={user.status as "active" | "locked"}
+                        config={userStatusConfig}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">

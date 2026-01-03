@@ -27,11 +27,11 @@ export function StatusBadge<T extends string>({
     const statusConfig = config[status];
 
     if (!statusConfig) {
-        return <Badge variant={variant}>{status}</Badge>;
+        return <Badge variant={variant} className="whitespace-nowrap">{status}</Badge>;
     }
 
     return (
-        <Badge variant={variant} className={cn(statusConfig.className)}>
+        <Badge variant={variant} className={cn("whitespace-nowrap", statusConfig.className)}>
             {statusConfig.label}
         </Badge>
     );
@@ -109,5 +109,36 @@ export const contactStatusConfig: Record<"new" | "read", StatusConfig> = {
     read: {
         label: "Đã đọc",
         className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+    },
+};
+
+/** Tour status configuration */
+export const tourStatusConfig: Record<
+    "Hoạt động" | "Nháp" | "Đã đóng",
+    StatusConfig
+> = {
+    "Hoạt động": {
+        label: "Hoạt động",
+        className: "bg-green-100 text-green-800 hover:bg-green-100",
+    },
+    "Nháp": {
+        label: "Nháp",
+        className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+    },
+    "Đã đóng": {
+        label: "Đã đóng",
+        className: "bg-red-100 text-red-800 hover:bg-red-100",
+    },
+};
+
+/** User status configuration */
+export const userStatusConfig: Record<"active" | "locked", StatusConfig> = {
+    active: {
+        label: "Hoạt động",
+        className: "bg-green-100 text-green-800 hover:bg-green-100",
+    },
+    locked: {
+        label: "Đã khóa",
+        className: "bg-red-100 text-red-800 hover:bg-red-100",
     },
 };
