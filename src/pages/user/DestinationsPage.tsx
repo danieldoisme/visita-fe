@@ -468,12 +468,14 @@ export default function DestinationsPage() {
                                 kế hoạch cho chuyến đi hoàn hảo.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Button
-                                    size="lg"
-                                    className="h-14 px-8 rounded-2xl bg-white text-primary hover:bg-slate-100 font-bold text-base"
-                                >
-                                    Liên hệ tư vấn
-                                </Button>
+                                <Link to="/contact">
+                                    <Button
+                                        size="lg"
+                                        className="h-14 px-8 rounded-2xl bg-white text-primary hover:bg-slate-100 font-bold text-base"
+                                    >
+                                        Liên hệ tư vấn
+                                    </Button>
+                                </Link>
                                 <Link to="/tours">
                                     <Button
                                         size="lg"
