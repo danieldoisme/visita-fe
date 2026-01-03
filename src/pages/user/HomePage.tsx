@@ -217,7 +217,7 @@ export default function HomePage() {
                 <Popover open={showDestinations} onOpenChange={setShowDestinations}>
                   <div
                     data-search-widget
-                    className="relative group px-4 py-2 hover:bg-slate-50 rounded-2xl transition-colors"
+                    className="relative group px-4 py-3 md:py-2 hover:bg-slate-50 rounded-2xl transition-colors overflow-hidden"
                   >
                     <label
                       htmlFor="location-input"
@@ -226,14 +226,14 @@ export default function HomePage() {
                       Địa điểm
                     </label>
                     <PopoverAnchor asChild>
-                      <div className="relative flex items-center">
-                        <MapPin className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
+                      <div className="relative flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
                         <input
                           id="location-input"
                           name="location-input"
                           type="text"
                           placeholder="Bạn muốn đi đâu?"
-                          className="flex-1 bg-transparent border-0 p-0 text-base font-medium placeholder:text-muted-foreground/70 focus:ring-0 focus:outline-none"
+                          className="flex-1 min-w-0 bg-transparent border-0 p-0 text-base font-medium placeholder:text-muted-foreground/70 focus:ring-0 focus:outline-none"
                           value={locationQuery}
                           onChange={(e) => setLocationQuery(e.target.value)}
                           onFocus={() => setShowDestinations(true)}
