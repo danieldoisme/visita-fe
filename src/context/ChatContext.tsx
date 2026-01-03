@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getBotResponse, shouldEscalate, getBotGreeting } from "@/services/mockBotService";
 
@@ -152,9 +152,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }));
     };
 
-    const leaveSession = () => {
+    const leaveSession = useCallback(() => {
         setCurrentSessionId(null);
-    };
+    }, []);
 
     const sendMessageInternal = async (sessionId: string, content: string, type: MessageType, currentSessions?: ChatSession[]) => {
         if (!user) return;

@@ -15,7 +15,8 @@ import {
     MessageSquare,
     CheckCircle2,
     AlertCircle,
-    Bot
+    Bot,
+    ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,10 +27,18 @@ export default function StaffChatPage() {
         currentSession,
         messages,
         joinSession,
+        leaveSession,
         sendMessage,
         acceptSession,
         closeSession
     } = useChat();
+
+    // Clear session when navigating away from the page
+    useEffect(() => {
+        return () => {
+            leaveSession();
+        };
+    }, [leaveSession]);
 
     // We can't use `sessions` directly because for staff we want ALL sessions or assigned sessions.
     // The context `sessions` might be filtered for user role. 
@@ -40,6 +49,7 @@ export default function StaffChatPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [activeFilter, setActiveFilter] = useState<"all" | "pending" | "active">("all");
     const [messageInput, setMessageInput] = useState("");
+    const [showChatOnMobile, setShowChatOnMobile] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const filteredSessions = sessions.filter(session => {
@@ -104,10 +114,27 @@ export default function StaffChatPage() {
         }, 100);
     };
 
+    // Handle session selection - show chat panel on mobile
+    const handleSelectSession = (sessionId: string) => {
+        joinSession(sessionId);
+        setShowChatOnMobile(true);
+    };
+
+    // Handle back button - return to session list on mobile
+    const handleBackToList = () => {
+        setShowChatOnMobile(false);
+    };
+
     return (
-        <div className="h-[calc(100vh-8rem)] flex gap-6">
+        <div className="h-[calc(100vh-8rem)] flex gap-6 relative overflow-hidden">
             {/* Session List */}
-            <Card className="w-80 flex flex-col border-slate-200 shadow-sm overflow-hidden bg-white">
+            <Card className={`
+                md:w-80 w-full flex flex-col border-slate-200 shadow-sm overflow-hidden bg-white
+                absolute md:relative inset-0 md:inset-auto
+                transition-transform duration-300 ease-in-out
+                ${showChatOnMobile ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}
+                z-10
+            `}>
                 <div className="p-4 border-b space-y-3">
                     <h2 className="font-bold text-lg flex items-center gap-2">
                         <MessageSquare className="h-5 w-5 text-primary" />
@@ -152,7 +179,7 @@ export default function StaffChatPage() {
                             filteredSessions.map(session => (
                                 <button
                                     key={session.id}
-                                    onClick={() => joinSession(session.id)}
+                                    onClick={() => handleSelectSession(session.id)}
                                     className={cn(
                                         "p-4 text-left border-b border-slate-50 hover:bg-slate-50 transition-colors relative",
                                         currentSession?.id === session.id && "bg-blue-50/50 hover:bg-blue-50/50"
@@ -207,31 +234,45 @@ export default function StaffChatPage() {
             </Card>
 
             {/* Chat Area */}
-            <Card className="flex-1 flex flex-col border-slate-200 shadow-sm overflow-hidden bg-white">
+            <Card className={`
+                flex-1 flex flex-col border-slate-200 shadow-sm overflow-hidden bg-white
+                absolute md:relative inset-0 md:inset-auto w-full
+                transition-transform duration-300 ease-in-out
+                ${showChatOnMobile ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+                z-20 md:z-auto
+            `}>
                 {currentSession ? (
                     <>
-                        <div className="p-4 border-b flex items-center justify-between bg-white">
-                            <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center">
+                        <div className="p-3 md:p-4 border-b flex items-center justify-between bg-white gap-2">
+                            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                                {/* Back button - visible only on mobile */}
+                                <button
+                                    onClick={handleBackToList}
+                                    className="md:hidden h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+                                    aria-label="Quay lại danh sách"
+                                >
+                                    <ArrowLeft className="h-4 w-4 text-slate-600" />
+                                </button>
+                                <div className="hidden md:flex h-10 w-10 bg-slate-100 rounded-full flex-shrink-0 items-center justify-center">
                                     <User className="h-5 w-5 text-slate-500" />
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-900">{currentSession.userName}</h3>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                                        <Clock className="h-3 w-3" />
-                                        <span>Bắt đầu: {format(new Date(currentSession.createdAt), "dd/MM/yyyy HH:mm")}</span>
+                                <div className="min-w-0">
+                                    <h3 className="font-bold text-slate-900 truncate">{currentSession.userName}</h3>
+                                    <div className="flex items-center gap-1 md:gap-2 text-xs text-slate-500">
+                                        <Clock className="h-3 w-3 flex-shrink-0" />
+                                        <span className="truncate">Bắt đầu: {format(new Date(currentSession.createdAt), "dd/MM/yyyy HH:mm")}</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                                 {currentSession.status === "pending" ? (
                                     <Button
                                         size="sm"
                                         className="bg-primary hover:bg-primary/90"
                                         onClick={() => acceptSession(currentSession.id)}
                                     >
-                                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                                        Tiếp nhận
+                                        <CheckCircle2 className="h-4 w-4 md:mr-2" />
+                                        <span className="hidden md:inline">Tiếp nhận</span>
                                     </Button>
                                 ) : currentSession.status === "active" ? (
                                     <Button
@@ -240,11 +281,11 @@ export default function StaffChatPage() {
                                         className="text-slate-500 hover:text-red-600 hover:bg-red-50"
                                         onClick={() => closeSession(currentSession.id)}
                                     >
-                                        <AlertCircle className="h-4 w-4 mr-2" />
-                                        Kết thúc
+                                        <AlertCircle className="h-4 w-4 md:mr-2" />
+                                        <span className="hidden md:inline">Kết thúc</span>
                                     </Button>
                                 ) : (
-                                    <span className="text-sm text-slate-500 font-medium px-3">Đã kết thúc</span>
+                                    <span className="text-xs md:text-sm text-slate-500 font-medium px-2 md:px-3 whitespace-nowrap">Đã kết thúc</span>
                                 )}
                             </div>
                         </div>
@@ -334,6 +375,14 @@ export default function StaffChatPage() {
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                        {/* Back button for empty state on mobile */}
+                        <button
+                            onClick={handleBackToList}
+                            className="md:hidden absolute top-4 left-4 h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+                            aria-label="Quay lại danh sách"
+                        >
+                            <ArrowLeft className="h-5 w-5 text-slate-600" />
+                        </button>
                         <MessageSquare className="h-16 w-16 mb-4 opacity-20" />
                         <p>Chọn một cuộc hội thoại để bắt đầu</p>
                     </div>
