@@ -485,15 +485,17 @@ export default function StaffBookingFormPage() {
                                 {/* Date Selection */}
                                 <div className="space-y-2">
                                     <span className="text-sm font-medium">Ngày khởi hành</span>
-                                    <div className="border rounded-lg p-2 flex justify-center bg-white">
-                                        <Calendar
-                                            mode="single"
-                                            selected={bookingForm.watch("selectedDate")}
-                                            onSelect={(date) => bookingForm.setValue("selectedDate", date as Date)}
-                                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                                            className="rounded-md border-0"
-                                            initialFocus
-                                        />
+                                    <div className="sm:border rounded-lg p-0 sm:p-2 flex justify-center bg-white overflow-hidden">
+                                        <div className="transform scale-[0.75] xs:scale-100 origin-top">
+                                            <Calendar
+                                                mode="single"
+                                                selected={bookingForm.watch("selectedDate")}
+                                                onSelect={(date) => bookingForm.setValue("selectedDate", date as Date)}
+                                                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                                className="rounded-md border-0"
+                                                initialFocus
+                                            />
+                                        </div>
                                     </div>
                                     {bookingForm.formState.errors.selectedDate && (
                                         <p className="text-sm text-destructive">{String(bookingForm.formState.errors.selectedDate.message)}</p>
@@ -665,12 +667,12 @@ export default function StaffBookingFormPage() {
                             <span className="font-medium">Booking sẽ được xác nhận tự động</span>
                         </div>
 
-                        <div className="flex justify-between">
-                            <Button type="button" variant="outline" onClick={() => setCurrentStep("booking")}>
+                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+                            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setCurrentStep("booking")}>
                                 <ArrowLeft className="h-4 w-4 mr-1" />
                                 Quay lại
                             </Button>
-                            <Button onClick={handleFinalSubmit} disabled={isSubmitting}>
+                            <Button className="w-full sm:w-auto" onClick={handleFinalSubmit} disabled={isSubmitting}>
                                 {isSubmitting ? (
                                     <>
                                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
