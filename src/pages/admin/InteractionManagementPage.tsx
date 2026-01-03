@@ -931,7 +931,7 @@ export default function InteractionManagementPage() {
                                                     <TableCell className={contact.status === "new" ? "font-semibold" : ""}>
                                                         {contact.subject}
                                                         {contact.replies.length > 0 && (
-                                                            <Badge variant="outline" className="ml-2 text-xs">
+                                                            <Badge variant="outline" className="ml-2 text-xs whitespace-nowrap">
                                                                 {contact.replies.length} phản hồi
                                                             </Badge>
                                                         )}
@@ -990,16 +990,16 @@ export default function InteractionManagementPage() {
                     {selectedContact && (
                         <div className="space-y-4">
                             {/* Back Button & Actions Header */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <Button
                                     variant="ghost"
                                     onClick={() => setSelectedContact(null)}
-                                    className="gap-2"
+                                    className="gap-2 self-start"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
                                     Quay lại danh sách
                                 </Button>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     {selectedContact.status === "read" ? (
                                         <Button
                                             variant="outline"
@@ -1038,20 +1038,24 @@ export default function InteractionManagementPage() {
                             {/* Email Detail Card */}
                             <div className="rounded-lg border bg-card">
                                 {/* Email Header */}
-                                <div className="p-6 border-b">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <h2 className="text-xl font-semibold">{selectedContact.subject}</h2>
-                                        {getContactStatusBadge(selectedContact.status)}
+                                <div className="p-4 sm:p-6 border-b">
+                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
+                                        <h2 className="text-lg sm:text-xl font-semibold break-words">{selectedContact.subject}</h2>
+                                        <div className="self-start">
+                                            {getContactStatusBadge(selectedContact.status)}
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                                            {selectedContact.name.charAt(0).toUpperCase()}
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                                                {selectedContact.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="min-w-0 overflow-hidden">
+                                                <p className="font-medium truncate">{selectedContact.name}</p>
+                                                <p className="text-sm text-muted-foreground truncate">{selectedContact.email}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-medium">{selectedContact.name}</p>
-                                            <p className="text-sm text-muted-foreground">{selectedContact.email}</p>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground ml-auto">
+                                        <p className="text-sm text-muted-foreground sm:ml-auto whitespace-nowrap">
                                             {formatDateTime(selectedContact.date)}
                                         </p>
                                     </div>
