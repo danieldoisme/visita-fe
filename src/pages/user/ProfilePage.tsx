@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -84,6 +85,7 @@ export default function ProfilePage() {
     // Form setup with react-hook-form
     const [isSaving, setIsSaving] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const isMobile = useIsMobile();
 
     // Contact modal state
     const [contactModal, setContactModal] = useState<{
@@ -523,7 +525,7 @@ export default function ProfilePage() {
                                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                                     </Button>
                                                                 </PopoverTrigger>
-                                                                <PopoverContent className="w-auto p-0" align="start">
+                                                                <PopoverContent className="w-auto p-0" align={isMobile ? "center" : "start"}>
                                                                     <Calendar
                                                                         mode="single"
                                                                         selected={field.value || undefined}

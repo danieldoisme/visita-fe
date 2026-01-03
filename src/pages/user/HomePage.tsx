@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -157,6 +158,7 @@ export default function HomePage() {
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [showGuestSelector, setShowGuestSelector] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -322,7 +324,7 @@ export default function HomePage() {
                         defaultMonth={date?.from}
                         selected={date}
                         onSelect={setDate}
-                        numberOfMonths={2}
+                        numberOfMonths={isMobile ? 1 : 2}
                         disabled={{ before: new Date() }}
                       />
                     </PopoverContent>
