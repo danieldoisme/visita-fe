@@ -116,7 +116,7 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }:
                     onClick={handleToggle}
                     className={cn(
                         "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 z-50 transition-transform hover:scale-110",
-                        isOpen && !isMinimized ? "scale-0 opacity-0" : "scale-100 opacity-100"
+                        isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"
                     )}
                 >
                     <MessageCircle className="h-6 w-6 text-white" />
@@ -128,8 +128,17 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }:
             {(isOpen || (externalIsOpen)) && (
                 <div
                     className={cn(
-                        "fixed bottom-6 right-6 w-full max-w-[380px] bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
-                        isMinimized ? "h-[70px]" : "h-[600px] max-h-[80vh]",
+                        // Base styles
+                        "fixed bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
+                        // Mobile-first responsive positioning: base -> xs -> sm+
+                        "bottom-2 right-2 xs:bottom-3 xs:right-3 sm:bottom-6 sm:right-6",
+                        // Mobile-first responsive width: base -> xs -> sm+
+                        "w-[calc(100%-16px)] xs:w-[calc(100%-24px)] sm:w-full sm:max-w-[380px]",
+                        // Mobile-first responsive height
+                        isMinimized
+                            ? "h-[70px]"
+                            : "h-[calc(100dvh-80px)] xs:h-[calc(100dvh-100px)] sm:h-[600px] sm:max-h-[80vh]",
+                        // External/embedded mode overrides
                         externalIsOpen ? "relative bottom-auto right-auto w-full max-w-full h-full shadow-none border-0" : ""
                     )}
                 >
