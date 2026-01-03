@@ -954,25 +954,22 @@ export default function ProfilePage() {
                                 /* Reviews List */
                                 <div className="space-y-4">
                                     {userReviews.map((review) => (
-                                        <Card key={review.id}>
+                                        <Card key={review.id} className="hover:shadow-md transition-shadow">
                                             <CardContent className="p-6">
-                                                <div className="flex items-start justify-between gap-4">
+                                                <div className="flex flex-col gap-4">
+                                                    {/* Review Info */}
                                                     <div className="flex-1 space-y-3">
-                                                        <div className="flex items-start justify-between">
-                                                            <div>
-                                                                <h3 className="font-semibold text-lg text-slate-900">
-                                                                    {review.tourTitle}
-                                                                </h3>
-                                                                <p className="text-sm text-slate-500">
-                                                                    {format(new Date(review.date), "dd/MM/yyyy", { locale: vi })}
-                                                                </p>
-                                                            </div>
+                                                        <div className="space-y-2">
+                                                            <h3 className="font-semibold text-lg text-slate-900">
+                                                                {review.tourTitle}
+                                                            </h3>
+                                                            <p className="text-sm text-slate-500">
+                                                                {format(new Date(review.date), "dd/MM/yyyy", { locale: vi })}
+                                                            </p>
                                                             {getReviewStatusBadge(review.status)}
                                                         </div>
 
-                                                        <div className="flex items-center gap-2">
-                                                            {renderStars(review.rating)}
-                                                        </div>
+                                                        {renderStars(review.rating)}
 
                                                         <p className="text-slate-600">{review.comment}</p>
 
