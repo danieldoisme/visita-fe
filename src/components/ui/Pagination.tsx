@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface PaginationProps {
     currentPage: number;
     totalPages: number;
     onPageChange: (page: number) => void;
-    /** Maximum number of page buttons to show (excluding prev/next) */
+    /** Maximum number of page buttons to show on desktop (excluding prev/next) */
     maxVisiblePages?: number;
 }
 
@@ -15,26 +16,31 @@ export function Pagination({
     onPageChange,
     maxVisiblePages = 5,
 }: PaginationProps) {
+    const isMobile = useIsMobile();
+
+    // Show fewer page buttons on mobile
+    const effectiveMaxVisible = isMobile ? Math.min(3, maxVisiblePages) : maxVisiblePages;
+
     // Generate array of page numbers to display
     const getVisiblePages = (): (number | "ellipsis")[] => {
-        if (totalPages <= maxVisiblePages) {
+        if (totalPages <= effectiveMaxVisible) {
             return Array.from({ length: totalPages }, (_, i) => i + 1);
         }
 
         const pages: (number | "ellipsis")[] = [];
-        const halfVisible = Math.floor(maxVisiblePages / 2);
+        const halfVisible = Math.floor(effectiveMaxVisible / 2);
 
         let startPage = Math.max(1, currentPage - halfVisible);
         let endPage = Math.min(totalPages, currentPage + halfVisible);
 
         // Adjust if at the start
         if (currentPage <= halfVisible) {
-            endPage = Math.min(totalPages, maxVisiblePages);
+            endPage = Math.min(totalPages, effectiveMaxVisible);
         }
 
         // Adjust if at the end
         if (currentPage > totalPages - halfVisible) {
-            startPage = Math.max(1, totalPages - maxVisiblePages + 1);
+            startPage = Math.max(1, totalPages - effectiveMaxVisible + 1);
         }
 
         // Add first page and ellipsis if needed
@@ -66,29 +72,29 @@ export function Pagination({
     const visiblePages = getVisiblePages();
 
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <div className="flex items-center gap-2 bg-white p-2 rounded-xl border shadow-sm">
+        <div className="flex flex-col items-center justify-center gap-2 sm:gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 bg-white p-1.5 sm:p-2 rounded-xl border shadow-sm max-w-full">
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage <= 1}
-                    className="rounded-lg"
+                    className="rounded-lg px-2 sm:px-3"
                 >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Trước
+                    <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Trước</span>
                 </Button>
 
                 {visiblePages.map((page, index) =>
                     page === "ellipsis" ? (
-                        <span key={`ellipsis-${index}`} className="text-muted-foreground px-2">
+                        <span key={`ellipsis-${index}`} className="text-muted-foreground px-1 sm:px-2">
                             ...
                         </span>
                     ) : (
                         <Button
                             key={page}
                             variant={currentPage === page ? "secondary" : "ghost"}
-                            className={`w-10 h-10 p-0 rounded-lg ${currentPage === page
+                            className={`w-8 h-8 sm:w-10 sm:h-10 p-0 rounded-lg text-sm sm:text-base ${currentPage === page
                                 ? "font-bold bg-primary/10 text-primary hover:bg-primary/20"
                                 : ""
                                 }`}
@@ -104,14 +110,14 @@ export function Pagination({
                     size="sm"
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage >= totalPages}
-                    className="rounded-lg"
+                    className="rounded-lg px-2 sm:px-3"
                 >
-                    Sau
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    <span className="hidden sm:inline">Sau</span>
+                    <ChevronRight className="h-4 w-4 sm:ml-1" />
                 </Button>
             </div>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
                 Trang {currentPage} / {totalPages}
             </p>
         </div>
