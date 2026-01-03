@@ -25,7 +25,7 @@ const MOCK_USERS: Record<string, User> = {
     "admin-001": {
         userId: "admin-001",
         email: "admin@visita.com",
-        fullName: "Admin Visita",
+        fullName: "Quản trị viên",
         role: "admin",
     },
     "staff-001": {

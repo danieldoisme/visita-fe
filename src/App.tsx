@@ -59,6 +59,7 @@ function App() {
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/internal/login" element={<InternalLoginPage />} />
                         <Route path="/admin/login" element={<Navigate to="/internal/login" replace />} />
+                        <Route path="/staff/login" element={<Navigate to="/internal/login" replace />} />
 
                         {/* User Routes */}
                         <Route path="/" element={<MainLayout />}>
