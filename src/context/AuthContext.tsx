@@ -41,6 +41,9 @@ interface AuthContextType {
     identifier: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (
+    googleAccessToken: string
+  ) => Promise<{ success: boolean; error?: string }>;
   register: (
     email: string,
     password: string,
@@ -191,6 +194,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   };
 
+  const loginWithGoogle = async (
+    googleAccessToken: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await authService.outboundAuthenticate(googleAccessToken);
+
+      if (response.authenticated && response.token) {
+        tokenStorage.setAccessToken(response.token);
+        tokenStorage.setRefreshToken(response.refreshToken);
+
+        const tokenUser = getUserFromToken(response.token);
+        if (tokenUser) {
+          setUser(tokenUser);
+          localStorage.setItem(AUTH_USER_KEY, JSON.stringify(tokenUser));
+        }
+
+        return { success: true };
+      }
+
+      return { success: false, error: "Đăng nhập với Google không thành công" };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: "Đã xảy ra lỗi. Vui lòng thử lại." };
+    }
+  };
+
   const logout = async () => {
     const accessToken = tokenStorage.getAccessToken();
 
@@ -214,6 +245,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isStaff: user?.role === "staff",
         loading,
         login,
+        loginWithGoogle,
         register,
         logout,
       }}

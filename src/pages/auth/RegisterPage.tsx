@@ -27,6 +27,7 @@ import {
   Facebook,
   AlertCircle,
 } from "lucide-react";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 import "@/styles/login.css";
 
 export default function RegisterPage() {
@@ -34,8 +35,9 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const { claimGuestBookings } = useBooking();
   const navigate = useNavigate();
 
@@ -70,6 +72,26 @@ export default function RegisterPage() {
     }
 
     setIsLoading(false);
+  };
+
+  const handleGoogleSuccess = async (accessToken: string) => {
+    setError("");
+    setIsGoogleLoading(true);
+
+    const result = await loginWithGoogle(accessToken);
+
+    if (result.success) {
+      toast.success("Đăng ký với Google thành công!");
+      navigate("/", { replace: true });
+    } else {
+      setError(result.error || "Đăng ký với Google thất bại");
+    }
+
+    setIsGoogleLoading(false);
+  };
+
+  const handleGoogleError = () => {
+    setError("Đăng ký với Google thất bại. Vui lòng thử lại.");
   };
 
   return (
@@ -262,7 +284,7 @@ export default function RegisterPage() {
                   />
                   <Button
                     className="login-btn-gradient h-11 font-semibold text-md"
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                   >
                     {isLoading ? "Đang đăng ký..." : "Đăng ký"}
                   </Button>
@@ -281,24 +303,12 @@ export default function RegisterPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng ký với Google chưa được triển khai")}>
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    aria-hidden="true"
-                    focusable="false"
-                    data-prefix="fab"
-                    data-icon="google"
-                    role="img"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 488 512"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                    ></path>
-                  </svg>
-                  Google
-                </Button>
+                <GoogleAuthButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  disabled={isLoading || isGoogleLoading}
+                  variant="register"
+                />
                 <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng ký với Facebook chưa được triển khai")}>
                   <Facebook className="mr-2 h-4 w-4 text-blue-600" />
                   Facebook
