@@ -13,6 +13,7 @@ import {
   updateTourApi,
   deleteTourApi,
 } from "@/api/tourService";
+import { fetchStaffMembers, type StaffMember } from "@/api/staffService";
 import { ApiError } from "@/api/apiClient";
 
 // Tour image structure for multi-image support
@@ -45,6 +46,7 @@ export interface Tour {
   features?: string[];
   startDate?: string;
   endDate?: string;
+  staffId?: string;
 }
 
 // Helper function to get the primary/cover image URL
@@ -55,23 +57,31 @@ export const getCoverImage = (tour: Tour): string => {
   return tour.image || "";
 };
 
+// Re-export StaffMember type for convenience
+export type { StaffMember };
+
 interface TourContextType {
   tours: Tour[];
+  staffList: StaffMember[];
   loading: boolean;
+  staffLoading: boolean;
   error: string | null;
   getTour: (id: number) => Promise<Tour | undefined>;
   getRecommendedTours: (currentTourId: number, category?: string) => Promise<Tour[]>;
-  addTour: (tour: Omit<Tour, "id" | "rating" | "reviews">) => Promise<void>;
-  updateTour: (id: number, tour: Partial<Tour>) => Promise<void>;
+  addTour: (tour: Omit<Tour, "id" | "rating" | "reviews">, staffId: string) => Promise<void>;
+  updateTour: (id: number, tour: Partial<Tour>, staffId: string) => Promise<void>;
   deleteTour: (id: number) => Promise<void>;
   refreshTours: () => Promise<void>;
+  loadStaffs: () => Promise<void>;
 }
 
 const TourContext = createContext<TourContextType | undefined>(undefined);
 
 export const TourProvider = ({ children }: { children: ReactNode }) => {
   const [tours, setTours] = useState<Tour[]>([]);
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [staffLoading, setStaffLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load tours from API on mount
@@ -93,18 +103,31 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // Load staff list from API
+  const loadStaffs = useCallback(async () => {
+    if (staffList.length > 0) return; // Already loaded
+
+    setStaffLoading(true);
+    try {
+      const staffs = await fetchStaffMembers();
+      setStaffList(staffs);
+    } catch (err) {
+      console.error("Error loading staff list:", err);
+    } finally {
+      setStaffLoading(false);
+    }
+  }, [staffList.length]);
+
   useEffect(() => {
     loadTours();
   }, [loadTours]);
 
   const getTour = async (id: number): Promise<Tour | undefined> => {
-    // First check local cache
     const cachedTour = tours.find((t) => t.id === id);
     if (cachedTour) {
       return cachedTour;
     }
 
-    // Fetch from API if not in cache
     try {
       return await fetchTourById(id);
     } catch (err) {
@@ -113,12 +136,10 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Get recommended tours by category (excludes current tour)
   const getRecommendedTours = async (
     currentTourId: number,
     category?: string
   ): Promise<Tour[]> => {
-    // First, try to get tours in the same category
     const sameCategoryTours = tours.filter((tour) => {
       if (tour.id === currentTourId) return false;
       if (tour.status !== "Hoạt động") return false;
@@ -130,7 +151,6 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
       return sameCategoryTours;
     }
 
-    // Fallback: return all other active tours
     return tours.filter((tour) => {
       if (tour.id === currentTourId) return false;
       if (tour.status !== "Hoạt động") return false;
@@ -138,10 +158,11 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addTour = async (tourData: Omit<Tour, "id" | "rating" | "reviews">) => {
+  const addTour = async (
+    tourData: Omit<Tour, "id" | "rating" | "reviews">,
+    staffId: string
+  ) => {
     try {
-      // TODO: Get actual staff ID from auth context when available
-      const staffId = "default-staff-id";
       const newTour = await createTourApi(tourData, staffId);
       setTours((prev) => [...prev, newTour]);
     } catch (err) {
@@ -153,10 +174,8 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateTour = async (id: number, updatedData: Partial<Tour>) => {
+  const updateTour = async (id: number, updatedData: Partial<Tour>, staffId: string) => {
     try {
-      // TODO: Get actual staff ID from auth context when available
-      const staffId = "default-staff-id";
       const updatedTour = await updateTourApi(id, updatedData, staffId);
       setTours((prev) =>
         prev.map((tour) => (tour.id === id ? updatedTour : tour))
@@ -191,7 +210,9 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     <TourContext.Provider
       value={{
         tours,
+        staffList,
         loading,
+        staffLoading,
         error,
         getTour,
         getRecommendedTours,
@@ -199,6 +220,7 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
         updateTour,
         deleteTour,
         refreshTours,
+        loadStaffs,
       }}
     >
       {children}

@@ -129,6 +129,7 @@ export const tourSchema = z.object({
   images: z.array(tourImageSchema),
   image: z.string().optional(), // Legacy field for backwards compatibility
   description: z.string().optional(),
+  staffId: z.string().min(1, "Vui lòng chọn nhân viên phụ trách"),
 });
 
 export type TourFormData = z.infer<typeof tourSchema>;
