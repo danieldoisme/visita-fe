@@ -80,6 +80,7 @@ export const mapTourEntityToTour = (entity: TourEntity): Tour => {
 
     return {
         id: numericId,
+        tourUuid: entity.tourId, // Store the original UUID for API calls
         title: entity.title || "",
         location: entity.destination || "",
         price: entity.priceAdult || 0,

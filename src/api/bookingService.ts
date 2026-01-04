@@ -64,7 +64,7 @@ export interface CreateBookingResult {
 export const createBookingApi = async (
     bookingData: Omit<Booking, "id" | "status" | "createdAt" | "paymentStatus">
 ): Promise<CreateBookingResult> => {
-    const tourUuid = getTourUuidForBooking(bookingData.tourId);
+    const tourUuid = getTourUuidForBooking(bookingData.tourId, bookingData.tourUuid);
     const request = mapBookingToRequest(bookingData, tourUuid);
 
     const response = await apiClient.post<ApiResponse<BookingResponse>>("/bookings", request);
@@ -90,7 +90,7 @@ export const createStaffBookingApi = async (
     bookingData: Omit<Booking, "id" | "status" | "createdAt" | "paymentStatus">,
     userId: string
 ): Promise<CreateBookingResult> => {
-    const tourUuid = getTourUuidForBooking(bookingData.tourId);
+    const tourUuid = getTourUuidForBooking(bookingData.tourId, bookingData.tourUuid);
     const request = mapStaffBookingToRequest(bookingData, tourUuid, userId);
 
     const response = await apiClient.post<ApiResponse<BookingResponse>>(

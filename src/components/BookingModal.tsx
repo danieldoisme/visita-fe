@@ -121,6 +121,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
 
             await addBooking({
                 tourId: tour.id,
+                tourUuid: tour.tourUuid, // Pass the original UUID for API call
                 tourTitle: tour.title,
                 tourPrice: tour.price,
                 selectedDate: data.selectedDate,

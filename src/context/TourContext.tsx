@@ -28,6 +28,7 @@ export interface TourImage {
 
 export interface Tour {
   id: number;
+  tourUuid?: string; // Original UUID from backend for API calls
   title: string;
   location: string;
   price: number;

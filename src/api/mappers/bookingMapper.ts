@@ -180,8 +180,10 @@ export const mapStaffBookingToRequest = (
 };
 
 /**
- * Get tour UUID for a booking, with fallback to numeric ID as string
+ * Get tour UUID for a booking
+ * Prioritizes: 1) direct tourUuid, 2) map lookup, 3) fallback to string ID
  */
-export const getTourUuidForBooking = (tourId: number): string => {
+export const getTourUuidForBooking = (tourId: number, tourUuid?: string): string => {
+    if (tourUuid) return tourUuid;
     return getTourUuid(tourId) || String(tourId);
 };
