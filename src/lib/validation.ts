@@ -14,6 +14,19 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
+// Internal login schema (for admin/staff using username)
+export const internalLoginSchema = z.object({
+  username: z
+    .string()
+    .min(1, "Vui lòng nhập tài khoản"),
+  password: z
+    .string()
+    .min(1, "Vui lòng nhập mật khẩu")
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+});
+
+export type InternalLoginFormData = z.infer<typeof internalLoginSchema>;
+
 // Register form schema
 export const registerSchema = z
   .object({

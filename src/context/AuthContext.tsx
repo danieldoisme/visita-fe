@@ -4,11 +4,20 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 import { tokenStorage } from "../utils/tokenStorage";
-import { mockAuthenticate, mockRegister, mockGetUserInfo } from "../services/mockAuthService";
+import {
+  decodeJwt,
+  extractRolesFromScope,
+  getPrimaryRole,
+  isTokenExpired,
+  type UserRole,
+} from "../utils/jwtUtils";
+import authService from "../services/authService";
+import { ApiError } from "../api/apiClient";
 
-export type UserRole = "user" | "admin" | "staff";
+export type { UserRole };
 
 export interface User {
   userId: string;
@@ -28,85 +37,169 @@ interface AuthContextType {
   isAdmin: boolean;
   isStaff: boolean;
   loading: boolean;
-  login: (email: string, password: string, isAdmin?: boolean) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  login: (
+    identifier: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    email: string,
+    password: string,
+    name: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_USER_KEY = "visita_auth_user";
 
+/**
+ * Extract user from JWT token
+ */
+const getUserFromToken = (token: string): User | null => {
+  const payload = decodeJwt(token);
+  if (!payload) return null;
+
+  const roles = extractRolesFromScope(payload.scope);
+  const primaryRole = getPrimaryRole(roles);
+
+  // The JWT 'sub' claim contains the user identifier (email or username)
+  return {
+    userId: payload.jti || payload.sub,
+    email: payload.sub,
+    fullName: payload.sub, // Will be updated from stored user data if available
+    role: primaryRole,
+  };
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on mount
-  useEffect(() => {
-    const initializeAuth = () => {
-      const storedUser = localStorage.getItem(AUTH_USER_KEY);
-      const hasToken = tokenStorage.hasTokens();
+  /**
+   * Initialize auth state from stored tokens
+   */
+  const initializeAuth = useCallback(async () => {
+    const accessToken = tokenStorage.getAccessToken();
+    const refreshToken = tokenStorage.getRefreshToken();
 
-      if (storedUser && hasToken) {
-        try {
-          const parsedUser: User = JSON.parse(storedUser);
-          // Validate stored user exists in mock data
-          const validUser = mockGetUserInfo(parsedUser.userId);
-          if (validUser) {
-            setUser(validUser);
-          } else {
-            // Fallback to stored user if not found (e.g., registered user)
-            setUser(parsedUser);
-          }
-        } catch {
-          // Invalid stored data, clear everything
-          tokenStorage.clearTokens();
-          localStorage.removeItem(AUTH_USER_KEY);
-        }
-      }
+    if (!accessToken && !refreshToken) {
       setLoading(false);
-    };
-
-    initializeAuth();
-  }, []);
-
-  const login = async (
-    email: string,
-    password: string,
-    isAdmin: boolean = false
-  ): Promise<{ success: boolean; error?: string }> => {
-    const result = mockAuthenticate(email, password, isAdmin);
-
-    if (result.success && result.user && result.token) {
-      // Store token and user
-      tokenStorage.setAccessToken(result.token);
-      setUser(result.user);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(result.user));
-      return { success: true };
+      return;
     }
 
-    return { success: false, error: result.error };
+    // Try to use access token if valid
+    if (accessToken && !isTokenExpired(accessToken)) {
+      const tokenUser = getUserFromToken(accessToken);
+      if (tokenUser) {
+        // Restore additional user data from localStorage if available
+        const storedUser = localStorage.getItem(AUTH_USER_KEY);
+        if (storedUser) {
+          try {
+            const parsedUser: User = JSON.parse(storedUser);
+            setUser({ ...tokenUser, ...parsedUser, role: tokenUser.role });
+          } catch {
+            setUser(tokenUser);
+          }
+        } else {
+          setUser(tokenUser);
+        }
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Access token expired, try refresh
+    if (refreshToken) {
+      try {
+        const response = await authService.refreshToken({ token: refreshToken });
+        tokenStorage.setAccessToken(response.token);
+        tokenStorage.setRefreshToken(response.refreshToken);
+
+        const tokenUser = getUserFromToken(response.token);
+        if (tokenUser) {
+          const storedUser = localStorage.getItem(AUTH_USER_KEY);
+          if (storedUser) {
+            try {
+              const parsedUser: User = JSON.parse(storedUser);
+              setUser({ ...tokenUser, ...parsedUser, role: tokenUser.role });
+            } catch {
+              setUser(tokenUser);
+            }
+          } else {
+            setUser(tokenUser);
+          }
+        }
+      } catch {
+        // Refresh failed, clear everything
+        tokenStorage.clearTokens();
+        localStorage.removeItem(AUTH_USER_KEY);
+      }
+    }
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  const login = async (
+    identifier: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // Determine if identifier is email or username
+      const isEmail = identifier.includes("@");
+      const request = isEmail
+        ? { email: identifier, password }
+        : { username: identifier, password };
+
+      const response = await authService.login(request);
+
+      if (response.authenticated && response.token) {
+        tokenStorage.setAccessToken(response.token);
+        tokenStorage.setRefreshToken(response.refreshToken);
+
+        const tokenUser = getUserFromToken(response.token);
+        if (tokenUser) {
+          setUser(tokenUser);
+          localStorage.setItem(AUTH_USER_KEY, JSON.stringify(tokenUser));
+        }
+
+        return { success: true };
+      }
+
+      return { success: false, error: "Đăng nhập không thành công" };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: "Đã xảy ra lỗi. Vui lòng thử lại." };
+    }
   };
 
   const register = async (
-    email: string,
-    password: string,
-    name: string
+    _email: string,
+    _password: string,
+    _name: string
   ): Promise<{ success: boolean; error?: string }> => {
-    const result = mockRegister(email, password, name);
-
-    if (result.success && result.user && result.token) {
-      // Store token and user (auto-login after registration)
-      tokenStorage.setAccessToken(result.token);
-      setUser(result.user);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(result.user));
-      return { success: true };
-    }
-
-    return { success: false, error: result.error };
+    // Registration will be implemented in a future iteration
+    return {
+      success: false,
+      error: "Chức năng đăng ký sẽ được triển khai sau.",
+    };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const accessToken = tokenStorage.getAccessToken();
+
+    // Call logout API to invalidate token on server
+    if (accessToken) {
+      await authService.logout({ token: accessToken });
+    }
+
+    // Clear local state
     setUser(null);
     tokenStorage.clearTokens();
     localStorage.removeItem(AUTH_USER_KEY);
