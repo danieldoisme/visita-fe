@@ -1,5 +1,5 @@
 import type { Tour, TourImage } from "@/context/TourContext";
-import type { TourResponse, TourRequest, TourEntity } from "../generated/types.gen";
+import type { TourRequest, TourEntity } from "../generated/types.gen";
 
 /**
  * Backend category enum to Vietnamese display text
@@ -56,10 +56,8 @@ export const getTourUuid = (numericId: number): string | undefined => {
 
 /**
  * Map backend TourEntity to frontend Tour interface
- * TourEntity is used by /tours endpoint (public list)
  */
 export const mapTourEntityToTour = (entity: TourEntity): Tour => {
-    // Convert TourImageEntity array to TourImage array
     const images: TourImage[] = (entity.images || []).map((img, index) => ({
         id: img.imageId || `img-${entity.tourId}-${index}`,
         url: img.imageUrl || "",
@@ -70,12 +68,10 @@ export const mapTourEntityToTour = (entity: TourEntity): Tour => {
 
     const numericId = hashStringToNumber(entity.tourId || "");
 
-    // Store the mapping immediately
     if (entity.tourId) {
         storeTourIdMapping(numericId, entity.tourId);
     }
 
-    // Calculate average rating from reviews if available
     const reviews = entity.reviews || [];
     const visibleReviews = reviews.filter(r => r.isVisible);
     const avgRating = visibleReviews.length > 0
@@ -97,44 +93,6 @@ export const mapTourEntityToTour = (entity: TourEntity): Tour => {
         description: entity.description,
         startDate: entity.startDate,
         endDate: entity.endDate,
-    };
-};
-
-/**
- * Map backend TourResponse to frontend Tour interface
- * TourResponse is used by specific endpoints like /tours/{id}
- */
-export const mapTourResponseToTour = (response: TourResponse): Tour => {
-    // Convert simple image URLs to TourImage array
-    const images: TourImage[] = (response.images || []).map((url, index) => ({
-        id: `img-${response.tourId}-${index}`,
-        url,
-        isPrimary: index === 0,
-        order: index,
-    }));
-
-    const numericId = hashStringToNumber(response.tourId || "");
-
-    // Store the mapping immediately
-    if (response.tourId) {
-        storeTourIdMapping(numericId, response.tourId);
-    }
-
-    return {
-        id: numericId,
-        title: response.title || "",
-        location: response.destination || "",
-        price: response.priceAdult || 0,
-        duration: response.duration || "",
-        images,
-        image: images[0]?.url || "",
-        rating: response.averageRating || 0,
-        reviews: response.reviewCount || 0,
-        category: CATEGORY_MAP[response.category || ""] || response.category,
-        status: response.isActive ? "Hoạt động" : "Đã đóng",
-        description: response.description,
-        startDate: response.startDate,
-        endDate: response.endDate,
     };
 };
 
@@ -167,11 +125,4 @@ export const mapTourToTourRequest = (
  */
 export const mapTourEntitiesToTours = (entities: TourEntity[]): Tour[] => {
     return entities.map(mapTourEntityToTour);
-};
-
-/**
- * Map array of TourResponse to Tour array
- */
-export const mapTourResponsesToTours = (responses: TourResponse[]): Tour[] => {
-    return responses.map(mapTourResponseToTour);
 };

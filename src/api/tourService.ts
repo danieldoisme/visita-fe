@@ -1,13 +1,26 @@
 import apiClient, { ApiError, type ApiResponse } from "./apiClient";
-import type { PageTourEntity, TourResponse, TourEntity } from "./generated/types.gen";
+import type { TourEntity } from "./generated/types.gen";
 import type { Tour } from "@/context/TourContext";
 import {
-    mapTourResponseToTour,
+    mapTourEntityToTour,
     mapTourEntitiesToTours,
     mapTourToTourRequest,
     getTourUuid,
     storeTourIdMapping,
 } from "./mappers/tourMapper";
+
+/**
+ * Page data structure from backend (generic)
+ */
+interface PageData<T> {
+    totalElements?: number;
+    totalPages?: number;
+    first?: boolean;
+    last?: boolean;
+    size?: number;
+    content?: T[];
+    number?: number;
+}
 
 /**
  * Pagination parameters
@@ -37,7 +50,7 @@ export interface PaginatedResult<T> {
 export const fetchAllTours = async (
     params?: PaginationParams
 ): Promise<PaginatedResult<Tour>> => {
-    const response = await apiClient.get<ApiResponse<PageTourEntity>>("/tours", {
+    const response = await apiClient.get<ApiResponse<PageData<TourEntity>>>("/tours", {
         params: {
             page: (params?.page ?? 0) + 1, // Backend uses 1-based pagination
             size: params?.size ?? 20,
@@ -65,10 +78,10 @@ export const fetchTourById = async (id: number): Promise<Tour | undefined> => {
     const uuid = getTourUuid(id) || String(id);
 
     try {
-        const response = await apiClient.get<ApiResponse<TourResponse>>(`/tours/${uuid}`);
+        const response = await apiClient.get<ApiResponse<TourEntity>>(`/tours/${uuid}`);
 
         if (response.data.result) {
-            const tour = mapTourResponseToTour(response.data.result);
+            const tour = mapTourEntityToTour(response.data.result);
             if (response.data.result.tourId) {
                 storeTourIdMapping(tour.id, response.data.result.tourId);
             }
@@ -89,7 +102,7 @@ export const fetchTourById = async (id: number): Promise<Tour | undefined> => {
 export const fetchAllToursAdmin = async (
     params?: PaginationParams
 ): Promise<PaginatedResult<Tour>> => {
-    const response = await apiClient.get<ApiResponse<PageTourEntity>>("/admins/tours", {
+    const response = await apiClient.get<ApiResponse<PageData<TourEntity>>>("/admins/tours", {
         params: {
             page: (params?.page ?? 0) + 1, // Backend uses 1-based pagination
             size: params?.size ?? 20,
