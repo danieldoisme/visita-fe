@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { loginSchema, LoginFormData } from "@/lib/validation";
+import { internalLoginSchema, InternalLoginFormData } from "@/lib/validation";
 import {
     Form,
     FormControl,
@@ -14,7 +14,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Shield, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Shield, User, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 export default function AdminLoginPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -24,10 +24,10 @@ export default function AdminLoginPage() {
     const { login, isAuthenticated, isAdmin, isStaff } = useAuth();
     const navigate = useNavigate();
 
-    const form = useForm<LoginFormData>({
-        resolver: zodResolver(loginSchema),
+    const form = useForm<InternalLoginFormData>({
+        resolver: zodResolver(internalLoginSchema),
         defaultValues: {
-            email: "",
+            username: "",
             password: "",
         },
     });
@@ -43,11 +43,11 @@ export default function AdminLoginPage() {
         }
     }, [isAuthenticated, isAdmin, isStaff, navigate]);
 
-    const onSubmit = async (data: LoginFormData) => {
+    const onSubmit = async (data: InternalLoginFormData) => {
         setError("");
         setIsLoading(true);
 
-        const result = await login(data.email, data.password, true); // isAdmin=true
+        const result = await login(data.username, data.password);
 
         if (!result.success) {
             setError(result.error || "Đăng nhập thất bại");
@@ -116,17 +116,17 @@ export default function AdminLoginPage() {
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                             <FormField
                                 control={form.control}
-                                name="email"
+                                name="username"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-zinc-300">Email</FormLabel>
+                                        <FormLabel className="text-zinc-300">Tài khoản</FormLabel>
                                         <div className="relative">
-                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
                                             <FormControl>
                                                 <Input
-                                                    type="email"
-                                                    autoComplete="email"
-                                                    placeholder="admin@visita.com"
+                                                    type="text"
+                                                    autoComplete="username"
+                                                    placeholder="admin"
                                                     className="pl-11 h-12 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-primary focus:ring-primary"
                                                     {...field}
                                                 />

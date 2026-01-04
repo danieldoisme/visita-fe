@@ -13,7 +13,7 @@ export default function StaffLayout() {
 
     const handleLogout = () => {
         logout();
-        navigate("/login");
+        navigate("/internal/login");
     };
 
     const menuItems = [
