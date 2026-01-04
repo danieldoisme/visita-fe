@@ -337,7 +337,7 @@ export default function ToursManagementPage() {
       </div>
 
       {/* Toolbar: Search & Bulk Actions */}
-      <div className="flex items-center justify-between gap-4 flex-wrap overflow-x-hidden">
+      <div className="flex items-center justify-between gap-4 flex-wrap overflow-x-hidden p-1">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
