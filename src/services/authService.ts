@@ -127,11 +127,40 @@ export const introspect = async (
     }
 };
 
+/**
+ * Exchange Google access token for app tokens (Google OAuth login)
+ */
+export const outboundAuthenticate = async (
+    googleAccessToken: string
+): Promise<AuthenticationResponse> => {
+    try {
+        const response = await apiClient.post<ApiResponse<AuthenticationResponse>>(
+            "/auth/outbound/authentication",
+            { token: googleAccessToken }
+        );
+
+        if (response.data.code === 1000 && response.data.result) {
+            return response.data.result;
+        }
+
+        throw new ApiError(
+            response.data.code,
+            getErrorMessage(response.data.code, response.data.message)
+        );
+    } catch (error) {
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        throw new ApiError(9999, NETWORK_ERRORS.SERVER_ERROR, error);
+    }
+};
+
 export const authService = {
     login,
     refreshToken,
     logout,
     introspect,
+    outboundAuthenticate,
 };
 
 export default authService;

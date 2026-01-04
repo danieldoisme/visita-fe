@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { TourProvider } from "@/context/TourContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { BookingProvider } from "@/context/BookingContext";
@@ -34,97 +35,100 @@ import InternalLoginPage from "@/pages/admin/InternalLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 function App() {
   return (
-    <AuthProvider>
-      <BookingProvider>
-        <FavoritesProvider>
-          <PromotionsProvider>
-            <ContactProvider>
-              <ReviewProvider>
-                <ChatProvider>
-                  <TourProvider>
-                    <Toaster position="top-right" richColors />
-                    <BrowserRouter
-                      future={{
-                        v7_startTransition: true,
-                        v7_relativeSplatPath: true,
-                      }}
-                    >
-                      <ScrollToTop />
-                      <Routes>
-                        {/* Auth Routes */}
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/register" element={<RegisterPage />} />
-                        <Route path="/internal/login" element={<InternalLoginPage />} />
-                        <Route path="/admin/login" element={<Navigate to="/internal/login" replace />} />
-                        <Route path="/staff/login" element={<Navigate to="/internal/login" replace />} />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <BookingProvider>
+          <FavoritesProvider>
+            <PromotionsProvider>
+              <ContactProvider>
+                <ReviewProvider>
+                  <ChatProvider>
+                    <TourProvider>
+                      <Toaster position="top-right" richColors />
+                      <BrowserRouter
+                        future={{
+                          v7_startTransition: true,
+                          v7_relativeSplatPath: true,
+                        }}
+                      >
+                        <ScrollToTop />
+                        <Routes>
+                          {/* Auth Routes */}
+                          <Route path="/login" element={<LoginPage />} />
+                          <Route path="/register" element={<RegisterPage />} />
+                          <Route path="/internal/login" element={<InternalLoginPage />} />
+                          <Route path="/admin/login" element={<Navigate to="/internal/login" replace />} />
+                          <Route path="/staff/login" element={<Navigate to="/internal/login" replace />} />
 
-                        {/* User Routes */}
-                        <Route path="/" element={<MainLayout />}>
-                          <Route index element={<HomePage />} />
-                          <Route path="destinations" element={<DestinationsPage />} />
-                          <Route path="tours" element={<ToursPage />} />
-                          <Route path="tours/:id" element={<TourDetailsPage />} />
-                          <Route path="about" element={<AboutPage />} />
-                          <Route path="contact" element={<ContactPage />} />
+                          {/* User Routes */}
+                          <Route path="/" element={<MainLayout />}>
+                            <Route index element={<HomePage />} />
+                            <Route path="destinations" element={<DestinationsPage />} />
+                            <Route path="tours" element={<ToursPage />} />
+                            <Route path="tours/:id" element={<TourDetailsPage />} />
+                            <Route path="about" element={<AboutPage />} />
+                            <Route path="contact" element={<ContactPage />} />
+                            <Route
+                              path="profile"
+                              element={
+                                <ProtectedRoute blockedRoles={["admin", "staff"]}>
+                                  <ProfilePage />
+                                </ProtectedRoute>
+                              }
+                            />
+                          </Route>
+
+                          {/* Admin Routes - Protected */}
                           <Route
-                            path="profile"
+                            path="/admin"
                             element={
-                              <ProtectedRoute blockedRoles={["admin", "staff"]}>
-                                <ProfilePage />
+                              <ProtectedRoute requiredRole="admin" adminLoginRedirect>
+                                <AdminLayout />
                               </ProtectedRoute>
                             }
-                          />
-                        </Route>
+                          >
+                            <Route index element={<DashboardPage />} />
+                            <Route path="tours" element={<ToursManagementPage />} />
+                            <Route path="users" element={<UsersPage />} />
+                            <Route path="bookings" element={<BookingsManagementPage />} />
+                            <Route path="interactions" element={<InteractionManagementPage />} />
+                            <Route path="promotions" element={<PromotionsPage />} />
+                            <Route path="settings" element={<SettingsPage />} />
+                          </Route>
 
-                        {/* Admin Routes - Protected */}
-                        <Route
-                          path="/admin"
-                          element={
-                            <ProtectedRoute requiredRole="admin" adminLoginRedirect>
-                              <AdminLayout />
-                            </ProtectedRoute>
-                          }
-                        >
-                          <Route index element={<DashboardPage />} />
-                          <Route path="tours" element={<ToursManagementPage />} />
-                          <Route path="users" element={<UsersPage />} />
-                          <Route path="bookings" element={<BookingsManagementPage />} />
-                          <Route path="interactions" element={<InteractionManagementPage />} />
-                          <Route path="promotions" element={<PromotionsPage />} />
-                          <Route path="settings" element={<SettingsPage />} />
-                        </Route>
+                          {/* Staff Routes - Protected */}
+                          <Route
+                            path="/staff"
+                            element={
+                              <ProtectedRoute requiredRole="staff" adminLoginRedirect>
+                                <StaffLayout />
+                              </ProtectedRoute>
+                            }
+                          >
+                            <Route index element={<Navigate to="chat" replace />} />
+                            <Route path="chat" element={<StaffChatPage />} />
+                            <Route path="tours" element={<StaffToursPage />} />
+                            <Route path="booking" element={<StaffBookingFormPage />} />
+                            <Route path="booking/:tourId" element={<StaffBookingFormPage />} />
+                          </Route>
 
-                        {/* Staff Routes - Protected */}
-                        <Route
-                          path="/staff"
-                          element={
-                            <ProtectedRoute requiredRole="staff" adminLoginRedirect>
-                              <StaffLayout />
-                            </ProtectedRoute>
-                          }
-                        >
-                          <Route index element={<Navigate to="chat" replace />} />
-                          <Route path="chat" element={<StaffChatPage />} />
-                          <Route path="tours" element={<StaffToursPage />} />
-                          <Route path="booking" element={<StaffBookingFormPage />} />
-                          <Route path="booking/:tourId" element={<StaffBookingFormPage />} />
-                        </Route>
-
-                        {/* 404 */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                      </Routes>
-                    </BrowserRouter>
-                  </TourProvider>
-                </ChatProvider>
-              </ReviewProvider>
-            </ContactProvider>
-          </PromotionsProvider>
-        </FavoritesProvider>
-      </BookingProvider>
-    </AuthProvider>
+                          {/* 404 */}
+                          <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                      </BrowserRouter>
+                    </TourProvider>
+                  </ChatProvider>
+                </ReviewProvider>
+              </ContactProvider>
+            </PromotionsProvider>
+          </FavoritesProvider>
+        </BookingProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 
