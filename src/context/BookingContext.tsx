@@ -32,6 +32,7 @@ export interface Booking {
   userId?: string;
   staffId?: string;
   tourId: number;
+  tourUuid?: string; // Original tour UUID for API calls
   tourTitle: string;
   tourPrice: number;
   selectedDate: Date;
