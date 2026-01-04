@@ -401,122 +401,57 @@ export type MoMoIpnRequest = {
     signature?: string;
 };
 
-export type ApiResponsePageBookingDetailResponse = {
-    code?: number;
-    message?: string;
-    result?: PageBookingDetailResponse;
-};
-
-export type PageBookingDetailResponse = {
-    totalElements?: number;
-    totalPages?: number;
-    pageable?: PageableObject;
-    first?: boolean;
-    last?: boolean;
-    numberOfElements?: number;
-    size?: number;
-    content?: Array<BookingDetailResponse>;
-    number?: number;
-    sort?: SortObject;
-    empty?: boolean;
-};
-
-export type PageableObject = {
-    paged?: boolean;
-    pageNumber?: number;
-    pageSize?: number;
-    unpaged?: boolean;
-    offset?: number;
-    sort?: SortObject;
-};
-
-export type SortObject = {
-    sorted?: boolean;
-    unsorted?: boolean;
-    empty?: boolean;
-};
-
 export type ApiResponsePageTourEntity = {
     code?: number;
     message?: string;
-    result?: PageTourEntity;
+    result?: PageObject;
 };
 
-export type PageTourEntity = {
+export type PageObject = {
     totalElements?: number;
     totalPages?: number;
-    pageable?: PageableObject;
     first?: boolean;
     last?: boolean;
-    numberOfElements?: number;
     size?: number;
     content?: Array<TourEntity>;
     number?: number;
     sort?: SortObject;
+    numberOfElements?: number;
+    pageable?: PageableObject;
     empty?: boolean;
+};
+
+export type PageableObject = {
+    offset?: number;
+    sort?: SortObject;
+    pageNumber?: number;
+    pageSize?: number;
+    paged?: boolean;
+    unpaged?: boolean;
+};
+
+export type SortObject = {
+    empty?: boolean;
+    sorted?: boolean;
+    unsorted?: boolean;
 };
 
 export type ApiResponsePageTourResponse = {
     code?: number;
     message?: string;
-    result?: PageTourResponse;
+    result?: PageObject;
 };
 
-export type PageTourResponse = {
-    totalElements?: number;
-    totalPages?: number;
-    pageable?: PageableObject;
-    first?: boolean;
-    last?: boolean;
-    numberOfElements?: number;
-    size?: number;
-    content?: Array<TourResponse>;
-    number?: number;
-    sort?: SortObject;
-    empty?: boolean;
-};
-
-export type TourResponse = {
-    tourId?: string;
-    title?: string;
-    description?: string;
-    itinerary?: string;
-    priceAdult?: number;
-    priceChild?: number;
-    duration?: string;
-    destination?: string;
-    startDate?: string;
-    endDate?: string;
-    capacity?: number;
-    isActive?: boolean;
-    category?: 'BEACH' | 'CITY' | 'CULTURE' | 'EXPLORATION' | 'ADVENTURE' | 'NATURE' | 'FOOD';
-    region?: 'NORTH' | 'CENTRAL' | 'SOUTH';
-    availability?: number;
-    images?: Array<string>;
-    averageRating?: number;
-    reviewCount?: number;
-    staffId?: string;
-    staffName?: string;
+export type ApiResponsePageBookingDetailResponse = {
+    code?: number;
+    message?: string;
+    result?: PageObject;
 };
 
 export type ApiResponsePageReviewResponse = {
     code?: number;
     message?: string;
-    result?: PageReviewResponse;
-};
-
-export type PageReviewResponse = {
-    totalElements?: number;
-    totalPages?: number;
-    pageable?: PageableObject;
-    first?: boolean;
-    last?: boolean;
-    numberOfElements?: number;
-    size?: number;
-    content?: Array<ReviewResponse>;
-    number?: number;
-    sort?: SortObject;
-    empty?: boolean;
+    result?: PageObject;
 };
 
 export type ApiResponseListTourEntity = {
@@ -528,21 +463,7 @@ export type ApiResponseListTourEntity = {
 export type ApiResponsePageUserResponse = {
     code?: number;
     message?: string;
-    result?: PageUserResponse;
-};
-
-export type PageUserResponse = {
-    totalElements?: number;
-    totalPages?: number;
-    pageable?: PageableObject;
-    first?: boolean;
-    last?: boolean;
-    numberOfElements?: number;
-    size?: number;
-    content?: Array<UserResponse>;
-    number?: number;
-    sort?: SortObject;
-    empty?: boolean;
+    result?: PageObject;
 };
 
 export type ApiResponseOptionalUserResponse = {
@@ -1321,44 +1242,6 @@ export type GetMyInfoResponses = {
 
 export type GetMyInfoResponse = GetMyInfoResponses[keyof GetMyInfoResponses];
 
-export type GetCompletedBookingsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        page?: number;
-        size?: number;
-    };
-    url: '/users/bookings/history';
-};
-
-export type GetCompletedBookingsResponses = {
-    /**
-     * OK
-     */
-    200: ApiResponsePageBookingDetailResponse;
-};
-
-export type GetCompletedBookingsResponse = GetCompletedBookingsResponses[keyof GetCompletedBookingsResponses];
-
-export type GetActiveBookingsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        page?: number;
-        size?: number;
-    };
-    url: '/users/bookings/active';
-};
-
-export type GetActiveBookingsResponses = {
-    /**
-     * OK
-     */
-    200: ApiResponsePageBookingDetailResponse;
-};
-
-export type GetActiveBookingsResponse = GetActiveBookingsResponses[keyof GetActiveBookingsResponses];
-
 export type GetAllActiveToursData = {
     body?: never;
     path?: never;
@@ -1489,7 +1372,7 @@ export type GetMyFavoritesResponses = {
 
 export type GetMyFavoritesResponse = GetMyFavoritesResponses[keyof GetMyFavoritesResponses];
 
-export type GetCompletedBookings1Data = {
+export type GetCompletedBookingsData = {
     body?: never;
     path?: never;
     query?: {
@@ -1499,16 +1382,16 @@ export type GetCompletedBookings1Data = {
     url: '/bookings/history';
 };
 
-export type GetCompletedBookings1Responses = {
+export type GetCompletedBookingsResponses = {
     /**
      * OK
      */
     200: ApiResponsePageBookingDetailResponse;
 };
 
-export type GetCompletedBookings1Response = GetCompletedBookings1Responses[keyof GetCompletedBookings1Responses];
+export type GetCompletedBookingsResponse = GetCompletedBookingsResponses[keyof GetCompletedBookingsResponses];
 
-export type GetActiveBookings1Data = {
+export type GetActiveBookingsData = {
     body?: never;
     path?: never;
     query?: {
@@ -1518,14 +1401,14 @@ export type GetActiveBookings1Data = {
     url: '/bookings/active';
 };
 
-export type GetActiveBookings1Responses = {
+export type GetActiveBookingsResponses = {
     /**
      * OK
      */
     200: ApiResponsePageBookingDetailResponse;
 };
 
-export type GetActiveBookings1Response = GetActiveBookings1Responses[keyof GetActiveBookings1Responses];
+export type GetActiveBookingsResponse = GetActiveBookingsResponses[keyof GetActiveBookingsResponses];
 
 export type ListUsersData = {
     body?: never;
