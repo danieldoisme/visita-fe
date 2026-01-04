@@ -40,7 +40,7 @@ const BULK_DELETE_TOUR_KEY = "bulk_delete_tour";
 
 
 export default function ToursManagementPage() {
-  const { tours, loading, addTour, updateTour, deleteTour } = useTour();
+  const { tours, loading, addTour, updateTour, deleteTour, staffList, loadStaffs } = useTour();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -127,10 +127,14 @@ export default function ToursManagementPage() {
       images: [],
       image: "",
       description: "",
+      staffId: "",
     },
   });
 
   const handleOpenModal = (tour?: Tour) => {
+    // Load staff list when opening modal
+    loadStaffs();
+
     if (tour) {
       setEditingTour(tour);
       form.reset({
@@ -143,6 +147,7 @@ export default function ToursManagementPage() {
         images: tour.images || [],
         image: tour.image || "",
         description: tour.description || "",
+        staffId: tour.staffId || (staffList.length > 0 ? staffList[0].userId : ""),
       });
     } else {
       setEditingTour(null);
@@ -156,6 +161,7 @@ export default function ToursManagementPage() {
         images: [],
         image: "",
         description: "",
+        staffId: staffList.length > 0 ? staffList[0].userId : "",
       });
     }
     setIsModalOpen(true);
@@ -169,11 +175,12 @@ export default function ToursManagementPage() {
 
   const onSubmit = async (data: TourFormData) => {
     try {
+      const { staffId, ...tourData } = data;
       if (editingTour) {
-        await updateTour(editingTour.id, data);
+        await updateTour(editingTour.id, tourData, staffId);
         toast.success("Đã cập nhật tour thành công!");
       } else {
-        await addTour(data as Tour);
+        await addTour(tourData as Tour, staffId);
         toast.success("Đã thêm tour mới thành công!");
       }
       handleCloseModal();
@@ -207,8 +214,8 @@ export default function ToursManagementPage() {
   const executeBulkStatusChange = async (newStatus: "Hoạt động" | "Nháp" | "Đã đóng") => {
     for (const id of selectedArray) {
       const tour = tours.find((t) => t.id === id);
-      if (tour) {
-        await updateTour(id, { ...tour, status: newStatus });
+      if (tour && tour.staffId) {
+        await updateTour(id, { ...tour, status: newStatus }, tour.staffId);
       }
     }
     toast.success(`Đã cập nhật trạng thái ${selectedCount} tour!`);
@@ -555,6 +562,30 @@ export default function ToursManagementPage() {
                         <option value="Hoạt động">Hoạt động</option>
                         <option value="Nháp">Nháp</option>
                         <option value="Đã đóng">Đã đóng</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="staffId"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Nhân viên phụ trách *</FormLabel>
+                    <FormControl>
+                      <select
+                        aria-label="Nhân viên phụ trách"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                      >
+                        <option value="">-- Chọn nhân viên --</option>
+                        {staffList.map((staff) => (
+                          <option key={staff.userId} value={staff.userId}>
+                            {staff.fullName} {staff.email ? `(${staff.email})` : ""}
+                          </option>
+                        ))}
                       </select>
                     </FormControl>
                     <FormMessage />
