@@ -416,18 +416,18 @@ export type PageObject = {
     content?: Array<TourEntity>;
     number?: number;
     sort?: SortObject;
-    numberOfElements?: number;
     pageable?: PageableObject;
+    numberOfElements?: number;
     empty?: boolean;
 };
 
 export type PageableObject = {
     offset?: number;
     sort?: SortObject;
-    pageNumber?: number;
-    pageSize?: number;
     paged?: boolean;
     unpaged?: boolean;
+    pageNumber?: number;
+    pageSize?: number;
 };
 
 export type SortObject = {
