@@ -15,6 +15,7 @@ import {
   type UserRole,
 } from "../utils/jwtUtils";
 import authService from "../services/authService";
+import userService from "../services/userService";
 import { ApiError } from "../api/apiClient";
 
 export type { UserRole };
@@ -183,15 +184,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (
-    _email: string,
-    _password: string,
-    _name: string
+    email: string,
+    password: string,
+    name: string
   ): Promise<{ success: boolean; error?: string }> => {
-    // Registration will be implemented in a future iteration
-    return {
-      success: false,
-      error: "Chức năng đăng ký sẽ được triển khai sau.",
-    };
+    try {
+      await userService.createUser({
+        email,
+        password,
+        fullName: name,
+      });
+
+      // Registration successful - user should now log in
+      return { success: true };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: "Đã xảy ra lỗi. Vui lòng thử lại." };
+    }
   };
 
   const loginWithGoogle = async (
