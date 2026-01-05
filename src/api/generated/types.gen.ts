@@ -44,35 +44,6 @@ export type ApiResponseTourImageEntity = {
     result?: TourImageEntity;
 };
 
-export type TourImageEntity = {
-    imageId?: string;
-    imageUrl?: string;
-    description?: string;
-};
-
-export type TourRequest = {
-    title: string;
-    description?: string;
-    itinerary?: string;
-    priceAdult: number;
-    priceChild: number;
-    duration?: string;
-    destination: string;
-    startDate?: string;
-    endDate?: string;
-    capacity: number;
-    category?: 'BEACH' | 'CITY' | 'CULTURE' | 'EXPLORATION' | 'ADVENTURE' | 'NATURE' | 'FOOD';
-    region?: 'NORTH' | 'CENTRAL' | 'SOUTH';
-    availability?: number;
-    staff_id: string;
-};
-
-export type ApiResponseTourEntity = {
-    code?: number;
-    message?: string;
-    result?: TourEntity;
-};
-
 export type BookingEntity = {
     bookingId?: string;
     user?: UserEntity;
@@ -187,6 +158,13 @@ export type TourEntity = {
     version?: number;
 };
 
+export type TourImageEntity = {
+    imageId?: string;
+    tour?: TourEntity;
+    imageUrl?: string;
+    description?: string;
+};
+
 export type UserEntity = {
     userId?: string;
     email?: string;
@@ -204,6 +182,29 @@ export type UserEntity = {
     reviews?: Array<ReviewEntity>;
     chatSessions?: Array<ChatSessionEntity>;
     histories?: Array<HistoryEntity>;
+};
+
+export type TourRequest = {
+    title: string;
+    description?: string;
+    itinerary?: string;
+    priceAdult: number;
+    priceChild: number;
+    duration?: string;
+    destination: string;
+    startDate?: string;
+    endDate?: string;
+    capacity: number;
+    category?: 'BEACH' | 'CITY' | 'CULTURE' | 'EXPLORATION' | 'ADVENTURE' | 'NATURE' | 'FOOD';
+    region?: 'NORTH' | 'CENTRAL' | 'SOUTH';
+    availability?: number;
+    staff_id: string;
+};
+
+export type ApiResponseTourEntity = {
+    code?: number;
+    message?: string;
+    result?: TourEntity;
 };
 
 export type PromotionRequest = {
@@ -410,30 +411,30 @@ export type ApiResponsePageTourEntity = {
 export type PageObject = {
     totalElements?: number;
     totalPages?: number;
+    pageable?: PageableObject;
+    numberOfElements?: number;
     first?: boolean;
     last?: boolean;
     size?: number;
     content?: Array<TourEntity>;
     number?: number;
     sort?: SortObject;
-    pageable?: PageableObject;
-    numberOfElements?: number;
     empty?: boolean;
 };
 
 export type PageableObject = {
-    offset?: number;
-    sort?: SortObject;
+    unpaged?: boolean;
+    paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
-    paged?: boolean;
-    unpaged?: boolean;
+    offset?: number;
+    sort?: SortObject;
 };
 
 export type SortObject = {
-    empty?: boolean;
     sorted?: boolean;
     unsorted?: boolean;
+    empty?: boolean;
 };
 
 export type ApiResponsePageTourResponse = {

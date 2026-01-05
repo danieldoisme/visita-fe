@@ -10,16 +10,21 @@ import {
 } from "./mappers/tourMapper";
 
 /**
+ * Page info structure from backend
+ */
+interface PageInfo {
+    size?: number;
+    number?: number;
+    totalElements?: number;
+    totalPages?: number;
+}
+
+/**
  * Page data structure from backend (generic)
  */
 interface PageData<T> {
-    totalElements?: number;
-    totalPages?: number;
-    first?: boolean;
-    last?: boolean;
-    size?: number;
     content?: T[];
-    number?: number;
+    page?: PageInfo;
 }
 
 /**
@@ -58,16 +63,17 @@ export const fetchAllTours = async (
     });
 
     const pageData = response.data.result;
+    const pageInfo = pageData?.page;
     const tours = mapTourEntitiesToTours(pageData?.content || []);
 
     return {
         content: tours,
-        totalElements: pageData?.totalElements || 0,
-        totalPages: pageData?.totalPages || 0,
-        currentPage: pageData?.number || 0,
-        pageSize: pageData?.size || 20,
-        isFirst: pageData?.first ?? true,
-        isLast: pageData?.last ?? true,
+        totalElements: pageInfo?.totalElements || 0,
+        totalPages: pageInfo?.totalPages || 0,
+        currentPage: pageInfo?.number || 0,
+        pageSize: pageInfo?.size || 20,
+        isFirst: (pageInfo?.number || 0) === 0,
+        isLast: (pageInfo?.number || 0) >= ((pageInfo?.totalPages || 1) - 1),
     };
 };
 
@@ -110,16 +116,17 @@ export const fetchAllToursAdmin = async (
     });
 
     const pageData = response.data.result;
+    const pageInfo = pageData?.page;
     const tours = mapTourEntitiesToTours(pageData?.content || []);
 
     return {
         content: tours,
-        totalElements: pageData?.totalElements || 0,
-        totalPages: pageData?.totalPages || 0,
-        currentPage: pageData?.number || 0,
-        pageSize: pageData?.size || 20,
-        isFirst: pageData?.first ?? true,
-        isLast: pageData?.last ?? true,
+        totalElements: pageInfo?.totalElements || 0,
+        totalPages: pageInfo?.totalPages || 0,
+        currentPage: pageInfo?.number || 0,
+        pageSize: pageInfo?.size || 20,
+        isFirst: (pageInfo?.number || 0) === 0,
+        isLast: (pageInfo?.number || 0) >= ((pageInfo?.totalPages || 1) - 1),
     };
 };
 
