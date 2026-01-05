@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useBooking, Booking } from "@/context/BookingContext";
-import { useTour } from "@/context/TourContext";
+import { useTour, getCoverImage } from "@/context/TourContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useReview, ReviewStatus } from "@/context/ReviewContext";
 import { ContactModal } from "@/components/ContactModal";
@@ -66,7 +66,7 @@ const ITEMS_PER_PAGE = 6;
 export default function ProfilePage() {
     const { user } = useAuth();
     const { bookings, cancelBooking } = useBooking();
-    const { tours } = useTour();
+    const { } = useTour(); // Keep for potential future use
     const { favorites, toggleFavorite } = useFavorites();
     const { getUserReviews, hasReviewedBooking } = useReview();
     const navigate = useNavigate();
@@ -257,8 +257,8 @@ export default function ProfilePage() {
         toast.success("Đã hủy đặt chỗ thành công!");
     };
 
-    // Get favorite tours
-    const favoriteTours = tours.filter((tour) => favorites.includes(tour.id));
+    // Favorites are now full Tour objects from context
+    const favoriteTours = favorites;
 
     // Get user reviews
     const userReviews = user ? getUserReviews(user.userId) : [];
@@ -903,7 +903,7 @@ export default function ProfilePage() {
                                             >
                                                 <div className="relative aspect-[4/3]">
                                                     <img
-                                                        src={tour.image}
+                                                        src={getCoverImage(tour)}
                                                         alt={tour.title}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                     />

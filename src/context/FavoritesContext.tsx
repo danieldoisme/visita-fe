@@ -7,10 +7,14 @@ import {
   useCallback,
 } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+import { fetchFavorites, addToFavorites, removeFromFavorites } from "@/services/favoriteService";
+import { getTourUuid } from "@/api/mappers/tourMapper";
+import type { Tour } from "@/context/TourContext";
 
 // ============== Types ==============
 interface FavoritesContextType {
-  favorites: number[];
+  favorites: Tour[];
   toggleFavorite: (tourId: number) => Promise<void>;
   isFavorite: (tourId: number) => boolean;
   isLoading: boolean;
@@ -18,31 +22,8 @@ interface FavoritesContextType {
   pendingFavoriteId: number | null;
   setPendingFavorite: (tourId: number | null) => void;
   executePendingFavorite: () => Promise<void>;
-}
-
-// ============== LocalStorage Key ==============
-const FAVORITES_STORAGE_KEY = "visita_favorites";
-
-// ============== Mock Favorites for user-001 ==============
-// Pre-populate with a few favorite tours for testing
-const MOCK_FAVORITES: number[] = [1, 3, 4]; // Hạ Long, Sơn Đoòng, Đà Lạt
-
-// ============== Mock API Functions ==============
-// These will be replaced with real API calls when backend is ready
-const mockDelay = () => new Promise((resolve) => setTimeout(resolve, 300));
-
-async function addFavoriteAPI(tourId: number): Promise<boolean> {
-  await mockDelay();
-  // Simulating API success
-  console.log(`[Mock API] Added tour ${tourId} to favorites`);
-  return true;
-}
-
-async function removeFavoriteAPI(tourId: number): Promise<boolean> {
-  await mockDelay();
-  // Simulating API success
-  console.log(`[Mock API] Removed tour ${tourId} from favorites`);
-  return true;
+  // Refresh favorites from API
+  refreshFavorites: () => Promise<void>;
 }
 
 // ============== Context ==============
@@ -56,70 +37,71 @@ interface FavoritesProviderProps {
 }
 
 export function FavoritesProvider({ children }: FavoritesProviderProps) {
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const { user, isAuthenticated } = useAuth();
+  const [favorites, setFavorites] = useState<Tour[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Pending favorite for auth-gated flow
   const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(null);
 
-  // Load favorites from LocalStorage on mount, or use mock data
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setFavorites(parsed);
-        } else {
-          // Empty array in storage, use mock data
-          setFavorites(MOCK_FAVORITES);
-        }
-      } else {
-        // No stored favorites, use mock data
-        setFavorites(MOCK_FAVORITES);
-      }
-    } catch (error) {
-      console.error("Failed to load favorites from LocalStorage:", error);
-      // Fallback to mock data on error
-      setFavorites(MOCK_FAVORITES);
+  // Load favorites from API when user authenticates
+  const loadFavorites = useCallback(async () => {
+    if (!isAuthenticated) {
+      setFavorites([]);
+      return;
     }
-    setIsInitialized(true);
-  }, []);
 
-  // Save favorites to LocalStorage whenever they change (only after initialization)
-  useEffect(() => {
-    if (!isInitialized) return;
+    setIsLoading(true);
     try {
-      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+      const favoriteTours = await fetchFavorites();
+      setFavorites(favoriteTours);
     } catch (error) {
-      console.error("Failed to save favorites to LocalStorage:", error);
+      console.error("Failed to load favorites:", error);
+      // Don't show toast on load failure, just log it
+    } finally {
+      setIsLoading(false);
     }
-  }, [favorites, isInitialized]);
+  }, [isAuthenticated]);
+
+  // Load favorites on auth change
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites, user?.userId]);
 
   const isFavorite = (tourId: number): boolean => {
-    return favorites.includes(tourId);
+    return favorites.some((tour) => tour.id === tourId);
   };
 
   const toggleFavorite = async (tourId: number): Promise<void> => {
+    if (!isAuthenticated) {
+      // This shouldn't happen if UI is correct, but handle it
+      toast.error("Vui lòng đăng nhập để thêm yêu thích");
+      return;
+    }
+
+    // Get the UUID for API call
+    const tourUuid = getTourUuid(tourId);
+    if (!tourUuid) {
+      console.error("Could not find UUID for tour:", tourId);
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
+      return;
+    }
+
     const wasAlreadyFavorite = isFavorite(tourId);
     setIsLoading(true);
 
     try {
       if (wasAlreadyFavorite) {
         // Remove from favorites
-        const success = await removeFavoriteAPI(tourId);
-        if (success) {
-          setFavorites((prev) => prev.filter((id) => id !== tourId));
-          toast.success("Đã xóa khỏi danh sách yêu thích");
-        }
+        await removeFromFavorites(tourUuid);
+        setFavorites((prev) => prev.filter((tour) => tour.id !== tourId));
+        toast.success("Đã xóa khỏi danh sách yêu thích");
       } else {
         // Add to favorites
-        const success = await addFavoriteAPI(tourId);
-        if (success) {
-          setFavorites((prev) => [...prev, tourId]);
-          toast.success("Đã thêm vào danh sách yêu thích");
-        }
+        await addToFavorites(tourUuid);
+        // Refresh favorites to get the full tour data
+        await loadFavorites();
+        toast.success("Đã thêm vào danh sách yêu thích");
       }
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
@@ -142,10 +124,15 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
     setPendingFavoriteId(null); // Clear pending state
 
     // Only add if not already a favorite
-    if (!favorites.includes(tourId)) {
+    if (!isFavorite(tourId)) {
       await toggleFavorite(tourId);
     }
   }, [pendingFavoriteId, favorites]);
+
+  // Refresh favorites from API
+  const refreshFavorites = useCallback(async () => {
+    await loadFavorites();
+  }, [loadFavorites]);
 
   return (
     <FavoritesContext.Provider
@@ -157,6 +144,7 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
         pendingFavoriteId,
         setPendingFavorite,
         executePendingFavorite,
+        refreshFavorites,
       }}
     >
       {children}
