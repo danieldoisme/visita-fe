@@ -1,17 +1,35 @@
 import { Modal } from "@/components/ui/modal";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, Calendar, UserCircle } from "lucide-react";
+import { Mail, Phone, Calendar, UserCircle, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
+const getRoleLabel = (role: "user" | "staff" | "admin") => {
+    switch (role) {
+        case "admin":
+            return "Quản trị viên";
+        case "staff":
+            return "Nhân viên";
+        default:
+            return "Người dùng";
+    }
+};
+
+const getRoleVariant = (role: "user" | "staff" | "admin") => {
+    if (role === "admin") return "default";
+    if (role === "staff") return "outline" as const;
+    return "secondary";
+};
+
 export interface UserDetails {
-    id: number;
+    id: number | string;
     email: string;
     name: string;
     phone?: string;
     dob?: string;
     gender?: "male" | "female" | "other";
-    role: "user" | "admin";
+    address?: string;
+    role: "user" | "staff" | "admin";
     status: "active" | "locked";
 }
 
@@ -59,8 +77,11 @@ export function UserDetailsModal({ user, isOpen, onClose }: UserDetailsModalProp
                 <div className="flex items-center gap-3">
                     <div>
                         <p className="text-sm text-muted-foreground mb-1">Vai trò</p>
-                        <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                            {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
+                        <Badge
+                            variant={getRoleVariant(user.role)}
+                            className={user.role === "staff" ? "border-blue-500 text-blue-600" : ""}
+                        >
+                            {getRoleLabel(user.role)}
                         </Badge>
                     </div>
                     <div>
@@ -123,6 +144,19 @@ export function UserDetailsModal({ user, isOpen, onClose }: UserDetailsModalProp
                         <div>
                             <p className="text-xs text-muted-foreground">Giới tính</p>
                             <p className="text-sm font-medium">{getGenderLabel(user.gender)}</p>
+                        </div>
+                    </div>
+
+                    {/* Address */}
+                    <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-muted-foreground">Địa chỉ</p>
+                            <p className="text-sm font-medium">
+                                {user.address || "Chưa cập nhật"}
+                            </p>
                         </div>
                     </div>
                 </div>
