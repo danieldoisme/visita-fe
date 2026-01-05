@@ -323,6 +323,24 @@ export type ReviewResponse = {
     isVisible?: boolean;
 };
 
+export type PromoValidationRequest = {
+    code: string;
+};
+
+export type ApiResponsePromoValidationResponse = {
+    code?: number;
+    message?: string;
+    result?: PromoValidationResponse;
+};
+
+export type PromoValidationResponse = {
+    valid?: boolean;
+    discountType?: string;
+    discountValue?: number;
+    description?: string;
+    message?: string;
+};
+
 export type ApiResponseString = {
     code?: number;
     message?: string;
@@ -436,8 +454,8 @@ export type PageableObject = {
 };
 
 export type SortObject = {
-    unsorted?: boolean;
     sorted?: boolean;
+    unsorted?: boolean;
     empty?: boolean;
 };
 
@@ -829,6 +847,22 @@ export type CreateReviewResponses = {
 };
 
 export type CreateReviewResponse = CreateReviewResponses[keyof CreateReviewResponses];
+
+export type ValidatePromoCodeData = {
+    body: PromoValidationRequest;
+    path?: never;
+    query?: never;
+    url: '/promotions/validate';
+};
+
+export type ValidatePromoCodeResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponsePromoValidationResponse;
+};
+
+export type ValidatePromoCodeResponse = ValidatePromoCodeResponses[keyof ValidatePromoCodeResponses];
 
 export type RemoveFavoriteData = {
     body?: never;

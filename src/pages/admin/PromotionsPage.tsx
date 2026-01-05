@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { format, isAfter, isBefore, isWithinInterval, startOfDay } from "date-fns";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
@@ -29,92 +29,18 @@ import { Ticket, Calendar as CalendarIcon, Plus, Pencil, Trash2, Search, Percent
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
-// ============== Types ==============
-type DiscountType = "percent" | "amount";
-type PromotionStatus = "active" | "expired" | "disabled";
-
-interface Promotion {
-    id: number;
-    code: string;
-    description: string;
-    discountType: DiscountType;
-    discountValue: number;
-    startDate: string;
-    endDate: string;
-    usageLimit: number;
-    usedCount: number;
-    status: PromotionStatus;
-    isManuallyDisabled: boolean; // Track if admin manually disabled it
-}
-
-// ============== Mock Data ==============
-const INITIAL_PROMOTIONS: Promotion[] = [
-    {
-        id: 1,
-        code: "SUMMER2025",
-        description: "Khuyến mãi mùa hè - Giảm giá cho tất cả tour biển",
-        discountType: "percent",
-        discountValue: 15,
-        startDate: "2025-06-01",
-        endDate: "2025-08-31",
-        usageLimit: 100,
-        usedCount: 23,
-        status: "active",
-        isManuallyDisabled: false,
-    },
-    {
-        id: 2,
-        code: "TETHOLIDAY",
-        description: "Ưu đãi Tết Nguyên Đán - Giảm trực tiếp",
-        discountType: "amount",
-        discountValue: 500000,
-        startDate: "2025-01-15",
-        endDate: "2025-02-15",
-        usageLimit: 50,
-        usedCount: 50,
-        status: "expired",
-        isManuallyDisabled: false,
-    },
-    {
-        id: 3,
-        code: "WELCOME10",
-        description: "Ưu đãi khách hàng mới - Giảm 10% cho đơn đầu tiên",
-        discountType: "percent",
-        discountValue: 10,
-        startDate: "2025-01-01",
-        endDate: "2025-12-31",
-        usageLimit: 500,
-        usedCount: 127,
-        status: "active",
-        isManuallyDisabled: false,
-    },
-    {
-        id: 4,
-        code: "DALAT300K",
-        description: "Giảm 300.000đ cho tất cả tour Đà Lạt",
-        discountType: "amount",
-        discountValue: 300000,
-        startDate: "2025-03-01",
-        endDate: "2025-04-30",
-        usageLimit: 80,
-        usedCount: 15,
-        status: "disabled",
-        isManuallyDisabled: true,
-    },
-    {
-        id: 5,
-        code: "VIP20",
-        description: "Ưu đãi đặc biệt dành cho khách VIP",
-        discountType: "percent",
-        discountValue: 20,
-        startDate: "2024-01-01",
-        endDate: "2024-12-31",
-        usageLimit: 200,
-        usedCount: 198,
-        status: "expired",
-        isManuallyDisabled: false,
-    },
-];
+import {
+    type Promotion,
+    type DiscountType,
+    calculateStatus,
+} from "@/api/mappers/promotionMapper";
+import {
+    fetchAllPromotions,
+    createPromotionApi,
+    updatePromotionApi,
+    deletePromotionApi,
+    updatePromotionStatusApi,
+} from "@/services/promotionService";
 
 // ============== Helper Functions ==============
 import { formatCurrency, formatDateRange } from "@/lib/formatters";
@@ -127,47 +53,36 @@ const formatDiscount = (type: DiscountType, value: number): string => {
     return formatCurrency(value);
 };
 
-// Calculate status based on dates with manual override support (Hybrid approach)
-const calculateStatus = (
-    startDate: string,
-    endDate: string,
-    isManuallyDisabled: boolean
-): PromotionStatus => {
-    if (isManuallyDisabled) {
-        return "disabled";
-    }
-
-    const today = startOfDay(new Date());
-    const start = startOfDay(new Date(startDate));
-    const end = startOfDay(new Date(endDate));
-
-    if (isAfter(today, end)) {
-        return "expired";
-    }
-
-    if (isBefore(today, start)) {
-        return "disabled"; // Not yet started, show as disabled
-    }
-
-    if (isWithinInterval(today, { start, end })) {
-        return "active";
-    }
-
-    return "disabled";
-};
-
 // Confirmation dialog keys
 const DELETE_PROMOTION_KEY = "delete_promotion";
 const BULK_DELETE_PROMOTION_KEY = "bulk_delete_promotion";
 
-// ============== Main Component ==============
 export default function PromotionsPage() {
-    const [promotions, setPromotions] = useState<Promotion[]>(INITIAL_PROMOTIONS);
+    const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const [loading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Fetch promotions from API
+    const loadPromotions = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await fetchAllPromotions();
+            setPromotions(data);
+        } catch (error) {
+            console.error("Failed to fetch promotions:", error);
+            toast.error("Không thể tải danh sách khuyến mãi");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadPromotions();
+    }, [loadPromotions]);
 
     // Sorting state
     const { sort, toggleSort, sortData } = useSorting<Promotion>({
@@ -191,7 +106,7 @@ export default function PromotionsPage() {
         isSelected,
         isAllSelected,
         isSomeSelected,
-    } = useTableSelection<number>();
+    } = useTableSelection<string>();
 
     // Form state
     const [formData, setFormData] = useState({
@@ -209,7 +124,7 @@ export default function PromotionsPage() {
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean;
         type: "delete" | "bulk_delete";
-        itemId: number | null;
+        itemId: string | null;
     }>({
         isOpen: false,
         type: "delete",
@@ -332,52 +247,68 @@ export default function PromotionsPage() {
     };
 
     // Handle form submission
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!validateForm()) return;
 
-        const promotionData: Promotion = {
-            id: editingPromotion?.id || Date.now(),
-            code: formData.code.toUpperCase(),
-            description: formData.description,
-            discountType: formData.discountType,
-            discountValue: formData.discountValue,
-            startDate: format(dateRange!.from!, "yyyy-MM-dd"),
-            endDate: format(dateRange!.to!, "yyyy-MM-dd"),
-            usageLimit: formData.usageLimit,
-            usedCount: editingPromotion?.usedCount || 0,
-            status: "active",
-            isManuallyDisabled: editingPromotion?.isManuallyDisabled || false,
-        };
+        setSubmitting(true);
+        try {
+            const promotionData = {
+                code: formData.code.toUpperCase(),
+                description: formData.description,
+                discountType: formData.discountType,
+                discountValue: formData.discountValue,
+                startDate: format(dateRange!.from!, "yyyy-MM-dd"),
+                endDate: format(dateRange!.to!, "yyyy-MM-dd"),
+                usageLimit: formData.usageLimit,
+                isManuallyDisabled: editingPromotion?.isManuallyDisabled || false,
+            };
 
-        if (editingPromotion) {
-            setPromotions((prev) =>
-                prev.map((p) => (p.id === editingPromotion.id ? promotionData : p))
-            );
-            toast.success("Đã cập nhật khuyến mãi thành công!");
-        } else {
-            setPromotions((prev) => [...prev, promotionData]);
-            toast.success("Đã tạo khuyến mãi mới thành công!");
+            if (editingPromotion) {
+                await updatePromotionApi(editingPromotion.id, promotionData);
+                toast.success("Đã cập nhật khuyến mãi thành công!");
+            } else {
+                await createPromotionApi(promotionData);
+                toast.success("Đã tạo khuyến mãi mới thành công!");
+            }
+
+            await loadPromotions();
+            handleCloseModal();
+        } catch (error) {
+            console.error("Failed to save promotion:", error);
+            toast.error(editingPromotion ? "Không thể cập nhật khuyến mãi" : "Không thể tạo khuyến mãi");
+        } finally {
+            setSubmitting(false);
         }
-
-        handleCloseModal();
     };
 
     // Delete promotion - execute action
-    const executeDeletePromotion = (id: number) => {
-        setPromotions((prev) => prev.filter((p) => p.id !== id));
-        clearSelection();
-        toast.success("Đã xóa khuyến mãi thành công!");
+    const executeDeletePromotion = async (id: string) => {
+        try {
+            await deletePromotionApi(id);
+            await loadPromotions();
+            clearSelection();
+            toast.success("Đã xóa khuyến mãi thành công!");
+        } catch (error) {
+            console.error("Failed to delete promotion:", error);
+            toast.error("Không thể xóa khuyến mãi");
+        }
     };
 
     // Bulk delete - execute action
-    const executeBulkDelete = () => {
-        setPromotions((prev) => prev.filter((p) => !selectedArray.includes(p.id)));
-        toast.success(`Đã xóa ${selectedCount} khuyến mãi!`);
-        clearSelection();
+    const executeBulkDelete = async () => {
+        try {
+            await Promise.all(selectedArray.map((id) => deletePromotionApi(id)));
+            await loadPromotions();
+            toast.success(`Đã xóa ${selectedCount} khuyến mãi!`);
+            clearSelection();
+        } catch (error) {
+            console.error("Failed to delete promotions:", error);
+            toast.error("Không thể xóa một số khuyến mãi");
+        }
     };
 
     // Delete promotion - click handler
-    const handleDeleteClick = (id: number) => {
+    const handleDeleteClick = (id: string) => {
         if (shouldShowConfirmation(DELETE_PROMOTION_KEY)) {
             setConfirmDialog({ isOpen: true, type: "delete", itemId: id });
         } else {
@@ -414,42 +345,57 @@ export default function PromotionsPage() {
     };
 
     // Toggle promotion disabled status (single)
-    const handleToggleStatus = (id: number) => {
-        setPromotions((prev) =>
-            prev.map((p) =>
-                p.id === id ? { ...p, isManuallyDisabled: !p.isManuallyDisabled } : p
-            )
-        );
+    const handleToggleStatus = async (id: string) => {
         const promo = promotions.find((p) => p.id === id);
-        if (promo) {
+        if (!promo) return;
+
+        const newIsActive = promo.isManuallyDisabled; // Toggle: if disabled, activate
+        try {
+            await updatePromotionStatusApi(id, newIsActive);
+            await loadPromotions();
             toast.success(
-                promo.isManuallyDisabled
+                newIsActive
                     ? "Đã kích hoạt lại khuyến mãi!"
                     : "Đã vô hiệu hóa khuyến mãi!"
             );
+        } catch (error) {
+            console.error("Failed to toggle status:", error);
+            toast.error("Không thể thay đổi trạng thái");
         }
     };
 
     // Bulk activate
-    const handleBulkActivate = () => {
-        setPromotions((prev) =>
-            prev.map((p) =>
-                selectedArray.includes(p.id) ? { ...p, isManuallyDisabled: false } : p
-            )
-        );
-        toast.success(`Đã kích hoạt ${selectedActivatableCount} khuyến mãi!`);
-        clearSelection();
+    const handleBulkActivate = async () => {
+        try {
+            await Promise.all(
+                selectedArray
+                    .filter((id) => promotions.find((p) => p.id === id)?.isManuallyDisabled)
+                    .map((id) => updatePromotionStatusApi(id, true))
+            );
+            await loadPromotions();
+            toast.success(`Đã kích hoạt ${selectedActivatableCount} khuyến mãi!`);
+            clearSelection();
+        } catch (error) {
+            console.error("Failed to activate promotions:", error);
+            toast.error("Không thể kích hoạt một số khuyến mãi");
+        }
     };
 
     // Bulk deactivate
-    const handleBulkDeactivate = () => {
-        setPromotions((prev) =>
-            prev.map((p) =>
-                selectedArray.includes(p.id) ? { ...p, isManuallyDisabled: true } : p
-            )
-        );
-        toast.success(`Đã vô hiệu hóa ${selectedDeactivatableCount} khuyến mãi!`);
-        clearSelection();
+    const handleBulkDeactivate = async () => {
+        try {
+            await Promise.all(
+                selectedArray
+                    .filter((id) => !promotions.find((p) => p.id === id)?.isManuallyDisabled)
+                    .map((id) => updatePromotionStatusApi(id, false))
+            );
+            await loadPromotions();
+            toast.success(`Đã vô hiệu hóa ${selectedDeactivatableCount} khuyến mãi!`);
+            clearSelection();
+        } catch (error) {
+            console.error("Failed to deactivate promotions:", error);
+            toast.error("Không thể vô hiệu hóa một số khuyến mãi");
+        }
     };
 
     // Clear search filter
@@ -832,11 +778,11 @@ export default function PromotionsPage() {
 
                     {/* Actions */}
                     <div className="flex justify-end gap-2 pt-4">
-                        <Button variant="outline" onClick={handleCloseModal}>
+                        <Button variant="outline" onClick={handleCloseModal} disabled={submitting}>
                             Hủy
                         </Button>
-                        <Button onClick={handleSubmit}>
-                            {editingPromotion ? "Lưu thay đổi" : "Tạo khuyến mãi"}
+                        <Button onClick={handleSubmit} disabled={submitting}>
+                            {submitting ? "Đang xử lý..." : (editingPromotion ? "Lưu thay đổi" : "Tạo khuyến mãi")}
                         </Button>
                     </div>
                 </div>
