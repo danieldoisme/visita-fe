@@ -58,6 +58,7 @@ export type BookingEntity = {
     specialRequest?: string;
     invoices?: Array<InvoiceEntity>;
     payments?: Array<PaymentEntity>;
+    review?: ReviewEntity;
 };
 
 export type ChatMessageEntity = {
@@ -123,6 +124,7 @@ export type ReviewEntity = {
     reviewId?: string;
     tour?: TourEntity;
     user?: UserEntity;
+    booking?: BookingEntity;
     rating?: number;
     comment?: string;
     createdAt?: string;
@@ -297,6 +299,7 @@ export type BookingResponse = {
 };
 
 export type ReviewRequest = {
+    bookingId: string;
     tourId: string;
     rating: number;
     comment: string;
@@ -310,6 +313,7 @@ export type ApiResponseReviewResponse = {
 
 export type ReviewResponse = {
     reviewId?: string;
+    bookingId?: string;
     tourId?: string;
     userId?: string;
     userName?: string;
@@ -412,9 +416,9 @@ export type PageObject = {
     totalElements?: number;
     totalPages?: number;
     pageable?: PageableObject;
+    numberOfElements?: number;
     first?: boolean;
     last?: boolean;
-    numberOfElements?: number;
     size?: number;
     content?: Array<TourEntity>;
     number?: number;
@@ -423,17 +427,17 @@ export type PageObject = {
 };
 
 export type PageableObject = {
-    unpaged?: boolean;
     paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
+    unpaged?: boolean;
     offset?: number;
     sort?: SortObject;
 };
 
 export type SortObject = {
-    sorted?: boolean;
     unsorted?: boolean;
+    sorted?: boolean;
     empty?: boolean;
 };
 

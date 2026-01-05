@@ -59,6 +59,7 @@ export const fetchReviewsByTour = async (
 export const submitReview = async (payload: CreateReviewPayload): Promise<Review> => {
     const response = await createReview({
         body: {
+            bookingId: payload.bookingId,
             tourId: payload.tourId,
             rating: payload.rating,
             comment: payload.comment,

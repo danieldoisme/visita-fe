@@ -120,13 +120,10 @@ export const ReviewProvider = ({ children }: { children: ReactNode }) => {
         return reviews.filter((r) => r.userId === userId);
     }, [reviews]);
 
-    // Helper: Check if booking has been reviewed (placeholder - backend doesn't support bookingId in reviews yet)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const hasReviewedBooking = useCallback((_bookingId: number): boolean => {
-        // Since the API doesn't track bookingId in reviews, we return false
-        // In a real implementation, this would check if a review exists for this booking
-        return false;
-    }, []);
+    // Helper: Check if booking has been reviewed
+    const hasReviewedBooking = useCallback((bookingId: number): boolean => {
+        return reviews.some(r => r.bookingId === bookingId.toString());
+    }, [reviews]);
 
     return (
         <ReviewContext.Provider

@@ -60,6 +60,7 @@ export function ReviewModal({ isOpen, onClose, booking }: ReviewModalProps) {
         setIsSubmitting(true);
         try {
             await addReview({
+                bookingId: booking.id.toString(),
                 tourId: booking.tourId.toString(),
                 rating: data.rating,
                 comment: data.comment,
