@@ -1,5 +1,6 @@
 import type { Tour, TourImage } from "@/context/TourContext";
 import type { TourRequest, TourEntity } from "../generated/types.gen";
+import { hashStringToNumber } from "@/utils/hashUtils";
 
 /**
  * Backend category enum to Vietnamese display text
@@ -28,20 +29,6 @@ export const CATEGORY_REVERSE_MAP: Record<string, TourRequest["category"]> = {
 };
 
 /**
- * Simple hash function to convert string UUID to number
- */
-const hashStringToNumber = (str: string): number => {
-    if (!str) return 0;
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
-    }
-    return Math.abs(hash);
-};
-
-/**
  * Store original tourId for API calls (UUID string)
  */
 const tourIdMap = new Map<number, string>();
@@ -52,6 +39,13 @@ export const storeTourIdMapping = (numericId: number, uuid: string): void => {
 
 export const getTourUuid = (numericId: number): string | undefined => {
     return tourIdMap.get(numericId);
+};
+
+/**
+ * Clear tour ID mappings (call on logout to prevent memory leak)
+ */
+export const clearTourIdMap = (): void => {
+    tourIdMap.clear();
 };
 
 /**

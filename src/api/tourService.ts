@@ -8,6 +8,7 @@ import {
     getTourUuid,
     storeTourIdMapping,
 } from "./mappers/tourMapper";
+import { hashStringToNumber } from "@/utils/hashUtils";
 
 /**
  * Page info structure from backend
@@ -224,15 +225,4 @@ export const updateTourStatusApi = async (
     await apiClient.patch(`/admins/tours/${uuid}/status`, null, {
         params: { isActive },
     });
-};
-
-const hashStringToNumber = (str: string): number => {
-    if (!str) return 0;
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
-    }
-    return Math.abs(hash);
 };

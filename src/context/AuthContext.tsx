@@ -17,6 +17,8 @@ import {
 import authService from "../services/authService";
 import userService from "../services/userService";
 import { ApiError } from "../api/apiClient";
+import { clearTourIdMap } from "../api/mappers/tourMapper";
+import { clearBookingIdMap } from "../api/mappers/bookingMapper";
 
 export type { UserRole };
 
@@ -245,6 +247,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     tokenStorage.clearTokens();
     localStorage.removeItem(AUTH_USER_KEY);
+
+    // Clear ID mappings to prevent memory leak
+    clearTourIdMap();
+    clearBookingIdMap();
   };
 
   return (
