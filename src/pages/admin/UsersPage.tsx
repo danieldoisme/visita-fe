@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { UserDetailsModal, UserDetails } from "@/components/UserDetailsModal";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, StatusBadge, userStatusConfig, type BulkAction } from "@/components/admin";
+import { UserDetailsModal } from "@/components/UserDetailsModal";
+import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, StatusBadge, userStatusConfig, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,58 +19,16 @@ import {
 } from "@/components/ui/table";
 import { Search, Lock, Unlock, Eye, Trash2, Users } from "lucide-react";
 
-interface UserData extends UserDetails {
-  avatar?: string;
-}
+import {
+  fetchUsers,
+  updateUserStatusApi,
+  deleteUserApi,
+  type User,
+  type PaginatedUsers,
+} from "@/services/adminUserService";
 
-// Mock users data
-const initialUsers: UserData[] = [
-  {
-    id: 1,
-    email: "admin@visita.com",
-    name: "Admin",
-    role: "admin",
-    status: "active",
-  },
-  {
-    id: 2,
-    email: "user@visita.com",
-    name: "Nguyen Van A",
-    phone: "0901234567",
-    dob: "1995-05-15",
-    gender: "male",
-    role: "user",
-    status: "active",
-  },
-  {
-    id: 3,
-    email: "tran.binh@email.com",
-    name: "Trần Thị Bình",
-    phone: "0912345678",
-    dob: "1990-03-20",
-    gender: "female",
-    role: "user",
-    status: "active",
-  },
-  {
-    id: 4,
-    email: "le.cuong@email.com",
-    name: "Lê Hoàng Cường",
-    phone: "0923456789",
-    gender: "male",
-    role: "user",
-    status: "locked",
-  },
-  {
-    id: 5,
-    email: "pham.duy@email.com",
-    name: "Phạm Minh Duy",
-    dob: "1998-12-01",
-    gender: "male",
-    role: "user",
-    status: "active",
-  },
-];
+// Page size for pagination
+const PAGE_SIZE = 10;
 
 // Confirmation dialog keys
 const LOCK_USER_KEY = "lock_user";
@@ -80,20 +38,34 @@ const BULK_DELETE_USER_KEY = "bulk_delete_user";
 const BULK_LOCK_USER_KEY = "bulk_lock_user";
 const BULK_UNLOCK_USER_KEY = "bulk_unlock_user";
 
+// Role display configuration
+const getRoleDisplay = (role: "admin" | "staff" | "user") => {
+  switch (role) {
+    case "admin":
+      return { label: "Quản trị viên", className: "bg-primary text-primary-foreground" };
+    case "staff":
+      return { label: "Nhân viên", className: "bg-blue-500 text-white" };
+    default:
+      return { label: "Người dùng", className: "bg-secondary text-secondary-foreground" };
+  }
+};
+
 export default function UsersPage() {
-  const [users, setUsers] = useState<UserData[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const loading = false; // Simulated loading state for skeleton demo
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Sorting state
-  const { sort, toggleSort, sortData } = useSorting<UserData>({
+  const { sort, toggleSort, sortData } = useSorting<User>({
     defaultSort: { key: "role", direction: "desc" },
     sortConfig: {
       role: "string",
-      status: "string",
+      isActive: "string",
     },
   });
 
@@ -108,110 +80,177 @@ export default function UsersPage() {
     isSelected,
     isAllSelected,
     isSomeSelected,
-  } = useTableSelection<number>();
+  } = useTableSelection<string>();
 
   // Confirmation dialog state
   const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     type: "lock" | "unlock" | "delete" | "bulk_lock" | "bulk_unlock" | "bulk_delete";
-    userId: number | null;
+    userId: string | null;
   }>({
     isOpen: false,
     type: "lock",
     userId: null,
   });
 
-  // Filter and sort users (exclude admins from selection for bulk actions)
+  // Fetch users from API
+  const loadUsers = useCallback(async (page: number) => {
+    setLoading(true);
+    try {
+      const data: PaginatedUsers = await fetchUsers(page, PAGE_SIZE);
+      setUsers(data.users);
+      setTotalPages(data.totalPages);
+      setCurrentPage(data.currentPage);
+    } catch {
+      toast.error("Không thể tải danh sách người dùng");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    loadUsers(1);
+  }, [loadUsers]);
+
+  // Filter and sort users (client-side search on loaded data)
   const filteredUsers = useMemo(() => {
     const filtered = users.filter(
       (user) =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
     return sortData(filtered);
   }, [users, searchTerm, sortData]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredUsers, currentPage]);
-
-  // Get IDs of paginated selectable users
-  const paginatedSelectableUserIds = useMemo(
-    () => paginatedUsers.filter((u) => u.role !== "admin").map((u) => u.id),
-    [paginatedUsers]
+  // Get IDs of selectable users (exclude admins)
+  const selectableUserIds = useMemo(
+    () => filteredUsers.filter((u) => u.role !== "admin").map((u) => u.id),
+    [filteredUsers]
   );
 
   // Count selected users by status for disabling bulk actions
   const selectedUsersWithStatus = useMemo(() => {
     const selectedUsers = users.filter((u) => selectedArray.includes(u.id) && u.role !== "admin");
     return {
-      active: selectedUsers.filter((u) => u.status === "active").length,
-      locked: selectedUsers.filter((u) => u.status === "locked").length,
+      active: selectedUsers.filter((u) => u.isActive).length,
+      locked: selectedUsers.filter((u) => !u.isActive).length,
       total: selectedUsers.length,
     };
   }, [users, selectedArray]);
 
   // Execute lock/unlock single user
-  const executeToggleLock = (userId: number) => {
+  const executeToggleLock = async (userId: string) => {
     const user = users.find((u) => u.id === userId);
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId
-          ? { ...user, status: user.status === "active" ? "locked" : "active" }
-          : user
-      )
-    );
-    toast.success(
-      user?.status === "active" ? "Đã khóa tài khoản!" : "Đã mở khóa tài khoản!"
-    );
+    if (!user) return;
+
+    const newStatus = !user.isActive;
+    setActionLoading(userId);
+
+    try {
+      await updateUserStatusApi(userId, newStatus);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, isActive: newStatus } : u
+        )
+      );
+      toast.success(newStatus ? "Đã mở khóa tài khoản!" : "Đã khóa tài khoản!");
+    } catch {
+      toast.error("Không thể cập nhật trạng thái tài khoản");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   // Execute delete single user
-  const executeDeleteUser = (userId: number) => {
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-    clearSelection();
-    toast.success("Đã xóa tài khoản!");
+  const executeDeleteUser = async (userId: string) => {
+    setActionLoading(userId);
+
+    try {
+      await deleteUserApi(userId);
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      clearSelection();
+      toast.success("Đã xóa tài khoản!");
+    } catch {
+      toast.error("Không thể xóa tài khoản");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   // Execute bulk lock
-  const executeBulkLock = () => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        selectedArray.includes(user.id) && user.role !== "admin"
-          ? { ...user, status: "locked" }
-          : user
-      )
-    );
-    toast.success(`Đã khóa ${selectedCount} tài khoản!`);
-    clearSelection();
+  const executeBulkLock = async () => {
+    setActionLoading("bulk");
+    const usersToLock = selectedArray.filter((id) => {
+      const user = users.find((u) => u.id === id);
+      return user && user.role !== "admin" && user.isActive;
+    });
+
+    try {
+      await Promise.all(usersToLock.map((id) => updateUserStatusApi(id, false)));
+      setUsers((prev) =>
+        prev.map((user) =>
+          usersToLock.includes(user.id) ? { ...user, isActive: false } : user
+        )
+      );
+      toast.success(`Đã khóa ${usersToLock.length} tài khoản!`);
+      clearSelection();
+    } catch {
+      toast.error("Không thể khóa một số tài khoản");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   // Execute bulk unlock
-  const executeBulkUnlock = () => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        selectedArray.includes(user.id) ? { ...user, status: "active" } : user
-      )
-    );
-    toast.success(`Đã mở khóa ${selectedCount} tài khoản!`);
-    clearSelection();
+  const executeBulkUnlock = async () => {
+    setActionLoading("bulk");
+    const usersToUnlock = selectedArray.filter((id) => {
+      const user = users.find((u) => u.id === id);
+      return user && !user.isActive;
+    });
+
+    try {
+      await Promise.all(usersToUnlock.map((id) => updateUserStatusApi(id, true)));
+      setUsers((prev) =>
+        prev.map((user) =>
+          usersToUnlock.includes(user.id) ? { ...user, isActive: true } : user
+        )
+      );
+      toast.success(`Đã mở khóa ${usersToUnlock.length} tài khoản!`);
+      clearSelection();
+    } catch {
+      toast.error("Không thể mở khóa một số tài khoản");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   // Execute bulk delete
-  const executeBulkDelete = () => {
-    setUsers((prev) => prev.filter((u) => !selectedArray.includes(u.id)));
-    toast.success(`Đã xóa ${selectedCount} tài khoản!`);
-    clearSelection();
+  const executeBulkDelete = async () => {
+    setActionLoading("bulk");
+    const usersToDelete = selectedArray.filter((id) => {
+      const user = users.find((u) => u.id === id);
+      return user && user.role !== "admin";
+    });
+
+    try {
+      await Promise.all(usersToDelete.map((id) => deleteUserApi(id)));
+      setUsers((prev) => prev.filter((u) => !usersToDelete.includes(u.id)));
+      toast.success(`Đã xóa ${usersToDelete.length} tài khoản!`);
+      clearSelection();
+    } catch {
+      toast.error("Không thể xóa một số tài khoản");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   // Handle lock/unlock click
-  const handleToggleLockClick = (user: UserData) => {
-    const dialogType = user.status === "active" ? "lock" : "unlock";
-    const key = user.status === "active" ? LOCK_USER_KEY : UNLOCK_USER_KEY;
+  const handleToggleLockClick = (user: User) => {
+    const dialogType = user.isActive ? "lock" : "unlock";
+    const key = user.isActive ? LOCK_USER_KEY : UNLOCK_USER_KEY;
 
     if (shouldShowConfirmation(key)) {
       setConfirmDialog({ isOpen: true, type: dialogType, userId: user.id });
@@ -221,7 +260,7 @@ export default function UsersPage() {
   };
 
   // Handle delete click
-  const handleDeleteClick = (userId: number) => {
+  const handleDeleteClick = (userId: string) => {
     if (shouldShowConfirmation(DELETE_USER_KEY)) {
       setConfirmDialog({ isOpen: true, type: "delete", userId });
     } else {
@@ -342,7 +381,7 @@ export default function UsersPage() {
   const dialogContent = getDialogContent();
 
   // View details handlers
-  const handleViewDetails = (user: UserData) => {
+  const handleViewDetails = (user: User) => {
     setSelectedUser(user);
     setIsDetailsModalOpen(true);
   };
@@ -355,7 +394,12 @@ export default function UsersPage() {
   // Clear search filter
   const handleClearFilters = () => {
     setSearchTerm("");
-    setCurrentPage(1);
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    loadUsers(page);
+    clearSelection();
   };
 
   // Bulk actions configuration
@@ -364,19 +408,20 @@ export default function UsersPage() {
       label: "Khóa",
       icon: <Lock className="h-4 w-4 mr-1" />,
       onClick: handleBulkLockClick,
-      disabled: selectedUsersWithStatus.locked === selectedUsersWithStatus.total,
+      disabled: selectedUsersWithStatus.locked === selectedUsersWithStatus.total || actionLoading === "bulk",
     },
     {
       label: "Mở khóa",
       icon: <Unlock className="h-4 w-4 mr-1" />,
       onClick: handleBulkUnlockClick,
-      disabled: selectedUsersWithStatus.active === selectedUsersWithStatus.total,
+      disabled: selectedUsersWithStatus.active === selectedUsersWithStatus.total || actionLoading === "bulk",
     },
     {
       label: "Xóa",
       icon: <Trash2 className="h-4 w-4 mr-1" />,
       onClick: handleBulkDeleteClick,
       variant: "destructive",
+      disabled: actionLoading === "bulk",
     },
   ];
 
@@ -426,10 +471,7 @@ export default function UsersPage() {
             className="pl-8"
             aria-label="Tìm kiếm người dùng"
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         {hasSelection && (
@@ -459,11 +501,11 @@ export default function UsersPage() {
                       id="select-all-users"
                       name="select-all-users"
                       type="checkbox"
-                      checked={isAllSelected(paginatedSelectableUserIds)}
+                      checked={isAllSelected(selectableUserIds)}
                       ref={(el) => {
-                        if (el) el.indeterminate = isSomeSelected(paginatedSelectableUserIds);
+                        if (el) el.indeterminate = isSomeSelected(selectableUserIds);
                       }}
-                      onChange={() => toggleAll(paginatedSelectableUserIds)}
+                      onChange={() => toggleAll(selectableUserIds)}
                       className="h-4 w-4 rounded border-gray-300"
                       aria-label="Chọn tất cả người dùng"
                     />
@@ -473,94 +515,107 @@ export default function UsersPage() {
                   <SortableHeader sortKey="role" currentSort={sort} onSort={toggleSort}>
                     Vai trò
                   </SortableHeader>
-                  <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                  <SortableHeader sortKey="isActive" currentSort={sort} onSort={toggleSort}>
                     Trạng thái
                   </SortableHeader>
                   <TableHead className="text-right">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedUsers.map((user) => (
-                  <TableRow key={user.id} className={isSelected(user.id) ? "bg-muted/50" : ""}>
-                    <TableCell>
-                      <input
-                        id={`user-checkbox-${user.id}`}
-                        name={`user-checkbox-${user.id}`}
-                        type="checkbox"
-                        checked={isSelected(user.id)}
-                        onChange={() => toggleSelection(user.id)}
-                        disabled={user.role === "admin"}
-                        className="h-4 w-4 rounded border-gray-300 disabled:opacity-50"
-                        aria-label={`Chọn ${user.name}`}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                          {user.name.charAt(0).toUpperCase()}
+                {filteredUsers.map((user) => {
+                  const roleDisplay = getRoleDisplay(user.role);
+                  return (
+                    <TableRow key={user.id} className={isSelected(user.id) ? "bg-muted/50" : ""}>
+                      <TableCell>
+                        <input
+                          id={`user-checkbox-${user.id}`}
+                          name={`user-checkbox-${user.id}`}
+                          type="checkbox"
+                          checked={isSelected(user.id)}
+                          onChange={() => toggleSelection(user.id)}
+                          disabled={user.role === "admin"}
+                          className="h-4 w-4 rounded border-gray-300 disabled:opacity-50"
+                          aria-label={`Chọn ${user.fullName}`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                            {user.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-medium">{user.fullName}</span>
                         </div>
-                        <span className="font-medium">{user.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${user.role === "admin" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-                        {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        status={user.status as "active" | "locked"}
-                        config={userStatusConfig}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewDetails(user)}
-                          title="Xem chi tiết"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleToggleLockClick(user)}
-                          disabled={user.role === "admin"}
-                          title={user.status === "active" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
-                        >
-                          {user.status === "active" ? (
-                            <Lock className="h-4 w-4" />
-                          ) : (
-                            <Unlock className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteClick(user.id)}
-                          disabled={user.role === "admin"}
-                          className="text-destructive hover:text-destructive"
-                          title="Xóa tài khoản"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${roleDisplay.className}`}>
+                          {roleDisplay.label}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          status={user.isActive ? "active" : "locked"}
+                          config={userStatusConfig}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewDetails(user)}
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleToggleLockClick(user)}
+                            disabled={user.role === "admin" || actionLoading === user.id}
+                            title={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                          >
+                            {user.isActive ? (
+                              <Lock className="h-4 w-4" />
+                            ) : (
+                              <Unlock className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteClick(user.id)}
+                            disabled={user.role === "admin" || actionLoading === user.id}
+                            className="text-destructive hover:text-destructive"
+                            title="Xóa tài khoản"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
-            <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
           </>
         )}
       </div>
 
       {/* User Details Modal */}
       <UserDetailsModal
-        user={selectedUser}
+        user={selectedUser ? {
+          id: selectedUser.id,
+          email: selectedUser.email,
+          name: selectedUser.fullName,
+          phone: selectedUser.phone,
+          dob: selectedUser.dob,
+          gender: selectedUser.gender,
+          address: selectedUser.address,
+          role: selectedUser.role,
+          status: selectedUser.isActive ? "active" : "locked",
+        } : null}
         isOpen={isDetailsModalOpen}
         onClose={handleCloseDetails}
       />
