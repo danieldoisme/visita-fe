@@ -7,7 +7,33 @@ import { toast } from "sonner";
 import { useTour, getCoverImage } from "@/context/TourContext";
 import { useBooking } from "@/context/BookingContext";
 import { useAuth } from "@/context/AuthContext";
-import { findUserByEmail, createUserForStaff } from "@/services/mockAuthService";
+// TODO: Replace with actual backend API calls when user management endpoints are ready
+// Stub types for future backend integration
+interface StaffUserLookup {
+    userId: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+}
+
+interface CreateUserData {
+    email: string;
+    fullName: string;
+    phone: string;
+    password: string;
+}
+
+type CreateUserResult =
+    | { success: true; user: StaffUserLookup }
+    | { success: false; error: string };
+
+// Stub functions - always return "user not found" / "not implemented" for now
+const findUserByEmail = (_email: string): StaffUserLookup | null => null;
+
+const createUserForStaff = (_data: CreateUserData): CreateUserResult => ({
+    success: false,
+    error: "Chức năng tạo tài khoản chưa được kích hoạt. Vui lòng liên hệ quản trị viên.",
+});
 import { formatCurrency } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -198,7 +224,7 @@ export default function StaffBookingFormPage() {
                     password: customerData.password || "123456", // Fallback shouldn't happen due to validation
                 });
 
-                if (!result.success || !result.user) {
+                if (!result.success) {
                     toast.error(result.error || "Không thể tạo tài khoản khách hàng");
                     setIsSubmitting(false);
                     return;
