@@ -275,12 +275,6 @@ export default function ProfilePage() {
     // Get review status badge styling
     const getReviewStatusBadge = (status: ReviewStatus) => {
         switch (status) {
-            case "pending":
-                return (
-                    <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-                        Chờ duyệt
-                    </Badge>
-                );
             case "approved":
                 return (
                     <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
@@ -1009,7 +1003,7 @@ export default function ProfilePage() {
                                                                     {review.tourTitle}
                                                                 </h3>
                                                                 <p className="text-sm text-slate-500">
-                                                                    {format(new Date(review.date), "dd/MM/yyyy", { locale: vi })}
+                                                                    {format(new Date(review.createdAt), "dd/MM/yyyy", { locale: vi })}
                                                                 </p>
                                                                 {getReviewStatusBadge(review.status)}
                                                             </div>
@@ -1018,11 +1012,7 @@ export default function ProfilePage() {
 
                                                             <p className="text-slate-600">{review.comment}</p>
 
-                                                            {review.status === "pending" && (
-                                                                <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                                                                    Đánh giá của bạn đang chờ quản trị viên xem xét trước khi hiển thị công khai.
-                                                                </p>
-                                                            )}
+
                                                             {review.status === "hidden" && (
                                                                 <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
                                                                     Đánh giá này đã bị ẩn và không hiển thị công khai.
