@@ -1516,7 +1516,11 @@ export type ExportDataResponse = ExportDataResponses[keyof ExportDataResponses];
 export type GetChartDataData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        startDate?: string;
+        endDate?: string;
+        granularity?: 'DAY' | 'MONTH';
+    };
     url: '/admins/dashboard/chart';
 };
 
@@ -1532,7 +1536,11 @@ export type GetChartDataResponse = GetChartDataResponses[keyof GetChartDataRespo
 export type GetUserChartDataData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        startDate?: string;
+        endDate?: string;
+        granularity?: 'DAY' | 'MONTH';
+    };
     url: '/admins/dashboard/chart/users';
 };
 
@@ -1548,7 +1556,11 @@ export type GetUserChartDataResponse = GetUserChartDataResponses[keyof GetUserCh
 export type GetBookingChartDataData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        startDate?: string;
+        endDate?: string;
+        granularity?: 'DAY' | 'MONTH';
+    };
     url: '/admins/dashboard/chart/bookings';
 };
 

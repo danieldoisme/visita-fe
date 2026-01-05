@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { Users, DollarSign, ShoppingBag, Activity, LayoutDashboard, Download, FileSpreadsheet, TrendingUp, ChevronDown, UserPlus, CalendarCheck } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Users, DollarSign, ShoppingBag, Activity, LayoutDashboard, Download, TrendingUp, ChevronDown, UserPlus, CalendarCheck, Loader2 } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -27,28 +27,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useExcelExport } from "@/hooks/useExcelExport";
+import {
+  fetchDashboardStats,
+  fetchRevenueChart,
+  fetchUsersChart,
+  fetchBookingsChart,
+  fetchRecentTransactions,
+  downloadDashboardExport,
+} from "@/services/dashboardService";
 import {
   type ViewMode,
   type DayRange,
-  monthlyRevenueData,
-  dailyRevenueData,
-  monthlyNewUsersData,
-  dailyNewUsersData,
-  monthlyBookedToursData,
-  dailyBookedToursData,
-  filterDailyData,
-  topSellingToursData,
-  customerListData,
-} from "@/data/dashboardMockData";
+  type DashboardStats,
+  type RevenueDataPoint,
+  type UsersDataPoint,
+  type BookingsDataPoint,
+  type RecentTransaction,
+  calculateDateRange,
+  calculateMonthlyRange,
+  viewModeToGranularity,
+  formatVND,
+} from "@/api/mappers/dashboardMapper";
 
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-const formatVND = (value: number) => {
-  return value.toLocaleString("vi-VN") + "đ";
-};
 
 const CustomTooltip = ({ active, payload, label, valueFormatter, valueSuffix = "" }: any) => {
   if (active && payload && payload.length) {
@@ -120,12 +123,55 @@ function ChartControls({ viewMode, onViewModeChange, dayRange, onDayRangeChange 
 }
 
 // ============================================================================
+// LOADING SKELETON
+// ============================================================================
+
+function CardSkeleton() {
+  return (
+    <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 animate-pulse">
+      <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="h-4 bg-muted rounded w-24"></div>
+        <div className="h-4 w-4 bg-muted rounded"></div>
+      </div>
+      <div className="pt-0">
+        <div className="h-8 bg-muted rounded w-32 mb-2"></div>
+        <div className="h-3 bg-muted rounded w-40"></div>
+      </div>
+    </div>
+  );
+}
+
+function ChartSkeleton() {
+  return (
+    <div className="flex items-center justify-center h-[250px]">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
-  const { exportToExcel, isExporting } = useExcelExport();
+
+  // Data states
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
+  const [usersData, setUsersData] = useState<UsersDataPoint[]>([]);
+  const [bookingsData, setBookingsData] = useState<BookingsDataPoint[]>([]);
+  const [transactions, setTransactions] = useState<RecentTransaction[]>([]);
+
+  // Loading states
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isLoadingRevenue, setIsLoadingRevenue] = useState(true);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Error state
+  const [error, setError] = useState<string | null>(null);
 
   // Revenue chart state
   const [revenueViewMode, setRevenueViewMode] = useState<ViewMode>('monthly');
@@ -143,55 +189,123 @@ export default function DashboardPage() {
     setMounted(true);
   }, []);
 
-  // Computed chart data
-  const revenueChartData = useMemo(() => {
-    if (revenueViewMode === 'monthly') return monthlyRevenueData;
-    return filterDailyData(dailyRevenueData, revenueDayRange);
+  // Fetch stats and transactions on mount
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        const [statsData, txData] = await Promise.all([
+          fetchDashboardStats(),
+          fetchRecentTransactions(),
+        ]);
+        setStats(statsData);
+        setTransactions(txData);
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+        setError("Không thể tải dữ liệu dashboard");
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+    loadInitialData();
+  }, []);
+
+  // Fetch revenue chart data
+  const loadRevenueData = useCallback(async () => {
+    setIsLoadingRevenue(true);
+    try {
+      const dateRange = revenueViewMode === 'daily'
+        ? calculateDateRange(revenueDayRange)
+        : calculateMonthlyRange();
+      const data = await fetchRevenueChart({
+        ...dateRange,
+        granularity: viewModeToGranularity(revenueViewMode),
+      });
+      setRevenueData(data);
+    } catch (err) {
+      console.error("Failed to load revenue data:", err);
+    } finally {
+      setIsLoadingRevenue(false);
+    }
   }, [revenueViewMode, revenueDayRange]);
 
-  const usersChartData = useMemo(() => {
-    if (usersViewMode === 'monthly') return monthlyNewUsersData;
-    return filterDailyData(dailyNewUsersData, usersDayRange);
+  useEffect(() => {
+    loadRevenueData();
+  }, [loadRevenueData]);
+
+  // Fetch users chart data
+  const loadUsersData = useCallback(async () => {
+    setIsLoadingUsers(true);
+    try {
+      const dateRange = usersViewMode === 'daily'
+        ? calculateDateRange(usersDayRange)
+        : calculateMonthlyRange();
+      const data = await fetchUsersChart({
+        ...dateRange,
+        granularity: viewModeToGranularity(usersViewMode),
+      });
+      setUsersData(data);
+    } catch (err) {
+      console.error("Failed to load users data:", err);
+    } finally {
+      setIsLoadingUsers(false);
+    }
   }, [usersViewMode, usersDayRange]);
 
-  const toursChartData = useMemo(() => {
-    if (toursViewMode === 'monthly') return monthlyBookedToursData;
-    return filterDailyData(dailyBookedToursData, toursDayRange);
+  useEffect(() => {
+    loadUsersData();
+  }, [loadUsersData]);
+
+  // Fetch bookings chart data
+  const loadBookingsData = useCallback(async () => {
+    setIsLoadingBookings(true);
+    try {
+      const dateRange = toursViewMode === 'daily'
+        ? calculateDateRange(toursDayRange)
+        : calculateMonthlyRange();
+      const data = await fetchBookingsChart({
+        ...dateRange,
+        granularity: viewModeToGranularity(toursViewMode),
+      });
+      setBookingsData(data);
+    } catch (err) {
+      console.error("Failed to load bookings data:", err);
+    } finally {
+      setIsLoadingBookings(false);
+    }
   }, [toursViewMode, toursDayRange]);
 
-  // Export handlers
-  const handleExportRevenue = () => {
-    exportToExcel(monthlyRevenueData.map(d => ({ month: d.label, revenue: d.revenue })), "doanh_thu_theo_thang", {
-      columns: [
-        { header: "Tháng", key: "month" },
-        { header: "Doanh thu (VNĐ)", key: "revenue", formatter: (v) => formatVND(v as number) },
-      ],
-      sheetName: "Doanh Thu",
-    });
+  useEffect(() => {
+    loadBookingsData();
+  }, [loadBookingsData]);
+
+  // Export handler
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await downloadDashboardExport();
+    } catch (err) {
+      console.error("Failed to export data:", err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  const handleExportTopTours = () => {
-    exportToExcel(topSellingToursData, "tour_ban_chay", {
-      columns: [
-        { header: "Tên Tour", key: "tourName" },
-        { header: "Số lượt đặt", key: "bookings" },
-        { header: "Tổng doanh thu (VNĐ)", key: "totalRevenue", formatter: (v) => formatVND(v as number) },
-      ],
-      sheetName: "Tour Bán Chạy",
-    });
+  // Format growth percentage
+  const formatGrowth = (value: number) => {
+    const sign = value >= 0 ? "+" : "";
+    return `${sign}${value.toFixed(1)}% so với tháng trước`;
   };
 
-  const handleExportCustomers = () => {
-    exportToExcel(customerListData, "danh_sach_khach_hang", {
-      columns: [
-        { header: "Họ và Tên", key: "name" },
-        { header: "Email", key: "email" },
-        { header: "Số điện thoại", key: "phone" },
-        { header: "Số lần đặt tour", key: "bookingCount" },
-      ],
-      sheetName: "Khách Hàng",
-    });
-  };
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-destructive mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -209,7 +323,11 @@ export default function DashboardPage() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" disabled={isExporting} className="w-full sm:w-auto">
-              <Download className="mr-2 h-4 w-4" />
+              {isExporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
               Xuất Dữ Liệu
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
@@ -217,17 +335,9 @@ export default function DashboardPage() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Báo Cáo & Thống Kê</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleExportRevenue}>
+            <DropdownMenuItem onClick={handleExport}>
               <TrendingUp className="mr-2 h-4 w-4" />
-              Doanh Thu Theo Tháng
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportTopTours}>
-              <FileSpreadsheet className="mr-2 h-4 w-4" />
-              Tour Bán Chạy
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportCustomers}>
-              <Users className="mr-2 h-4 w-4" />
-              Danh Sách Khách Hàng
+              Xuất báo cáo tổng hợp
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -235,30 +345,41 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card
-          title="Tổng doanh thu"
-          value="1.250.000.000đ"
-          icon={DollarSign}
-          description="+20.1% so với tháng trước"
-        />
-        <Card
-          title="Đăng ký mới"
-          value="+2350"
-          icon={Users}
-          description="+180.1% so với tháng trước"
-        />
-        <Card
-          title="Doanh số"
-          value="+12,234"
-          icon={ShoppingBag}
-          description="+19% so với tháng trước"
-        />
-        <Card
-          title="Đang hoạt động"
-          value="+573"
-          icon={Activity}
-          description="+201 so với giờ trước"
-        />
+        {isLoadingStats ? (
+          <>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </>
+        ) : stats ? (
+          <>
+            <Card
+              title="Tổng doanh thu"
+              value={formatVND(stats.totalRevenue)}
+              icon={DollarSign}
+              description={formatGrowth(stats.revenueGrowth)}
+            />
+            <Card
+              title="Đăng ký mới"
+              value={`+${stats.newUsers.toLocaleString("vi-VN")}`}
+              icon={Users}
+              description={formatGrowth(stats.userGrowth)}
+            />
+            <Card
+              title="Doanh số"
+              value={`+${stats.totalBookings.toLocaleString("vi-VN")}`}
+              icon={ShoppingBag}
+              description={formatGrowth(stats.bookingGrowth)}
+            />
+            <Card
+              title="Đang hoạt động"
+              value={`+${stats.activeUsers.toLocaleString("vi-VN")}`}
+              icon={Activity}
+              description="Người dùng hoạt động"
+            />
+          </>
+        ) : null}
       </div>
 
       {/* Revenue Chart + Recent Transactions */}
@@ -277,9 +398,11 @@ export default function DashboardPage() {
             />
           </div>
           <div className="w-full min-w-0">
-            {mounted && (
+            {!mounted || isLoadingRevenue ? (
+              <ChartSkeleton />
+            ) : (
               <ResponsiveContainer width="100%" height={300} debounce={100}>
-                <BarChart data={revenueChartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis
                     dataKey="label"
@@ -289,7 +412,12 @@ export default function DashboardPage() {
                     className="text-muted-foreground"
                   />
                   <YAxis
-                    tickFormatter={(value) => `${(value / 1000000)}M`}
+                    tickFormatter={(value) => {
+                      if (value === 0) return '0';
+                      if (value >= 1000000) return `${(value / 1000000).toFixed(0)}M`;
+                      if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+                      return value.toString();
+                    }}
                     tick={{ fontSize: 12 }}
                     tickLine={false}
                     axisLine={false}
@@ -311,20 +439,24 @@ export default function DashboardPage() {
             Giao dịch gần đây
           </h3>
           <div className="space-y-6">
-            {recentSales.map((sale, i) => (
-              <div key={i} className="flex items-center gap-3 min-w-0">
-                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <Users className="h-5 w-5 text-muted-foreground" />
+            {transactions.length > 0 ? (
+              transactions.map((sale, i) => (
+                <div key={i} className="flex items-center gap-3 min-w-0">
+                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-none truncate">
+                      {sale.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate hidden sm:block">{sale.email}</p>
+                  </div>
+                  <div className="font-medium text-sm shrink-0">{sale.amount}</div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium leading-none truncate">
-                    {sale.name}
-                  </p>
-                  <p className="text-sm text-muted-foreground truncate hidden sm:block">{sale.email}</p>
-                </div>
-                <div className="font-medium text-sm shrink-0">{sale.amount}</div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">Chưa có giao dịch nào</p>
+            )}
           </div>
         </div>
       </div>
@@ -346,9 +478,11 @@ export default function DashboardPage() {
             />
           </div>
           <div className="w-full min-w-0">
-            {mounted && (
+            {!mounted || isLoadingUsers ? (
+              <ChartSkeleton />
+            ) : (
               <ResponsiveContainer width="100%" height={250} debounce={100}>
-                <LineChart data={usersChartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <LineChart data={usersData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis
                     dataKey="label"
@@ -393,9 +527,11 @@ export default function DashboardPage() {
             />
           </div>
           <div className="w-full min-w-0">
-            {mounted && (
+            {!mounted || isLoadingBookings ? (
+              <ChartSkeleton />
+            ) : (
               <ResponsiveContainer width="100%" height={250} debounce={100}>
-                <BarChart data={toursChartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <BarChart data={bookingsData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis
                     dataKey="label"
@@ -425,34 +561,6 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-const recentSales = [
-  {
-    name: "Nguyễn Văn An",
-    email: "nguyen.an@email.com",
-    amount: "+50.000.000đ",
-  },
-  {
-    name: "Trần Thị Bình",
-    email: "tran.binh@email.com",
-    amount: "+1.000.000đ",
-  },
-  {
-    name: "Lê Hoàng Cường",
-    email: "le.cuong@email.com",
-    amount: "+7.500.000đ",
-  },
-  {
-    name: "Phạm Minh Duy",
-    email: "pham.duy@email.com",
-    amount: "+2.500.000đ",
-  },
-  {
-    name: "Hoàng Thị Em",
-    email: "hoang.em@email.com",
-    amount: "+1.000.000đ",
-  },
-];
 
 function Card({ title, value, icon: Icon, description }: any) {
   return (
