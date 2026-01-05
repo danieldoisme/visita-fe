@@ -8,6 +8,7 @@ export type ReviewStatus = "approved" | "hidden";
 
 export interface Review {
     id: string;
+    bookingId: string;
     tourId: string;
     tourTitle?: string;
     userId: string;
@@ -45,6 +46,7 @@ const mapVisibilityToStatus = (isVisible?: boolean): ReviewStatus => {
 export const mapReviewResponse = (response: ReviewResponse): Review => {
     return {
         id: response.reviewId || "",
+        bookingId: response.bookingId || "",
         tourId: response.tourId || "",
         userId: response.userId || "",
         userName: response.userName || "Khách hàng",
@@ -78,6 +80,7 @@ export const mapPagedReviews = (page: PageObject): PaginatedReviews => {
 // ============================================================================
 
 export interface CreateReviewPayload {
+    bookingId: string;
     tourId: string;
     rating: number;
     comment: string;
