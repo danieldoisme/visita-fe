@@ -56,68 +56,9 @@ interface Contact {
     replies: ContactReply[];
 }
 
-// ============== Mock Data ==============
-
-
-const INITIAL_CONTACTS: Contact[] = [
-    {
-        id: 1,
-        name: "Nguyễn Minh Tuấn",
-        email: "tuan.nm@gmail.com",
-        subject: "Hỏi về tour Đà Lạt",
-        message: "Xin chào,\n\nTôi muốn hỏi về tour Đà Lạt 3N2Đ có được đón tại sân bay không? Và có thể đặt tour cho nhóm 10 người được không?\n\nNgoài ra, tôi muốn biết thêm về lịch trình chi tiết và các điểm đến trong tour.\n\nCảm ơn!",
-        date: "2024-12-23T09:15:00",
-        status: "new",
-        replies: [],
-    },
-    {
-        id: 2,
-        name: "Lê Thị Hương",
-        email: "huong.lt@yahoo.com",
-        subject: "Yêu cầu hỗ trợ đặt tour",
-        message: "Tôi đã đặt tour nhưng chưa nhận được email xác nhận. Mã booking là #000123. Nhờ hỗ trợ kiểm tra giúp.\n\nTôi đã thanh toán qua chuyển khoản ngày 20/12.",
-        date: "2024-12-22T15:30:00",
-        status: "read",
-        replies: [
-            {
-                id: 1,
-                message: "Chào chị Hương,\n\nChúng tôi đã kiểm tra và xác nhận booking #000123 của chị. Email xác nhận đã được gửi lại.\n\nNếu cần hỗ trợ thêm, vui lòng liên hệ hotline: 1900-xxxx.\n\nTrân trọng!",
-                date: "2024-12-22T16:00:00",
-                isAdmin: true,
-            },
-        ],
-    },
-    {
-        id: 3,
-        name: "Trần Văn Bình",
-        email: "binh.tv@outlook.com",
-        subject: "Hợp tác kinh doanh",
-        message: "Kính gửi ban quản lý Visita,\n\nChúng tôi là công ty XYZ Travel, muốn đề xuất hợp tác với quý công ty về mảng tour du lịch outbound.\n\nVui lòng liên hệ lại để chúng tôi có thể trao đổi chi tiết hơn.\n\nTrân trọng,\nTrần Văn Bình\nGiám đốc Kinh doanh\nXYZ Travel",
-        date: "2024-12-21T10:00:00",
-        status: "new",
-        replies: [],
-    },
-    {
-        id: 4,
-        name: "Phạm Thị Lan",
-        email: "lan.pt@gmail.com",
-        subject: "Góp ý về dịch vụ",
-        message: "Tôi muốn góp ý về tour Phú Quốc vừa rồi.\n\nXe đón trễ 30 phút và không có thông báo trước. Khách sạn cũng khác so với hình ảnh quảng cáo.\n\nMong công ty cải thiện để phục vụ khách hàng tốt hơn.",
-        date: "2024-12-20T14:45:00",
-        status: "read",
-        replies: [],
-    },
-    {
-        id: 5,
-        name: "Đỗ Quang Hải",
-        email: "hai.dq@company.vn",
-        subject: "Đặt tour cho công ty",
-        message: "Công ty chúng tôi muốn đặt tour team building cho 50 nhân viên vào tháng 1/2025.\n\nXin báo giá và chương trình phù hợp cho nhóm đông.\n\nLiên hệ: 0909-xxx-xxx",
-        date: "2024-12-23T11:30:00",
-        status: "new",
-        replies: [],
-    },
-];
+// ============== Placeholder Data ==============
+// TODO: Integrate with backend contacts API when available
+const INITIAL_CONTACTS: Contact[] = [];
 
 // ============== Helper Functions ==============
 const getReviewStatusBadge = (status: ReviewStatus) => (
