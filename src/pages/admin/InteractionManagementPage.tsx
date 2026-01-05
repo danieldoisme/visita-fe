@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
@@ -33,7 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 
 // ============== Types ==============
-import { useReview, Review, ReviewStatus } from "@/context/ReviewContext";
+import { useReview, type Review, type ReviewStatus } from "@/context/ReviewContext";
 
 type ContactStatus = "new" | "read";
 type TabType = "reviews" | "contacts";
@@ -143,9 +143,7 @@ const renderStars = (rating: number, size: "sm" | "md" = "sm") => (
 );
 
 // ============== Confirmation Dialog Keys ==============
-const DELETE_REVIEW_KEY = "delete_review";
 const DELETE_CONTACT_KEY = "delete_contact";
-const BULK_DELETE_REVIEW_KEY = "bulk_delete_review";
 const BULK_DELETE_CONTACT_KEY = "bulk_delete_contact";
 
 export default function InteractionManagementPage() {
@@ -153,7 +151,12 @@ export default function InteractionManagementPage() {
     const [activeTab, setActiveTab] = useState<TabType>("reviews");
 
     // Context
-    const { reviews, approveReview, hideReview, deleteReview } = useReview();
+    const { reviews, isLoading, error, pagination, loadAllReviews, setVisibility } = useReview();
+
+    // Load reviews on mount
+    useEffect(() => {
+        loadAllReviews();
+    }, [loadAllReviews]);
 
     // Data state
     const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
@@ -166,12 +169,11 @@ export default function InteractionManagementPage() {
     const [reviewSort, setReviewSort] = useState<SortState>({ key: "date", direction: "desc" });
     const [contactSort, setContactSort] = useState<SortState>({ key: "date", direction: "desc" });
 
-    // Pagination state
-    const [reviewPage, setReviewPage] = useState(1);
+    // Pagination state is now handled by context
     const [contactPage, setContactPage] = useState(1);
 
     // Selection state for bulk actions
-    const [selectedReviews, setSelectedReviews] = useState<Set<number>>(new Set());
+    const [selectedReviews, setSelectedReviews] = useState<Set<string>>(new Set());
     const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
 
     // Detail view state
@@ -183,11 +185,11 @@ export default function InteractionManagementPage() {
     const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean;
-        type: "delete_review" | "delete_contact" | "bulk_delete_review" | "bulk_delete_contact";
+        type: "delete_contact" | "bulk_delete_contact";
         itemId: number | null;
     }>({
         isOpen: false,
-        type: "delete_review",
+        type: "delete_contact",
         itemId: null,
     });
 
@@ -216,7 +218,7 @@ export default function InteractionManagementPage() {
         let result = reviews.filter(
             (r) =>
                 r.userName.toLowerCase().includes(search) ||
-                r.tourTitle.toLowerCase().includes(search) ||
+                (r.tourTitle || "").toLowerCase().includes(search) ||
                 r.comment.toLowerCase().includes(search)
         );
 
@@ -224,7 +226,7 @@ export default function InteractionManagementPage() {
         result.sort((a, b) => {
             let comparison = 0;
             if (reviewSort.key === "date") {
-                comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+                comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             } else if (reviewSort.key === "rating") {
                 comparison = a.rating - b.rating;
             } else if (reviewSort.key === "status") {
@@ -259,13 +261,10 @@ export default function InteractionManagementPage() {
         return result;
     }, [contacts, contactSearchTerm, contactSort]);
 
-    const totalReviewPages = Math.ceil(filteredReviews.length / ITEMS_PER_PAGE);
     const totalContactPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
 
-    const paginatedReviews = useMemo(() => {
-        const start = (reviewPage - 1) * ITEMS_PER_PAGE;
-        return filteredReviews.slice(start, start + ITEMS_PER_PAGE);
-    }, [filteredReviews, reviewPage]);
+    // For server-side pagination, filteredReviews are already the current page
+    const paginatedReviews = filteredReviews;
 
     const paginatedContacts = useMemo(() => {
         const start = (contactPage - 1) * ITEMS_PER_PAGE;
@@ -276,7 +275,6 @@ export default function InteractionManagementPage() {
     const selectedReviewsWithStatus = useMemo(() => {
         const selected = reviews.filter((r) => selectedReviews.has(r.id));
         return {
-            pending: selected.filter((r) => r.status === "pending").length,
             approved: selected.filter((r) => r.status === "approved").length,
             hidden: selected.filter((r) => r.status === "hidden").length,
             total: selected.length,
@@ -293,7 +291,7 @@ export default function InteractionManagementPage() {
     }, [contacts, selectedContacts]);
 
     // ============== Selection Handlers ==============
-    const toggleReviewSelection = (id: number) => {
+    const toggleReviewSelection = (id: string) => {
         setSelectedReviews((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(id)) {
@@ -334,21 +332,17 @@ export default function InteractionManagementPage() {
     };
 
     // ============== Review Actions ==============
-    const handleApproveReview = async (id: number) => {
-        await approveReview(id);
+    const handleApproveReview = async (id: string) => {
+        await setVisibility(id, true);
         // Update selectedReview if it's the one being approved
         if (selectedReview?.id === id) {
-            // Need to reload selected or just update efficiently
-            // Context will update 'reviews', but selectedReview is a copy.
-            // For simplicity we update it manually or close it.
-            // Let's manually update status.
             setSelectedReview((prev) => prev ? { ...prev, status: "approved" } : null);
         }
         toast.success("Đã duyệt đánh giá!");
     };
 
-    const handleHideReview = async (id: number) => {
-        await hideReview(id);
+    const handleHideReview = async (id: string) => {
+        await setVisibility(id, false);
         // Update selectedReview if it's the one being hidden
         if (selectedReview?.id === id) {
             setSelectedReview((prev) => prev ? { ...prev, status: "hidden" } : null);
@@ -356,61 +350,19 @@ export default function InteractionManagementPage() {
         toast.success("Đã ẩn đánh giá!");
     };
 
-    const executeDeleteReview = async (id: number) => {
-        await deleteReview(id);
-        setSelectedReviews((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(id);
-            return newSet;
-        });
-        // Close detail modal if the deleted review was being viewed
-        if (selectedReview?.id === id) {
-            setSelectedReview(null);
-        }
-        toast.success("Đã xóa đánh giá!");
-    };
-
-    const handleDeleteReviewClick = (id: number) => {
-        if (shouldShowConfirmation(DELETE_REVIEW_KEY)) {
-            setConfirmDialog({ isOpen: true, type: "delete_review", itemId: id });
-        } else {
-            executeDeleteReview(id);
-        }
-    };
-
     // Bulk review actions
     const handleBulkApproveReviews = async () => {
-        // Iterate and approve
-        // In a real app we would have a bulk API. Here we simulate.
-        for (const id of Array.from(selectedReviews)) {
-            await approveReview(id);
-        }
+        const promises = Array.from(selectedReviews).map(id => setVisibility(id, true));
+        await Promise.all(promises);
         setSelectedReviews(new Set());
         toast.success(`Đã duyệt ${selectedReviews.size} đánh giá!`);
     };
 
     const handleBulkHideReviews = async () => {
-        for (const id of Array.from(selectedReviews)) {
-            await hideReview(id);
-        }
+        const promises = Array.from(selectedReviews).map(id => setVisibility(id, false));
+        await Promise.all(promises);
         setSelectedReviews(new Set());
         toast.success(`Đã ẩn ${selectedReviews.size} đánh giá!`);
-    };
-
-    const executeBulkDeleteReviews = async () => {
-        for (const id of Array.from(selectedReviews)) {
-            await deleteReview(id);
-        }
-        setSelectedReviews(new Set());
-        toast.success(`Đã xóa ${selectedReviews.size} đánh giá!`);
-    };
-
-    const handleBulkDeleteReviewsClick = () => {
-        if (shouldShowConfirmation(BULK_DELETE_REVIEW_KEY)) {
-            setConfirmDialog({ isOpen: true, type: "bulk_delete_review", itemId: null });
-        } else {
-            executeBulkDeleteReviews();
-        }
     };
 
     // ============== Contact Actions ==============
@@ -535,28 +487,22 @@ export default function InteractionManagementPage() {
 
     // ============== Dialog Handlers ==============
     const handleDialogConfirm = () => {
-        if (confirmDialog.type === "delete_review" && confirmDialog.itemId) {
-            executeDeleteReview(confirmDialog.itemId);
-        } else if (confirmDialog.type === "delete_contact" && confirmDialog.itemId) {
+        if (confirmDialog.type === "delete_contact" && confirmDialog.itemId) {
             executeDeleteContact(confirmDialog.itemId);
-        } else if (confirmDialog.type === "bulk_delete_review") {
-            executeBulkDeleteReviews();
         } else if (confirmDialog.type === "bulk_delete_contact") {
             executeBulkDeleteContacts();
         }
 
-        setConfirmDialog({ isOpen: false, type: "delete_review", itemId: null });
+        setConfirmDialog({ isOpen: false, type: "delete_contact", itemId: null });
     };
 
     const handleDialogCancel = () => {
-        setConfirmDialog({ isOpen: false, type: "delete_review", itemId: null });
+        setConfirmDialog({ isOpen: false, type: "delete_contact", itemId: null });
     };
 
     const handleDontShowAgain = () => {
         const keyMap = {
-            delete_review: DELETE_REVIEW_KEY,
             delete_contact: DELETE_CONTACT_KEY,
-            bulk_delete_review: BULK_DELETE_REVIEW_KEY,
             bulk_delete_contact: BULK_DELETE_CONTACT_KEY,
         };
         setDontShowAgain(keyMap[confirmDialog.type]);
@@ -589,11 +535,6 @@ export default function InteractionManagementPage() {
                         <div className="flex items-center gap-2">
                             <MessageSquare className="w-4 h-4" />
                             Đánh giá
-                            {reviews.filter((r) => r.status === "pending").length > 0 && (
-                                <Badge variant="secondary" className="ml-1">
-                                    {reviews.filter((r) => r.status === "pending").length}
-                                </Badge>
-                            )}
                         </div>
                     </button>
                     <button
@@ -619,6 +560,12 @@ export default function InteractionManagementPage() {
             {/* Reviews Tab */}
             {activeTab === "reviews" && (
                 <div className="space-y-4">
+                    {error && (
+                        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+                            {error}
+                        </div>
+                    )}
+
                     {/* Search & Bulk Actions */}
                     <div className="flex items-center justify-between gap-4 flex-wrap overflow-x-hidden p-1">
                         <div className="relative flex-1 max-w-sm">
@@ -632,7 +579,7 @@ export default function InteractionManagementPage() {
                                 value={reviewSearchTerm}
                                 onChange={(e) => {
                                     setReviewSearchTerm(e.target.value);
-                                    setReviewPage(1);
+                                    loadAllReviews(1); // Reset to page 1 on search
                                 }}
                             />
                         </div>
@@ -651,12 +598,6 @@ export default function InteractionManagementPage() {
                                         icon: <EyeOff className="h-4 w-4 mr-1" />,
                                         onClick: handleBulkHideReviews,
                                         disabled: selectedReviewsWithStatus.hidden === selectedReviewsWithStatus.total,
-                                    },
-                                    {
-                                        label: "Xóa tất cả",
-                                        icon: <Trash2 className="h-4 w-4 mr-1" />,
-                                        onClick: handleBulkDeleteReviewsClick,
-                                        variant: "destructive",
                                     },
                                 ] as BulkAction[]}
                                 onClearSelection={() => setSelectedReviews(new Set())}
@@ -711,7 +652,13 @@ export default function InteractionManagementPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {paginatedReviews.length === 0 ? (
+                                {isLoading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={8} className="h-24 text-center">
+                                            Đang tải...
+                                        </TableCell>
+                                    </TableRow>
+                                ) : paginatedReviews.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={8} className="p-0">
                                             <EmptyState
@@ -736,12 +683,12 @@ export default function InteractionManagementPage() {
                                                 />
                                             </TableCell>
                                             <TableCell className="font-medium">{review.userName}</TableCell>
-                                            <TableCell>{review.tourTitle}</TableCell>
+                                            <TableCell>{review.tourTitle || "N/A"}</TableCell>
                                             <TableCell>{renderStars(review.rating)}</TableCell>
                                             <TableCell className="max-w-[200px] truncate" title={review.comment}>
                                                 {review.comment}
                                             </TableCell>
-                                            <TableCell>{formatDate(review.date)}</TableCell>
+                                            <TableCell>{formatDate(review.createdAt)}</TableCell>
                                             <TableCell>{getReviewStatusBadge(review.status)}</TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-1">
@@ -775,15 +722,6 @@ export default function InteractionManagementPage() {
                                                             <EyeOff className="h-4 w-4" />
                                                         </Button>
                                                     )}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                        title="Xóa"
-                                                        onClick={() => handleDeleteReviewClick(review.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -792,9 +730,9 @@ export default function InteractionManagementPage() {
                             </TableBody>
                         </Table>
                         <PaginationControls
-                            currentPage={reviewPage}
-                            totalPages={totalReviewPages}
-                            onPageChange={setReviewPage}
+                            currentPage={pagination.currentPage}
+                            totalPages={pagination.totalPages}
+                            onPageChange={(page) => loadAllReviews(page)}
                         />
                     </div>
                 </div>
@@ -1137,7 +1075,7 @@ export default function InteractionManagementPage() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="font-semibold">{selectedReview.userName}</p>
-                                <p className="text-sm text-muted-foreground">{formatDateTime(selectedReview.date)}</p>
+                                <p className="text-sm text-muted-foreground">{formatDateTime(selectedReview.createdAt)}</p>
                             </div>
                             {getReviewStatusBadge(selectedReview.status)}
                         </div>
@@ -1181,13 +1119,6 @@ export default function InteractionManagementPage() {
                                     Ẩn
                                 </Button>
                             )}
-                            <Button
-                                variant="destructive"
-                                onClick={() => handleDeleteReviewClick(selectedReview.id)}
-                            >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Xóa
-                            </Button>
                         </div>
                     </div>
                 )}
@@ -1199,14 +1130,12 @@ export default function InteractionManagementPage() {
                 onConfirm={handleDialogConfirm}
                 onCancel={handleDialogCancel}
                 title={
-                    confirmDialog.type.includes("review") ? "Xóa đánh giá" : "Xóa liên hệ"
+                    "Xóa liên hệ"
                 }
                 message={
                     confirmDialog.type.includes("bulk")
-                        ? `Bạn có chắc chắn muốn xóa ${confirmDialog.type === "bulk_delete_review" ? selectedReviews.size : selectedContacts.size} mục đã chọn không? Hành động này không thể hoàn tác.`
-                        : confirmDialog.type === "delete_review"
-                            ? "Bạn có chắc chắn muốn xóa đánh giá này không? Hành động này không thể hoàn tác."
-                            : "Bạn có chắc chắn muốn xóa liên hệ này không? Hành động này không thể hoàn tác."
+                        ? `Bạn có chắc chắn muốn xóa ${selectedContacts.size} mục đã chọn không? Hành động này không thể hoàn tác.`
+                        : "Bạn có chắc chắn muốn xóa liên hệ này không? Hành động này không thể hoàn tác."
                 }
                 confirmText="Xóa"
                 cancelText="Hủy"

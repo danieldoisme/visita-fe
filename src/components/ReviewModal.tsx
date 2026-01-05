@@ -60,16 +60,12 @@ export function ReviewModal({ isOpen, onClose, booking }: ReviewModalProps) {
         setIsSubmitting(true);
         try {
             await addReview({
-                bookingId: booking.id,
-                tourId: booking.tourId,
-                tourTitle: booking.tourTitle,
-                userId: user.userId,
-                userName: user.fullName,
+                tourId: booking.tourId.toString(),
                 rating: data.rating,
                 comment: data.comment,
             });
 
-            toast.success("Đánh giá của bạn đã được gửi và đang chờ phê duyệt!");
+            toast.success("Cảm ơn! Đánh giá của bạn đã được gửi thành công.");
             reset();
             onClose();
         } catch {
@@ -174,8 +170,7 @@ export function ReviewModal({ isOpen, onClose, booking }: ReviewModalProps) {
 
                 {/* Notice */}
                 <p className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg">
-                    💡 Đánh giá của bạn sẽ được xem xét trước khi hiển thị công khai.
-                    Sau khi gửi, bạn sẽ không thể chỉnh sửa hoặc xóa đánh giá này.
+                    💡 Đánh giá của bạn giúp chúng tôi cải thiện chất lượng dịch vụ tốt hơn.
                 </p>
 
                 {/* Actions */}

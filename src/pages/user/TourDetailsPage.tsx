@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Clock, Star, ArrowLeft, Calendar, Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
-import { useReview } from "@/context/ReviewContext";
+import { useReview, Review } from "@/context/ReviewContext";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -22,7 +22,8 @@ export default function TourDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getTour, getRecommendedTours } = useTour();
-  const { getReviewsByTour } = useReview();
+  const { loadReviewsByTour } = useReview();
+  const [reviews, setReviews] = useState<Review[]>([]);
   const { user, isAuthenticated, isAdmin, isStaff } = useAuth();
 
   // Only show recommendations for logged in regular users (not admin/staff)
@@ -36,8 +37,16 @@ export default function TourDetailsPage() {
   const [recommendedTours, setRecommendedTours] = useState<Tour[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
 
-  // Get dynamic reviews
-  const reviews = tour ? getReviewsByTour(tour.id) : [];
+  // Fetch reviews when tour loads
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (tour) {
+        const fetchedReviews = await loadReviewsByTour(tour.id.toString());
+        setReviews(fetchedReviews);
+      }
+    };
+    fetchReviews();
+  }, [tour, loadReviewsByTour]);
 
   // Calculate average rating from valid reviews
   const averageRating = reviews.length > 0
@@ -261,7 +270,7 @@ export default function TourDetailsPage() {
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium">{review.userName}</span>
                           <span className="text-sm text-gray-500">
-                            {format(new Date(review.date), "dd/MM/yyyy", { locale: vi })}
+                            {format(new Date(review.createdAt), "dd/MM/yyyy", { locale: vi })}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 mb-2">
