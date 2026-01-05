@@ -5,20 +5,7 @@ import type {
     StaffBookingRequest,
 } from "../generated/types.gen";
 import { getTourUuid } from "./tourMapper";
-
-/**
- * Simple hash function to convert string UUID to number
- */
-const hashStringToNumber = (str: string): number => {
-    if (!str) return 0;
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
-    }
-    return Math.abs(hash);
-};
+import { hashStringToNumber } from "@/utils/hashUtils";
 
 /**
  * Store original bookingId for API calls (UUID string)
@@ -31,6 +18,13 @@ export const storeBookingIdMapping = (numericId: number, uuid: string): void => 
 
 export const getBookingUuid = (numericId: number): string | undefined => {
     return bookingIdMap.get(numericId);
+};
+
+/**
+ * Clear booking ID mappings (call on logout to prevent memory leak)
+ */
+export const clearBookingIdMap = (): void => {
+    bookingIdMap.clear();
 };
 
 /**

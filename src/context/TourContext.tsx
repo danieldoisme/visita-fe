@@ -54,7 +54,7 @@ export interface Tour {
 export const getCoverImage = (tour: Tour): string => {
   const primaryImage = tour.images?.find((img) => img.isPrimary);
   if (primaryImage) return primaryImage.url;
-  if (tour.images?.length > 0) return tour.images[0].url;
+  if (tour.images && tour.images.length > 0) return tour.images[0].url;
   return tour.image || "";
 };
 
