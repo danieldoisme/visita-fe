@@ -14,6 +14,7 @@ import { apiClient } from "./apiClient";
 // Configure the generated SDK client to use our authenticated axios instance
 client.setConfig({
     axios: apiClient,
+    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080",
 });
 
 export { client };
