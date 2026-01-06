@@ -24,10 +24,7 @@ export default function TourDetailsPage() {
   const { getTour, getRecommendedTours } = useTour();
   const { loadReviewsByTour } = useReview();
   const [reviews, setReviews] = useState<Review[]>([]);
-  const { user, isAuthenticated, isAdmin, isStaff } = useAuth();
-
-  // Only show recommendations for logged in regular users (not admin/staff)
-  const showRecommendations = isAuthenticated && !isAdmin && !isStaff;
+  const { user } = useAuth();
   const [tour, setTour] = useState<Tour | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -86,13 +83,14 @@ export default function TourDetailsPage() {
   useEffect(() => {
     const fetchRecommendations = async () => {
       if (tour) {
-        const recommendations = await getRecommendedTours(tour.id, tour.category);
+        // Pass userId for personalized recommendations (if logged in)
+        const recommendations = await getRecommendedTours(tour.id, tour.category, user?.userId);
         setRecommendedTours(recommendations);
         setCurrentPage(0); // Reset pagination when tour changes
       }
     };
     fetchRecommendations();
-  }, [tour, getRecommendedTours]);
+  }, [tour, getRecommendedTours, user?.userId]);
 
   // Pagination calculations
   const totalPages = Math.ceil(recommendedTours.length / TOURS_PER_PAGE);
@@ -338,8 +336,8 @@ export default function TourDetailsPage() {
               </p>
             </div>
 
-            {/* Recommended Tours Section - Only shown for logged in regular users */}
-            {showRecommendations && recommendedTours.length > 0 && (
+            {/* Recommended Tours Section - Shown for all users */}
+            {recommendedTours.length > 0 && (
               <div className="bg-white rounded-xl border shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-lg">Tour tương tự</h3>

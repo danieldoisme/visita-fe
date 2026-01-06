@@ -15,6 +15,7 @@ import {
 } from "@/api/tourService";
 import { fetchStaffMembers, type StaffMember } from "@/api/staffService";
 import { ApiError } from "@/api/apiClient";
+import { getRecommendations } from "@/services/recommendationService";
 
 // Tour image structure for multi-image support
 export interface TourImage {
@@ -68,7 +69,7 @@ interface TourContextType {
   staffLoading: boolean;
   error: string | null;
   getTour: (id: number) => Promise<Tour | undefined>;
-  getRecommendedTours: (currentTourId: number, category?: string) => Promise<Tour[]>;
+  getRecommendedTours: (currentTourId: number, category?: string, userId?: string) => Promise<Tour[]>;
   addTour: (tour: Omit<Tour, "id" | "rating" | "reviews">, staffId: string) => Promise<void>;
   updateTour: (id: number, tour: Partial<Tour>, staffId: string) => Promise<void>;
   deleteTour: (id: number) => Promise<void>;
@@ -139,8 +140,34 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
 
   const getRecommendedTours = async (
     currentTourId: number,
-    category?: string
+    category?: string,
+    userId?: string
   ): Promise<Tour[]> => {
+    // Get the current tour to find its UUID for the AI service
+    const currentTour = tours.find((t) => t.id === currentTourId);
+    const tourUuid = currentTour?.tourUuid;
+
+    // Try AI recommendation service if we have the tour UUID
+    if (tourUuid) {
+      try {
+        const recommendedIds = await getRecommendations(tourUuid, userId);
+
+        if (recommendedIds.length > 0) {
+          // Map recommended UUIDs to Tour objects
+          const recommendedTours = recommendedIds
+            .map((uuid) => tours.find((t) => t.tourUuid === uuid))
+            .filter((t): t is Tour => t !== undefined && t.status === "Hoạt động");
+
+          if (recommendedTours.length > 0) {
+            return recommendedTours;
+          }
+        }
+      } catch (error) {
+        console.warn('AI recommendation failed, falling back to category filter:', error);
+      }
+    }
+
+    // Fallback: category-based filtering
     const sameCategoryTours = tours.filter((tour) => {
       if (tour.id === currentTourId) return false;
       if (tour.status !== "Hoạt động") return false;
@@ -152,6 +179,7 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
       return sameCategoryTours;
     }
 
+    // Final fallback: any active tour
     return tours.filter((tour) => {
       if (tour.id === currentTourId) return false;
       if (tour.status !== "Hoạt động") return false;
