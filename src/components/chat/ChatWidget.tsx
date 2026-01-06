@@ -106,7 +106,8 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }:
         }, 100);
     };
 
-    if (!user || user.role !== "user") return null; // Only for normal users
+    // Hide for staff/admin (they have their own dashboard), but allow guests and regular users
+    if (user && user.role !== "user") return null;
 
     return (
         <>
@@ -225,7 +226,7 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }:
                                             <Bot className="h-8 w-8 text-violet-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-900">Xin chào, {user.fullName}! 👋</h4>
+                                            <h4 className="font-bold text-slate-900">Xin chào{user ? `, ${user.fullName}` : ''}! 👋</h4>
                                             <p className="text-sm text-slate-500 mt-2">
                                                 Tôi là trợ lý AI của Visita. Hãy hỏi tôi về tour, đặt chỗ, hoặc thanh toán nhé!
                                             </p>
@@ -233,7 +234,7 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }:
                                     </div>
                                 ) : (
                                     messages.map((msg) => {
-                                        const isMyMessage = msg.senderId === user.userId;
+                                        const isMyMessage = currentSession ? msg.senderId === currentSession.userId : false;
                                         const isBot = msg.senderRole === "bot";
                                         const isSystem = msg.senderRole === "system";
 

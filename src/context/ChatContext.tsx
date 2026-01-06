@@ -1,6 +1,22 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getBotResponse, shouldEscalate, getBotGreeting } from "@/services/chatbotService";
+import { getBotResponse, getBotGreeting, ChatHistoryItem } from "@/services/chatbotService";
+
+// Keywords that trigger escalation to human support
+const ESCALATION_KEYWORDS = [
+    "nhân viên", "staff", "agent", "người thật", "human",
+    "nói chuyện với ai đó", "talk to someone",
+    "khiếu nại", "complaint", "phàn nàn",
+    "gấp", "urgent", "emergency"
+];
+
+function shouldEscalate(message: string, failCount: number): boolean {
+    const lowerMessage = message.toLowerCase();
+    if (ESCALATION_KEYWORDS.some(keyword => lowerMessage.includes(keyword))) {
+        return true;
+    }
+    return failCount >= 3;
+}
 
 export type MessageType = "text" | "image";
 
@@ -61,18 +77,36 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const [loading] = useState(false);
     const [isWidgetOpen, setWidgetOpen] = useState(false);
 
+    // Generate or retrieve guest ID for anonymous users
+    const getGuestId = (): string => {
+        let guestId = sessionStorage.getItem('chat_guest_id');
+        if (!guestId) {
+            guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            sessionStorage.setItem('chat_guest_id', guestId);
+        }
+        return guestId;
+    };
+
+    // Get current user info (logged in or guest)
+    const getCurrentUserInfo = () => {
+        if (user) {
+            return { id: user.userId, name: user.fullName };
+        }
+        return { id: getGuestId(), name: 'Khách' };
+    };
+
     const currentSession = sessions.find(s => s.id === currentSessionId) || null;
     const currentMessages = messages
         .filter(m => m.sessionId === currentSessionId)
         .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     const createSession = async (initialMessage?: string): Promise<string> => {
-        if (!user) throw new Error("Must be logged in");
+        const { id: userId, name: userName } = getCurrentUserInfo();
 
         const newSession: ChatSession = {
             id: `session_${Date.now()}`,
-            userId: user.userId,
-            userName: user.fullName,
+            userId,
+            userName,
             status: "active",
             mode: "bot", // AI bot mode by default
             botFailCount: 0,
@@ -93,7 +127,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             senderId: "bot",
             senderName: "Trợ lý AI",
             senderRole: "bot",
-            content: getBotGreeting(user.fullName),
+            content: getBotGreeting(userName),
             timestamp: new Date().toISOString(),
             type: "text"
         };
@@ -101,8 +135,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
         if (initialMessage) {
             // Send user's initial message after session creation
+            // Pass the session directly to avoid stale closure
             setTimeout(() => {
-                sendMessageToBot(newSession.id, initialMessage);
+                sendMessageToBot(newSession.id, initialMessage, newSession);
             }, 100);
         }
 
@@ -111,17 +146,17 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     /**
      * Send message and get bot response (AI chatbot integration point)
-     * TODO: Replace getBotResponse with actual AI API call
+     * @param sessionToUse - Optional session object to avoid stale closure issues
      */
-    const sendMessageToBot = async (sessionId: string, content: string) => {
-        if (!user) return;
+    const sendMessageToBot = async (sessionId: string, content: string, sessionToUse?: ChatSession) => {
+        const { id: userId, name: userName } = getCurrentUserInfo();
 
         // Add user message
         const userMsg: ChatMessage = {
             id: `msg_${Date.now()}`,
             sessionId,
-            senderId: user.userId,
-            senderName: user.fullName,
+            senderId: userId,
+            senderName: userName,
             senderRole: "user",
             content,
             timestamp: new Date().toISOString(),
@@ -141,8 +176,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             return s;
         }));
 
-        // Get session for bot logic
-        const session = sessions.find(s => s.id === sessionId);
+        // Use provided session or find from state
+        const session = sessionToUse || sessions.find(s => s.id === sessionId);
         if (!session || session.mode !== "bot") return;
 
         // Check if should escalate to human
@@ -151,12 +186,18 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        // Simulate typing delay then get bot response
-        // TODO: Replace timeout with actual AI API streaming
-        setTimeout(async () => {
-            const botReply = await getBotResponse(content, session.botFailCount);
-            addBotMessage(sessionId, botReply.message, botReply.success);
-        }, 800 + Math.random() * 800);
+        // Build conversation history for AI context
+        const sessionMessages = messages.filter(m => m.sessionId === sessionId);
+        const history: ChatHistoryItem[] = sessionMessages
+            .filter(m => m.senderRole === "user" || m.senderRole === "bot")
+            .map(m => ({
+                role: m.senderRole === "user" ? "user" as const : "assistant" as const,
+                content: m.content
+            }));
+
+        // Call AI service
+        const botReply = await getBotResponse(content, history);
+        addBotMessage(sessionId, botReply.message, botReply.success);
     };
 
     const addBotMessage = (sessionId: string, content: string, success: boolean) => {
@@ -229,15 +270,18 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const sendMessage = async (content: string, type: MessageType = "text") => {
-        if (!currentSessionId || !user) return;
+        if (!currentSessionId) return;
+
+        const { id: userId, name: userName } = getCurrentUserInfo();
+        const session = currentSession; // Capture current session to avoid stale closure
 
         if (type === "image") {
             // Handle image message
             const imageMsg: ChatMessage = {
                 id: `msg_${Date.now()}`,
                 sessionId: currentSessionId,
-                senderId: user.userId,
-                senderName: user.fullName,
+                senderId: userId,
+                senderName: userName,
                 senderRole: "user",
                 content,
                 timestamp: new Date().toISOString(),
@@ -247,8 +291,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        // Text message - send to bot
-        await sendMessageToBot(currentSessionId, content);
+        // Text message - send to bot (pass session to avoid stale closure)
+        await sendMessageToBot(currentSessionId, content, session || undefined);
     };
 
     const closeSession = (sessionId: string) => {
