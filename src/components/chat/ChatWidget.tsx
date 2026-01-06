@@ -93,18 +93,19 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }:
     const handleSend = async () => {
         if (!messageInput.trim()) return;
 
-        if (!currentSession) {
-            await createSession(messageInput);
-        } else {
-            await sendMessage(messageInput);
-        }
-
-        setMessageInput("");
+        const message = messageInput;
+        setMessageInput(""); // Clear input immediately (optimistic UI)
 
         // Scroll to bottom after sending
         setTimeout(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 100);
+
+        if (!currentSession) {
+            await createSession(message);
+        } else {
+            await sendMessage(message);
+        }
     };
 
     // Hide for staff/admin (they have their own dashboard), but allow guests and regular users

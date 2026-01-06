@@ -200,6 +200,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         try {
             const botReply = await getBotResponse(content, history);
             addBotMessage(sessionId, botReply.message, botReply.success);
+        } catch (error) {
+            console.error("Failed to get bot response:", error);
+            // Add error message to notify user
+            const errorMsg: ChatMessage = {
+                id: `msg_${Date.now()}_error`,
+                sessionId,
+                senderId: "system",
+                senderName: "Hệ thống",
+                senderRole: "system",
+                content: "Không thể gửi tin nhắn. Vui lòng thử lại sau.",
+                timestamp: new Date().toISOString(),
+                type: "text"
+            };
+            setMessages(prev => [...prev, errorMsg]);
         } finally {
             setLoading(false);
         }
