@@ -74,7 +74,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const [sessions, setSessions] = useState<ChatSession[]>([]);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-    const [loading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [isWidgetOpen, setWidgetOpen] = useState(false);
 
     // Generate or retrieve guest ID for anonymous users
@@ -196,8 +196,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             }));
 
         // Call AI service
-        const botReply = await getBotResponse(content, history);
-        addBotMessage(sessionId, botReply.message, botReply.success);
+        setLoading(true);
+        try {
+            const botReply = await getBotResponse(content, history);
+            addBotMessage(sessionId, botReply.message, botReply.success);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const addBotMessage = (sessionId: string, content: string, success: boolean) => {

@@ -24,7 +24,8 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }:
         joinSession,
         isWidgetOpen,
         setWidgetOpen,
-        requestHuman
+        requestHuman,
+        loading
     } = useChat();
 
     // Use context state for floating widget, or external for embedded mode
@@ -286,6 +287,17 @@ export function ChatWidget({ isOpen: externalIsOpen, onClose: externalOnClose }:
                                             </div>
                                         );
                                     })
+                                )}
+                                {loading && (
+                                    <div className="flex justify-start w-full">
+                                        <div className="bg-gradient-to-br from-violet-100 to-indigo-100 text-slate-800 border border-violet-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
+                                            <div className="flex items-center gap-1">
+                                                <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                                <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                                <div className="w-2 h-2 bg-violet-400 rounded-full animate-bounce"></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
                                 <div ref={messagesEndRef} />
                             </div>
