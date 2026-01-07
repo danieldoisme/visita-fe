@@ -8,6 +8,7 @@ export interface ContactSubmission {
     id: number;
     name: string;
     email: string;
+    phone?: string;
     subject: string;
     message: string;
     date: string;
@@ -30,6 +31,7 @@ interface ContactContextType {
     submitContactRequest: (data: {
         name: string;
         email: string;
+        phone?: string;
         subject: string;
         message: string;
         type: ContactType;
@@ -46,6 +48,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     const submitContactRequest = async (data: {
         name: string;
         email: string;
+        phone?: string;
         subject: string;
         message: string;
         type: ContactType;
@@ -59,6 +62,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
             id: Date.now(),
             name: data.name,
             email: data.email,
+            phone: data.phone,
             subject: data.subject,
             message: data.message,
             date: new Date().toISOString(),

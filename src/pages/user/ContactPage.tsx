@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -47,14 +47,21 @@ export default function ContactPage() {
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const form = useForm<ContactFormData>({
-        resolver: zodResolver(contactFormSchema),
-        defaultValues: {
+    // Memoize form values to reactively update when user logs in
+    const formValues = useMemo(
+        () => ({
             name: user?.fullName || "",
             email: user?.email || "",
+            phone: user?.phone || "",
             subject: "",
             message: "",
-        },
+        }),
+        [user?.fullName, user?.email, user?.phone]
+    );
+
+    const form = useForm<ContactFormData>({
+        resolver: zodResolver(contactFormSchema),
+        values: formValues,
     });
 
     const onSubmit = async (data: ContactFormData) => {
@@ -68,6 +75,7 @@ export default function ContactPage() {
             form.reset({
                 name: user?.fullName || "",
                 email: user?.email || "",
+                phone: user?.phone || "",
                 subject: "",
                 message: "",
             });
@@ -266,6 +274,38 @@ export default function ContactPage() {
                                                                 {...field}
                                                             />
                                                         </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            {/* Phone field */}
+                                            <FormField
+                                                control={form.control}
+                                                name="phone"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            Số điện thoại{" "}
+                                                            <span className="text-slate-400 font-normal">
+                                                                (không bắt buộc)
+                                                            </span>
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                type="tel"
+                                                                inputMode="numeric"
+                                                                placeholder="Nhập số điện thoại"
+                                                                autoComplete="tel"
+                                                                aria-describedby="phone-hint"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <p
+                                                            id="phone-hint"
+                                                            className="text-xs text-slate-500"
+                                                        >
+                                                            Để chúng tôi có thể liên hệ nhanh hơn
+                                                        </p>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}

@@ -162,6 +162,11 @@ export const contactFormSchema = z.object({
     .string()
     .min(1, "Vui lòng nhập email")
     .email("Email không hợp lệ"),
+  phone: z
+    .string()
+    .regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ (10-11 số)")
+    .optional()
+    .or(z.literal("")),
   subject: z.string().min(1, "Vui lòng nhập tiêu đề"),
   message: z
     .string()
