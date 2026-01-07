@@ -34,6 +34,7 @@ interface ReviewContextType {
     // Actions
     loadAllReviews: (page?: number, size?: number) => Promise<void>;
     loadReviewsByTour: (tourId: string, page?: number, size?: number) => Promise<Review[]>;
+    loadAllReviewsByTour: (tourId: string, page?: number, size?: number) => Promise<Review[]>;
     addReview: (payload: CreateReviewPayload) => Promise<Review>;
     setVisibility: (reviewId: string, isVisible: boolean) => Promise<void>;
     // Helpers
@@ -73,7 +74,7 @@ export const ReviewProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
-    // Public: Load reviews for a specific tour
+    // Public: Load reviews for a specific tour (visible only, for tour detail page)
     const loadReviewsByTour = useCallback(async (
         tourId: string,
         page: number = 1,
@@ -83,6 +84,22 @@ export const ReviewProvider = ({ children }: { children: ReactNode }) => {
             const result = await fetchReviewsByTour(tourId, page, size);
             // Return only visible reviews for public display
             return result.reviews.filter(r => r.status === "approved");
+        } catch (err) {
+            console.error("Failed to load tour reviews:", err);
+            return [];
+        }
+    }, []);
+
+    // User: Load all reviews for a tour (including hidden, for profile page)
+    const loadAllReviewsByTour = useCallback(async (
+        tourId: string,
+        page: number = 1,
+        size: number = 10
+    ): Promise<Review[]> => {
+        try {
+            const result = await fetchReviewsByTour(tourId, page, size);
+            // Return all reviews (including hidden) for user's own profile
+            return result.reviews;
         } catch (err) {
             console.error("Failed to load tour reviews:", err);
             return [];
@@ -134,6 +151,7 @@ export const ReviewProvider = ({ children }: { children: ReactNode }) => {
                 pagination,
                 loadAllReviews,
                 loadReviewsByTour,
+                loadAllReviewsByTour,
                 addReview,
                 setVisibility,
                 getVisibleReviewsForTour,

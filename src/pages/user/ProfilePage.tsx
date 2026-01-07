@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Pagination, usePagination } from "@/components/ui/Pagination";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, UserProfileUpdate } from "@/context/AuthContext";
 import { useBooking, Booking } from "@/context/BookingContext";
 import { useTour, getCoverImage } from "@/context/TourContext";
 import { useFavorites } from "@/context/FavoritesContext";
-import { useReview, ReviewStatus } from "@/context/ReviewContext";
+import { useReview, ReviewStatus, Review } from "@/context/ReviewContext";
 import { ContactModal } from "@/components/ContactModal";
 import { ReviewModal } from "@/components/ReviewModal";
 import { ContactType } from "@/context/ContactContext";
@@ -68,7 +68,7 @@ export default function ProfilePage() {
     const { bookings, cancelBooking } = useBooking();
     const { } = useTour(); // Keep for potential future use
     const { favorites, toggleFavorite } = useFavorites();
-    const { getUserReviews, hasReviewedBooking } = useReview();
+    const { loadAllReviewsByTour, hasReviewedBooking } = useReview();
     const navigate = useNavigate();
     const location = useLocation();
     const [activeTab, setActiveTab] = useState<TabType>(() => {
@@ -97,9 +97,55 @@ export default function ProfilePage() {
         setFavoritesPage(1);
     }, [activeTab]);
 
+    // Filter user's bookings by current user ID
+    const userBookings = useMemo(
+        () => bookings.filter((b) => b.userId === user?.userId),
+        [bookings, user?.userId]
+    );
+
+    // State for user's reviews (fetched from completed bookings)
+    const [userReviews, setUserReviews] = useState<Review[]>([]);
+    const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+
+    // Load user's reviews when switching to reviews tab
+    // Fetches reviews by tour for each completed booking, then filters by userId
+    useEffect(() => {
+        const loadUserReviews = async () => {
+            if (activeTab !== "reviews" || !user) return;
+
+            setIsLoadingReviews(true);
+            try {
+                // Get unique tour IDs from completed bookings
+                const completedBookings = userBookings.filter(b => b.status === "completed");
+                const uniqueTourIds = [...new Set(completedBookings.map(b => b.tourId.toString()))];
+
+                // Fetch reviews for each tour and filter by current user
+                const allUserReviews: Review[] = [];
+                for (const tourId of uniqueTourIds) {
+                    // Use loadAllReviewsByTour to get all reviews including hidden ones
+                    const tourReviews = await loadAllReviewsByTour(tourId, 1, 100);
+                    const myReviews = tourReviews.filter(r => r.userId === user.userId);
+                    allUserReviews.push(...myReviews);
+                }
+
+                // Sort by createdAt descending
+                allUserReviews.sort((a, b) =>
+                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
+
+                setUserReviews(allUserReviews);
+            } catch (error) {
+                console.error("Failed to load user reviews:", error);
+            } finally {
+                setIsLoadingReviews(false);
+            }
+        };
+
+        loadUserReviews();
+    }, [activeTab, user, userBookings, loadAllReviewsByTour]);
+
     // Form setup with react-hook-form
     const [isSaving, setIsSaving] = useState(false);
-    const [isChangingPassword, setIsChangingPassword] = useState(false);
     const isMobile = useIsMobile();
 
     // Contact modal state
@@ -151,9 +197,9 @@ export default function ProfilePage() {
         defaultValues: {
             name: user?.fullName || "",
             email: user?.email || "",
-            phone: "",
-            dob: null,
-            gender: null,
+            phone: user?.phone || "",
+            dob: user?.dob ? new Date(user.dob) : null,
+            gender: (user?.gender?.toLowerCase() as "male" | "female" | "other") || null,
         },
     });
 
@@ -167,14 +213,20 @@ export default function ProfilePage() {
         },
     });
 
+    // Handle password change - show toast since backend not implemented
+    const onPasswordChange = () => {
+        toast.info("Tính năng đổi mật khẩu đang được phát triển và sẽ sớm ra mắt!");
+        securityForm.reset();
+    };
+
     useEffect(() => {
         if (user) {
             form.reset({
                 name: user.fullName,
                 email: user.email,
-                phone: "",
-                dob: null,
-                gender: null,
+                phone: user.phone || "",
+                dob: user.dob ? new Date(user.dob) : null,
+                gender: (user.gender?.toLowerCase() as "male" | "female" | "other") || null,
             });
         }
     }, [user, form]);
@@ -189,28 +241,25 @@ export default function ProfilePage() {
             .slice(0, 2);
     };
 
+    // Use updateProfile from AuthContext
+    const { updateProfile } = useAuth();
+
     // Handle save
     const onSubmit = async (data: ProfileFormData) => {
         setIsSaving(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        const updates: UserProfileUpdate = {
+            fullName: data.name,
+            phone: data.phone || undefined,
+            gender: data.gender || undefined,
+            dob: data.dob ? format(data.dob, "yyyy-MM-dd") : undefined,
+        };
+        const result = await updateProfile(updates);
         setIsSaving(false);
-        toast.success("Đã lưu thông tin thành công!");
-        console.log("Profile data:", data);
-    };
-
-    // Handle password change
-    const onPasswordChange = async (data: ChangePasswordFormData) => {
-        setIsChangingPassword(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setIsChangingPassword(false);
-
-        // Reset form
-        securityForm.reset();
-
-        toast.success("Đổi mật khẩu thành công");
-        console.log("Password change data:", data);
+        if (result.success) {
+            toast.success("Đã lưu thông tin thành công!");
+        } else {
+            toast.error(result.error || "Không thể lưu thông tin. Vui lòng thử lại.");
+        }
     };
 
     // Get status badge styling
@@ -243,9 +292,6 @@ export default function ProfilePage() {
         }
     };
 
-    // Filter user's bookings by current user ID
-    const userBookings = bookings.filter((b) => b.userId === user?.userId);
-
     // Handle change photo button click
     const handleChangePhoto = () => {
         toast.info("Tính năng sẽ sớm ra mắt!");
@@ -259,9 +305,6 @@ export default function ProfilePage() {
 
     // Favorites are now full Tour objects from context
     const favoriteTours = favorites;
-
-    // Get user reviews
-    const userReviews = user ? getUserReviews(user.userId) : [];
 
     // Pagination for each list
     const bookingsPagination = usePagination(userBookings, ITEMS_PER_PAGE);
@@ -841,18 +884,9 @@ export default function ProfilePage() {
                                                 )}
                                             />
                                             <div className="pt-4 border-t">
-                                                <Button type="submit" disabled={isChangingPassword}>
-                                                    {isChangingPassword ? (
-                                                        <>
-                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                                            Đang xử lý...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Lock className="w-4 h-4 mr-2" />
-                                                            Đổi mật khẩu
-                                                        </>
-                                                    )}
+                                                <Button type="submit">
+                                                    <Lock className="w-4 h-4 mr-2" />
+                                                    Đổi mật khẩu
                                                 </Button>
                                             </div>
                                         </form>
@@ -970,7 +1004,15 @@ export default function ProfilePage() {
                                 </p>
                             </div>
 
-                            {userReviews.length === 0 ? (
+                            {isLoadingReviews ? (
+                                /* Loading State */
+                                <Card>
+                                    <CardContent className="py-16 text-center">
+                                        <div className="w-8 h-8 mx-auto mb-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                        <p className="text-slate-500">Đang tải đánh giá...</p>
+                                    </CardContent>
+                                </Card>
+                            ) : userReviews.length === 0 ? (
                                 /* Empty State */
                                 <Card>
                                     <CardContent className="py-16 text-center">

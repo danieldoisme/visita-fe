@@ -179,11 +179,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const tokenUser = getUserFromToken(response.token);
         if (tokenUser) {
-          // Fetch full user profile to get correct fullName
+          // Fetch full user profile to get correct fullName and userId
           try {
             const userProfile = await userService.getMyInfo();
             const fullUser: User = {
               ...tokenUser,
+              userId: userProfile.userId,
               fullName: userProfile.fullName || tokenUser.fullName,
               phone: userProfile.phone,
               gender: userProfile.gender,
@@ -251,6 +252,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const userProfile = await userService.getMyInfo();
             const fullUser: User = {
               ...tokenUser,
+              userId: userProfile.userId,
               fullName: userProfile.fullName || tokenUser.fullName,
               phone: userProfile.phone,
               gender: userProfile.gender,
