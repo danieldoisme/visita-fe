@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -35,42 +35,30 @@ import { TourCardSkeleton } from "@/components/TourCardSkeleton";
 import { Tour, useTour } from "@/context/TourContext";
 
 const TRENDING_DESTINATIONS = [
-  "Hạ Long, Quảng Ninh",
   "Đà Nẵng",
   "Phú Quốc",
   "Hội An",
   "Sapa",
   "Nha Trang",
   "Đà Lạt",
+  "Hạ Long",
   "Huế",
 ];
 
-const POPULAR_DESTINATIONS = [
-  {
-    name: "Đà Nẵng",
-    count: "120+ Tour",
-    image:
-      "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2070&auto=format&fit=crop",
-  },
-  {
-    name: "Hà Nội",
-    count: "85+ Tour",
-    image:
-      "https://images.unsplash.com/photo-1576513500959-4f29b3fed28f?q=80&w=2070&auto=format&fit=crop",
-  },
-  {
-    name: "Hồ Chí Minh",
-    count: "90+ Tour",
-    image:
-      "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop",
-  },
-  {
-    name: "Sapa",
-    count: "75+ Tour",
-    image:
-      "https://images.unsplash.com/photo-1570366583862-f91883984fde?q=80&w=2070&auto=format&fit=crop",
-  },
-];
+// Curated destination images (fallback for destinations without tour images)
+const DESTINATION_IMAGES: Record<string, string> = {
+  "Đà Nẵng": "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2070&auto=format&fit=crop",
+  "Hà Nội": "https://images.unsplash.com/photo-1576513500959-4f29b3fed28f?q=80&w=2070&auto=format&fit=crop",
+  "Hồ Chí Minh": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop",
+  "Sapa": "https://images.unsplash.com/photo-1570366583862-f91883984fde?q=80&w=2070&auto=format&fit=crop",
+  "Phú Quốc": "https://images.unsplash.com/photo-1730714103959-5d5a30acf547?q=80&w=2938&auto=format&fit=crop",
+  "Nha Trang": "https://images.unsplash.com/photo-1570366290364-5e76a15ae408?q=80&w=2070&auto=format&fit=crop",
+  "Hội An": "https://images.unsplash.com/photo-1712580415180-6ef0a0a7a3a7?q=80&w=2070&auto=format&fit=crop",
+  "Huế": "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop",
+  "Hạ Long": "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
+  "Đà Lạt": "https://images.unsplash.com/photo-1552310065-aad9ebece999?q=80&w=2070&auto=format&fit=crop",
+};
+const DEFAULT_DESTINATION_IMAGE = "https://images.unsplash.com/photo-1739595414767-0b5015743b43?q=80&w=2070&auto=format&fit=crop";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -92,6 +80,25 @@ export default function HomePage() {
     .filter((t) => t.status === "Hoạt động")
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 3);
+
+  // Derive popular destinations from tour data (aggregate by location)
+  const popularDestinations = useMemo(() => {
+    const locationCounts = tours.reduce((acc, tour) => {
+      if (tour.location && tour.status === "Hoạt động") {
+        acc[tour.location] = (acc[tour.location] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(locationCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 4)
+      .map(([name, count]) => ({
+        name,
+        count: `${count}+ Tour`,
+        image: DESTINATION_IMAGES[name] || DEFAULT_DESTINATION_IMAGE,
+      }));
+  }, [tours]);
 
   // Fetch personalized recommendations when user is authenticated
   useEffect(() => {
@@ -500,32 +507,38 @@ export default function HomePage() {
                 Khám phá những địa điểm được ghé thăm nhiều nhất trong mùa này.
               </p>
             </div>
-            <Link to="/destinations">
+            <Link to="/tours">
               <Button variant="outline" className="group">
-                Xem tất cả điểm đến{" "}
+                Xem tất cả tour{" "}
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {POPULAR_DESTINATIONS.map((dest, idx) => (
-              <Link
-                to={`/tours?location=${encodeURIComponent(dest.name)}`}
-                key={idx}
-                className="group relative h-[300px] rounded-2xl overflow-hidden cursor-pointer"
-              >
-                <img
-                  src={dest.image}
-                  alt={dest.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-1">{dest.name}</h3>
-                  <p className="text-sm font-medium opacity-90">{dest.count}</p>
-                </div>
-              </Link>
-            ))}
+            {popularDestinations.length > 0 ? (
+              popularDestinations.map((dest, idx) => (
+                <Link
+                  to={`/tours?location=${encodeURIComponent(dest.name)}`}
+                  key={idx}
+                  className="group relative h-[300px] rounded-2xl overflow-hidden cursor-pointer"
+                >
+                  <img
+                    src={dest.image}
+                    alt={dest.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-6 text-white">
+                    <h3 className="text-2xl font-bold mb-1">{dest.name}</h3>
+                    <p className="text-sm font-medium opacity-90">{dest.count}</p>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <p className="col-span-4 text-center text-muted-foreground py-8">
+                Đang tải điểm đến...
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -625,7 +638,7 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-      </section>
-    </div>
+      </section >
+    </div >
   );
 }

@@ -15,7 +15,6 @@ import MainLayout from "@/layouts/MainLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import HomePage from "@/pages/user/HomePage";
 import ToursPage from "@/pages/user/ToursPage";
-import DestinationsPage from "@/pages/user/DestinationsPage";
 import TourDetailsPage from "@/pages/user/TourDetailsPage";
 import AboutPage from "@/pages/user/AboutPage";
 import ContactPage from "@/pages/user/ContactPage";
@@ -75,7 +74,6 @@ function App() {
                           {/* User Routes */}
                           <Route path="/" element={<MainLayout />}>
                             <Route index element={<HomePage />} />
-                            <Route path="destinations" element={<DestinationsPage />} />
                             <Route path="tours" element={<ToursPage />} />
                             <Route path="tours/:id" element={<TourDetailsPage />} />
                             <Route path="about" element={<AboutPage />} />

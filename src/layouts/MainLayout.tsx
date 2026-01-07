@@ -62,15 +62,6 @@ export default function MainLayout() {
               Trang chủ
             </Link>
             <Link
-              to="/destinations"
-              className={`transition-colors hover:text-foreground/80 ${isActive("/destinations")
-                ? "text-primary font-semibold"
-                : "text-foreground/60"
-                }`}
-            >
-              Điểm đến
-            </Link>
-            <Link
               to="/tours"
               className={`transition-colors hover:text-foreground/80 ${isActive("/tours")
                 ? "text-primary font-semibold"
@@ -262,14 +253,6 @@ export default function MainLayout() {
                   }`}
               >
                 Trang chủ
-              </Link>
-              <Link
-                to="/destinations"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/destinations") ? "bg-primary/10 text-primary" : ""
-                  }`}
-              >
-                Điểm đến
               </Link>
               <Link
                 to="/tours"
