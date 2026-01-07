@@ -1,47 +1,43 @@
-import { useGoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 interface GoogleAuthButtonProps {
-    onSuccess: (accessToken: string) => void;
-    onError?: (error: unknown) => void;
     disabled?: boolean;
     className?: string;
-    variant?: "login" | "register";
 }
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
 export default function GoogleAuthButton({
-    onSuccess,
-    onError,
     disabled = false,
     className = "",
-    variant = "login",
 }: GoogleAuthButtonProps) {
     const [isLoading, setIsLoading] = useState(false);
 
-    const googleLogin = useGoogleLogin({
-        onSuccess: (tokenResponse) => {
-            setIsLoading(false);
-            onSuccess(tokenResponse.access_token);
-        },
-        onError: (error) => {
-            setIsLoading(false);
-            console.error("Google login error:", error);
-            onError?.(error);
-        },
-        onNonOAuthError: (error) => {
-            setIsLoading(false);
-            console.error("Google non-OAuth error:", error);
-            onError?.(error);
-        },
-    });
-
     const handleClick = () => {
-        setIsLoading(true);
-        googleLogin();
-    };
+        // Store the current path so we know where to redirect after auth
+        const currentPath = window.location.pathname;
+        if (currentPath !== "/login" && currentPath !== "/register") {
+            sessionStorage.setItem("google_auth_redirect", currentPath);
+        }
 
-    const buttonText = variant === "login" ? "Google" : "Google";
+        setIsLoading(true);
+
+        // Build Google OAuth URL for implicit flow with redirect
+        const redirectUri = window.location.origin + "/auth/google/callback";
+        const scope = "openid email profile";
+        const responseType = "token"; // implicit flow returns token directly
+
+        const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+        authUrl.searchParams.set("client_id", GOOGLE_CLIENT_ID);
+        authUrl.searchParams.set("redirect_uri", redirectUri);
+        authUrl.searchParams.set("response_type", responseType);
+        authUrl.searchParams.set("scope", scope);
+        authUrl.searchParams.set("prompt", "select_account");
+
+        // Redirect to Google OAuth
+        window.location.href = authUrl.toString();
+    };
 
     return (
         <Button
@@ -84,7 +80,7 @@ export default function GoogleAuthButton({
                             d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
                         />
                     </svg>
-                    {buttonText}
+                    Google
                 </>
             )}
         </Button>

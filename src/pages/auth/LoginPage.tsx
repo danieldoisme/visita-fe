@@ -32,9 +32,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const { login, loginWithGoogle } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const form = useForm<LoginFormData>({
@@ -74,25 +73,7 @@ export default function LoginPage() {
     setIsLoading(false);
   };
 
-  const handleGoogleSuccess = async (accessToken: string) => {
-    setError("");
-    setIsGoogleLoading(true);
 
-    const result = await loginWithGoogle(accessToken);
-
-    if (result.success) {
-      toast.success("Đăng nhập với Google thành công!");
-      navigate("/", { replace: true });
-    } else {
-      setError(result.error || "Đăng nhập với Google thất bại");
-    }
-
-    setIsGoogleLoading(false);
-  };
-
-  const handleGoogleError = () => {
-    setError("Đăng nhập với Google thất bại. Vui lòng thử lại.");
-  };
 
   return (
     <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
@@ -202,7 +183,7 @@ export default function LoginPage() {
                 />
                 <Button
                   className="login-btn-gradient h-11 font-semibold text-md"
-                  disabled={isLoading || isGoogleLoading}
+                  disabled={isLoading}
                 >
                   {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
                 </Button>
@@ -221,12 +202,7 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <GoogleAuthButton
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                disabled={isLoading || isGoogleLoading}
-                variant="login"
-              />
+              <GoogleAuthButton disabled={isLoading} />
               <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng nhập với Facebook chưa được triển khai")}>
                 <Facebook className="mr-2 h-4 w-4 text-blue-600" />
                 Facebook

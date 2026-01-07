@@ -34,6 +34,7 @@ import StaffBookingFormPage from "@/pages/staff/StaffBookingFormPage";
 import InternalLoginPage from "@/pages/auth/InternalLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
+import GoogleCallbackPage from "@/pages/auth/GoogleCallbackPage";
 import PaymentSuccessPage from "@/pages/payment/PaymentSuccessPage";
 import PaymentCancelPage from "@/pages/payment/PaymentCancelPage";
 
@@ -66,6 +67,7 @@ function App() {
                           {/* Auth Routes */}
                           <Route path="/login" element={<LoginPage />} />
                           <Route path="/register" element={<RegisterPage />} />
+                          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
                           <Route path="/internal/login" element={<InternalLoginPage />} />
                           <Route path="/admin/login" element={<Navigate to="/internal/login" replace />} />
                           <Route path="/staff/login" element={<Navigate to="/internal/login" replace />} />
