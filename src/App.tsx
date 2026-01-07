@@ -31,7 +31,7 @@ import StaffLayout from "@/layouts/StaffLayout";
 import StaffChatPage from "@/pages/staff/StaffChatPage";
 import StaffToursPage from "@/pages/staff/StaffToursPage";
 import StaffBookingFormPage from "@/pages/staff/StaffBookingFormPage";
-import InternalLoginPage from "@/pages/admin/InternalLoginPage";
+import InternalLoginPage from "@/pages/auth/InternalLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import PaymentSuccessPage from "@/pages/payment/PaymentSuccessPage";

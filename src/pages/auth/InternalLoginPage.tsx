@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Shield, User, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
-export default function AdminLoginPage() {
+export default function InternalLoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
