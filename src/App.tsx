@@ -34,6 +34,8 @@ import StaffBookingFormPage from "@/pages/staff/StaffBookingFormPage";
 import InternalLoginPage from "@/pages/admin/InternalLoginPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
+import PaymentSuccessPage from "@/pages/payment/PaymentSuccessPage";
+import PaymentCancelPage from "@/pages/payment/PaymentCancelPage";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
@@ -57,6 +59,10 @@ function App() {
                       >
                         <ScrollToTop />
                         <Routes>
+                          {/* Payment Result Routes (for popup) */}
+                          <Route path="/payment/success" element={<PaymentSuccessPage />} />
+                          <Route path="/payment/cancel" element={<PaymentCancelPage />} />
+
                           {/* Auth Routes */}
                           <Route path="/login" element={<LoginPage />} />
                           <Route path="/register" element={<RegisterPage />} />

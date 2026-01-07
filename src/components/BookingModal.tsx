@@ -105,6 +105,58 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
     const basePrice = tour.price * adults + tour.price * 0.5 * children;
     const totalPrice = appliedDiscount ? appliedDiscount.finalPrice : basePrice;
 
+    // State for payment popup
+    const [gatewayLoading, setGatewayLoading] = useState(false);
+    const [paymentPopupBlocked, setPaymentPopupBlocked] = useState(false);
+    const [pendingPaymentUrl, setPendingPaymentUrl] = useState<string | null>(null);
+    const paymentPopupRef = useRef<Window | null>(null);
+
+    // Listen for payment result from popup
+    useEffect(() => {
+        const handlePaymentMessage = (event: MessageEvent) => {
+            // Verify origin for security
+            if (event.origin !== window.location.origin) return;
+
+            if (event.data?.type === "PAYMENT_SUCCESS") {
+                setGatewayLoading(false);
+                setPendingPaymentUrl(null);
+                setPaymentPopupBlocked(false);
+                paymentPopupRef.current = null;
+                // Form will show success state via isSubmitSuccessful
+            } else if (event.data?.type === "PAYMENT_CANCEL") {
+                setGatewayLoading(false);
+                setPendingPaymentUrl(null);
+                setPaymentPopupBlocked(false);
+                paymentPopupRef.current = null;
+                toast.error("Thanh toán bị hủy. Vui lòng thử lại.");
+                // Reset form submission state to allow retry
+                form.reset(form.getValues());
+            }
+        };
+
+        window.addEventListener("message", handlePaymentMessage);
+        return () => window.removeEventListener("message", handlePaymentMessage);
+    }, [form]);
+
+    // Handle popup manually if blocked
+    const openPaymentPopup = (url: string) => {
+        const popup = window.open(
+            url,
+            "payment_popup",
+            "width=500,height=700,scrollbars=yes,resizable=yes"
+        );
+
+        if (popup) {
+            paymentPopupRef.current = popup;
+            setPaymentPopupBlocked(false);
+            setPendingPaymentUrl(null);
+        } else {
+            // Popup was blocked
+            setPaymentPopupBlocked(true);
+            setPendingPaymentUrl(url);
+        }
+    };
+
     const onSubmit = async (data: BookingFormData) => {
         if (!user) {
             toast.error("Vui lòng đăng nhập để đặt tour");
@@ -112,16 +164,13 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
         }
 
         try {
-            // Simulate payment gateway handshake for MoMo and PayPal
-            if (data.paymentMethod === "momo" || data.paymentMethod === "paypal") {
-                setGatewayLoading(true);
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-                setGatewayLoading(false);
-            }
+            setGatewayLoading(true);
+            setPaymentPopupBlocked(false);
+            setPendingPaymentUrl(null);
 
-            await addBooking({
+            const result = await addBooking({
                 tourId: tour.id,
-                tourUuid: tour.tourUuid, // Pass the original UUID for API call
+                tourUuid: tour.tourUuid,
                 tourTitle: tour.title,
                 tourPrice: tour.price,
                 selectedDate: data.selectedDate,
@@ -135,13 +184,19 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                 paymentMethod: data.paymentMethod,
                 totalPrice,
                 specialRequest: data.specialRequest,
-                // Include promo code if applied
                 ...(appliedDiscount && { promoCode: appliedDiscount.code }),
-                // Always link to authenticated user
                 userId: user.userId,
             });
 
-            toast.success("Đặt tour thành công!");
+            // Handle payment redirect for MoMo/PayPal
+            if (result.paymentUrl && (data.paymentMethod === "momo" || data.paymentMethod === "paypal")) {
+                openPaymentPopup(result.paymentUrl);
+                // Keep gatewayLoading true while waiting for popup result
+            } else {
+                // Cash payment - no redirect needed
+                setGatewayLoading(false);
+                toast.success("Đặt tour thành công!");
+            }
         } catch (error) {
             console.error("Booking failed:", error);
             toast.error("Đặt tour thất bại. Vui lòng thử lại.");
@@ -149,7 +204,6 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
         }
     };
 
-    const [gatewayLoading, setGatewayLoading] = useState(false);
 
     const paymentMethods: {
         id: PaymentMethod;
@@ -506,18 +560,35 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                     {/* Submit Button */}
                     <Button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || gatewayLoading}
                         className="w-full h-12 text-lg"
                     >
                         {isSubmitting || gatewayLoading ? (
                             <>
                                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                {gatewayLoading ? "Đang kết nối tới cổng thanh toán..." : "Đang xử lý..."}
+                                {gatewayLoading ? "Đang chờ thanh toán..." : "Đang xử lý..."}
                             </>
                         ) : (
                             "Xác nhận đặt tour"
                         )}
                     </Button>
+
+                    {/* Popup Blocked Fallback */}
+                    {paymentPopupBlocked && pendingPaymentUrl && (
+                        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <p className="text-sm text-amber-800 mb-2">
+                                <strong>Popup bị chặn!</strong> Trình duyệt đã chặn cửa sổ thanh toán.
+                            </p>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => openPaymentPopup(pendingPaymentUrl)}
+                            >
+                                Mở trang thanh toán
+                            </Button>
+                        </div>
+                    )}
 
                     <p className="text-xs text-center text-gray-500">
                         Bằng việc nhấn "Xác nhận đặt tour", bạn đồng ý với các điều khoản và điều kiện của chúng tôi.
