@@ -15,7 +15,7 @@ import {
 } from "@/api/tourService";
 import { fetchStaffMembers, type StaffMember } from "@/api/staffService";
 import { ApiError } from "@/api/apiClient";
-import { getRecommendations } from "@/services/recommendationService";
+import { getRecommendations, getRecommendationsForUser } from "@/services/recommendationService";
 
 // Tour image structure for multi-image support
 export interface TourImage {
@@ -70,6 +70,7 @@ interface TourContextType {
   error: string | null;
   getTour: (id: number) => Promise<Tour | undefined>;
   getRecommendedTours: (currentTourId: number, category?: string, userId?: string) => Promise<Tour[]>;
+  getPersonalizedRecommendations: (userId: string) => Promise<Tour[]>;
   addTour: (tour: Omit<Tour, "id" | "rating" | "reviews">, staffId: string) => Promise<void>;
   updateTour: (id: number, tour: Partial<Tour>, staffId: string) => Promise<void>;
   deleteTour: (id: number) => Promise<void>;
@@ -187,6 +188,32 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  // Get personalized recommendations for a user (without needing a current tour)
+  const getPersonalizedRecommendations = async (userId: string): Promise<Tour[]> => {
+    try {
+      const recommendedIds = await getRecommendationsForUser(userId);
+
+      if (recommendedIds.length > 0) {
+        // Map recommended UUIDs to Tour objects
+        const recommendedTours = recommendedIds
+          .map((uuid) => tours.find((t) => t.tourUuid === uuid))
+          .filter((t): t is Tour => t !== undefined && t.status === "Hoạt động");
+
+        if (recommendedTours.length > 0) {
+          return recommendedTours;
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to get personalized recommendations:', error);
+    }
+
+    // Fallback: return popular active tours (sorted by rating)
+    return tours
+      .filter((t) => t.status === "Hoạt động")
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 5);
+  };
+
   const addTour = async (
     tourData: Omit<Tour, "id" | "rating" | "reviews">,
     staffId: string
@@ -245,6 +272,7 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
         error,
         getTour,
         getRecommendedTours,
+        getPersonalizedRecommendations,
         addTour,
         updateTour,
         deleteTour,

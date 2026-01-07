@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -31,7 +31,8 @@ import {
 } from "lucide-react";
 import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
 import { TourCard } from "@/components/TourCard";
-import { Tour } from "@/context/TourContext";
+import { TourCardSkeleton } from "@/components/TourCardSkeleton";
+import { Tour, useTour } from "@/context/TourContext";
 
 const TRENDING_DESTINATIONS = [
   "Hạ Long, Quảng Ninh",
@@ -42,45 +43,6 @@ const TRENDING_DESTINATIONS = [
   "Nha Trang",
   "Đà Lạt",
   "Huế",
-];
-
-const FEATURED_TOURS: Tour[] = [
-  {
-    id: 1,
-    title: "Khám phá Vịnh Hạ Long",
-    location: "Quảng Ninh",
-    price: 3500000,
-    duration: "2 Ngày",
-    rating: 4.9,
-    reviews: 124,
-    images: [{ id: "f1", url: "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
-    tags: ["Bán chạy"],
-    status: "Hoạt động",
-  },
-  {
-    id: 2,
-    title: "Văn hóa Cố đô Huế",
-    location: "Huế",
-    price: 2500000,
-    duration: "3 Ngày",
-    rating: 4.8,
-    reviews: 89,
-    images: [{ id: "f2", url: "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
-    tags: ["Văn hóa"],
-    status: "Hoạt động",
-  },
-  {
-    id: 3,
-    title: "Nghỉ dưỡng Phú Quốc",
-    location: "Kiên Giang",
-    price: 5000000,
-    duration: "4 Ngày",
-    rating: 4.9,
-    reviews: 210,
-    images: [{ id: "f3", url: "https://images.unsplash.com/photo-1730714103959-5d5a30acf547?q=80&w=2938&auto=format&fit=crop", isPrimary: true, order: 0 }],
-    tags: ["Lãng mạn"],
-    status: "Hoạt động",
-  },
 ];
 
 const POPULAR_DESTINATIONS = [
@@ -110,55 +72,44 @@ const POPULAR_DESTINATIONS = [
   },
 ];
 
-// Mock AI-recommended tours based on user history (thesis: Recommendation System)
-const AI_RECOMMENDED_TOURS: Tour[] = [
-  {
-    id: 101,
-    title: "Khám phá Hang Sơn Đoòng",
-    location: "Quảng Bình",
-    price: 8500000,
-    duration: "4 Ngày",
-    rating: 4.9,
-    reviews: 56,
-    images: [{ id: "ai1", url: "https://images.unsplash.com/photo-1638793772999-8df79f0ef0b8?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
-    tags: ["Phiêu lưu"],
-    status: "Hoạt động",
-  },
-  {
-    id: 102,
-    title: "Trekking Hà Giang Loop",
-    location: "Hà Giang",
-    price: 4200000,
-    duration: "3 Ngày",
-    rating: 4.8,
-    reviews: 92,
-    images: [{ id: "ai2", url: "https://images.unsplash.com/photo-1686755660203-55781dbc2f24?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
-    tags: ["Trekking"],
-    status: "Hoạt động",
-  },
-  {
-    id: 103,
-    title: "Thiên đường biển Côn Đảo",
-    location: "Bà Rịa - Vũng Tàu",
-    price: 6800000,
-    duration: "3 Ngày",
-    rating: 4.9,
-    reviews: 78,
-    images: [{ id: "ai3", url: "https://images.unsplash.com/photo-1725433734976-9be2e772d0bc?q=80&w=2070&auto=format&fit=crop", isPrimary: true, order: 0 }],
-    tags: ["Biển đảo"],
-    status: "Hoạt động",
-  },
-];
-
 export default function HomePage() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { tours, loading: toursLoading, getPersonalizedRecommendations } = useTour();
   const [locationQuery, setLocationQuery] = useState("");
   const [showDestinations, setShowDestinations] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>();
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const isMobile = useIsMobile();
+
+  // AI Recommendations state
+  const [recommendedTours, setRecommendedTours] = useState<Tour[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+
+  // Get featured tours from real data (first 3 active tours sorted by rating)
+  const featuredTours = tours
+    .filter((t) => t.status === "Hoạt động")
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 3);
+
+  // Fetch personalized recommendations when user is authenticated
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (isAuthenticated && user?.userId) {
+        setRecommendationsLoading(true);
+        try {
+          const recommendations = await getPersonalizedRecommendations(user.userId);
+          setRecommendedTours(recommendations.slice(0, 3));
+        } catch (error) {
+          console.warn('Failed to fetch recommendations:', error);
+        } finally {
+          setRecommendationsLoading(false);
+        }
+      }
+    };
+    fetchRecommendations();
+  }, [isAuthenticated, user?.userId, getPersonalizedRecommendations]);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -466,22 +417,34 @@ export default function HomePage() {
                   đề xuất những hành trình phù hợp nhất.
                 </p>
               </div>
-              <Button variant="outline" className="group">
+              <Button variant="outline" className="group" onClick={() => navigate('/tours')}>
                 Xem thêm gợi ý{" "}
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {AI_RECOMMENDED_TOURS.map((tour) => (
-                <TourCard
-                  key={tour.id}
-                  tour={tour}
-                  variant="recommended"
-                  accentColor="purple"
-                  showFavorite={false}
-                />
-              ))}
+              {recommendationsLoading ? (
+                // Loading skeletons
+                Array.from({ length: 3 }).map((_, idx) => (
+                  <TourCardSkeleton key={idx} variant="recommended" />
+                ))
+              ) : recommendedTours.length > 0 ? (
+                recommendedTours.map((tour) => (
+                  <TourCard
+                    key={tour.id}
+                    tour={tour}
+                    variant="recommended"
+                    accentColor="purple"
+                    showFavorite={false}
+                  />
+                ))
+              ) : (
+                // Fallback if no recommendations
+                <p className="col-span-3 text-center text-muted-foreground py-8">
+                  Chưa có gợi ý nào. Hãy khám phá các tour của chúng tôi!
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -581,14 +544,26 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {FEATURED_TOURS.map((tour) => (
-              <TourCard
-                key={tour.id}
-                tour={tour}
-                variant="featured"
-                showFavorite={false}
-              />
-            ))}
+            {toursLoading ? (
+              // Loading skeletons
+              Array.from({ length: 3 }).map((_, idx) => (
+                <TourCardSkeleton key={idx} variant="featured" />
+              ))
+            ) : featuredTours.length > 0 ? (
+              featuredTours.map((tour) => (
+                <TourCard
+                  key={tour.id}
+                  tour={tour}
+                  variant="featured"
+                  showFavorite={false}
+                />
+              ))
+            ) : (
+              // Fallback if no tours
+              <p className="col-span-3 text-center text-muted-foreground py-8">
+                Đang tải danh sách tour...
+              </p>
+            )}
           </div>
 
           <div className="mt-12 text-center">
