@@ -179,8 +179,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const tokenUser = getUserFromToken(response.token);
         if (tokenUser) {
-          setUser(tokenUser);
-          localStorage.setItem(AUTH_USER_KEY, JSON.stringify(tokenUser));
+          // Fetch full user profile to get correct fullName
+          try {
+            const userProfile = await userService.getMyInfo();
+            const fullUser: User = {
+              ...tokenUser,
+              fullName: userProfile.fullName || tokenUser.fullName,
+              phone: userProfile.phone,
+              gender: userProfile.gender,
+              dob: userProfile.dob,
+              address: userProfile.address,
+              isActive: userProfile.isActive,
+            };
+            setUser(fullUser);
+            localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
+          } catch {
+            // Fallback to token user if profile fetch fails
+            setUser(tokenUser);
+            localStorage.setItem(AUTH_USER_KEY, JSON.stringify(tokenUser));
+          }
         }
 
         return { success: true };
@@ -229,8 +246,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const tokenUser = getUserFromToken(response.token);
         if (tokenUser) {
-          setUser(tokenUser);
-          localStorage.setItem(AUTH_USER_KEY, JSON.stringify(tokenUser));
+          // Fetch full user profile to get correct fullName
+          try {
+            const userProfile = await userService.getMyInfo();
+            const fullUser: User = {
+              ...tokenUser,
+              fullName: userProfile.fullName || tokenUser.fullName,
+              phone: userProfile.phone,
+              gender: userProfile.gender,
+              dob: userProfile.dob,
+              address: userProfile.address,
+              isActive: userProfile.isActive,
+            };
+            setUser(fullUser);
+            localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
+          } catch {
+            // Fallback to token user if profile fetch fails
+            setUser(tokenUser);
+            localStorage.setItem(AUTH_USER_KEY, JSON.stringify(tokenUser));
+          }
         }
 
         return { success: true };

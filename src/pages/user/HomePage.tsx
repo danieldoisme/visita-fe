@@ -467,7 +467,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold mb-2">Điểm đến đa dạng</h3>
               <p className="text-muted-foreground">
-                Tiếp cận hơn 63+ tỉnh thành trên toàn quốc với hướng dẫn viên
+                Tiếp cận 34 tỉnh thành trên toàn quốc với hướng dẫn viên
                 chuyên nghiệp.
               </p>
             </div>
