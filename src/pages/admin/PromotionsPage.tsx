@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { format } from "date-fns";
+import { format, startOfDay, isAfter } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
@@ -199,6 +199,11 @@ export default function PromotionsPage() {
 
         if (!dateRange?.from || !dateRange?.to) {
             errors.dateRange = "Vui lòng chọn thời gian hiệu lực";
+        } else if (isAfter(startOfDay(dateRange.from), startOfDay(dateRange.to))) {
+            errors.dateRange = "Ngày bắt đầu phải trước ngày kết thúc";
+        } else if (!editingPromotion && !isAfter(startOfDay(dateRange.to), startOfDay(new Date()))) {
+            // Only enforce future end date for new promotions (not edits)
+            errors.dateRange = "Ngày kết thúc phải trong tương lai";
         }
 
         if (formData.usageLimit <= 0) {
