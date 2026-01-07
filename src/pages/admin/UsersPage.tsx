@@ -17,12 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Lock, Unlock, Eye, Trash2, Users } from "lucide-react";
+import { Search, Lock, Unlock, Eye, Users } from "lucide-react";
 
 import {
   fetchUsers,
   updateUserStatusApi,
-  deleteUserApi,
   type User,
   type PaginatedUsers,
 } from "@/services/adminUserService";
@@ -33,8 +32,6 @@ const PAGE_SIZE = 10;
 // Confirmation dialog keys
 const LOCK_USER_KEY = "lock_user";
 const UNLOCK_USER_KEY = "unlock_user";
-const DELETE_USER_KEY = "delete_user";
-const BULK_DELETE_USER_KEY = "bulk_delete_user";
 const BULK_LOCK_USER_KEY = "bulk_lock_user";
 const BULK_UNLOCK_USER_KEY = "bulk_unlock_user";
 
@@ -86,7 +83,7 @@ export default function UsersPage() {
   const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
-    type: "lock" | "unlock" | "delete" | "bulk_lock" | "bulk_unlock" | "bulk_delete";
+    type: "lock" | "unlock" | "bulk_lock" | "bulk_unlock";
     userId: string | null;
   }>({
     isOpen: false,
@@ -163,21 +160,7 @@ export default function UsersPage() {
     }
   };
 
-  // Execute delete single user
-  const executeDeleteUser = async (userId: string) => {
-    setActionLoading(userId);
 
-    try {
-      await deleteUserApi(userId);
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-      clearSelection();
-      toast.success("Đã xóa tài khoản!");
-    } catch {
-      toast.error("Không thể xóa tài khoản");
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   // Execute bulk lock
   const executeBulkLock = async () => {
@@ -227,25 +210,7 @@ export default function UsersPage() {
     }
   };
 
-  // Execute bulk delete
-  const executeBulkDelete = async () => {
-    setActionLoading("bulk");
-    const usersToDelete = selectedArray.filter((id) => {
-      const user = users.find((u) => u.id === id);
-      return user && user.role !== "admin";
-    });
 
-    try {
-      await Promise.all(usersToDelete.map((id) => deleteUserApi(id)));
-      setUsers((prev) => prev.filter((u) => !usersToDelete.includes(u.id)));
-      toast.success(`Đã xóa ${usersToDelete.length} tài khoản!`);
-      clearSelection();
-    } catch {
-      toast.error("Không thể xóa một số tài khoản");
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   // Handle lock/unlock click
   const handleToggleLockClick = (user: User) => {
@@ -259,14 +224,7 @@ export default function UsersPage() {
     }
   };
 
-  // Handle delete click
-  const handleDeleteClick = (userId: string) => {
-    if (shouldShowConfirmation(DELETE_USER_KEY)) {
-      setConfirmDialog({ isOpen: true, type: "delete", userId });
-    } else {
-      executeDeleteUser(userId);
-    }
-  };
+
 
   // Handle bulk lock click
   const handleBulkLockClick = () => {
@@ -286,14 +244,7 @@ export default function UsersPage() {
     }
   };
 
-  // Handle bulk delete click
-  const handleBulkDeleteClick = () => {
-    if (shouldShowConfirmation(BULK_DELETE_USER_KEY)) {
-      setConfirmDialog({ isOpen: true, type: "bulk_delete", userId: null });
-    } else {
-      executeBulkDelete();
-    }
-  };
+
 
   // Dialog confirm handler
   const handleDialogConfirm = () => {
@@ -302,17 +253,11 @@ export default function UsersPage() {
       case "unlock":
         if (confirmDialog.userId) executeToggleLock(confirmDialog.userId);
         break;
-      case "delete":
-        if (confirmDialog.userId) executeDeleteUser(confirmDialog.userId);
-        break;
       case "bulk_lock":
         executeBulkLock();
         break;
       case "bulk_unlock":
         executeBulkUnlock();
-        break;
-      case "bulk_delete":
-        executeBulkDelete();
         break;
     }
     setConfirmDialog({ isOpen: false, type: "lock", userId: null });
@@ -328,10 +273,8 @@ export default function UsersPage() {
     const keyMap: Record<string, string> = {
       lock: LOCK_USER_KEY,
       unlock: UNLOCK_USER_KEY,
-      delete: DELETE_USER_KEY,
       bulk_lock: BULK_LOCK_USER_KEY,
       bulk_unlock: BULK_UNLOCK_USER_KEY,
-      bulk_delete: BULK_DELETE_USER_KEY,
     };
     setDontShowAgain(keyMap[confirmDialog.type]);
   };
@@ -351,12 +294,7 @@ export default function UsersPage() {
           message: "Bạn có chắc chắn muốn mở khóa tài khoản này?",
           variant: "default" as const,
         };
-      case "delete":
-        return {
-          title: "Xóa tài khoản",
-          message: "Bạn có chắc chắn muốn xóa tài khoản này? Hành động này không thể hoàn tác.",
-          variant: "danger" as const,
-        };
+
       case "bulk_lock":
         return {
           title: "Khóa các tài khoản đã chọn",
@@ -369,12 +307,7 @@ export default function UsersPage() {
           message: `Bạn có chắc chắn muốn mở khóa ${selectedCount} tài khoản đã chọn?`,
           variant: "default" as const,
         };
-      case "bulk_delete":
-        return {
-          title: "Xóa các tài khoản đã chọn",
-          message: `Bạn có chắc chắn muốn xóa ${selectedCount} tài khoản đã chọn? Hành động này không thể hoàn tác.`,
-          variant: "danger" as const,
-        };
+
     }
   };
 
@@ -416,13 +349,7 @@ export default function UsersPage() {
       onClick: handleBulkUnlockClick,
       disabled: selectedUsersWithStatus.active === selectedUsersWithStatus.total || actionLoading === "bulk",
     },
-    {
-      label: "Xóa",
-      icon: <Trash2 className="h-4 w-4 mr-1" />,
-      onClick: handleBulkDeleteClick,
-      variant: "destructive",
-      disabled: actionLoading === "bulk",
-    },
+
   ];
 
   // Show loading skeleton
@@ -581,16 +508,7 @@ export default function UsersPage() {
                               <Unlock className="h-4 w-4" />
                             )}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteClick(user.id)}
-                            disabled={user.role === "admin" || actionLoading === user.id}
-                            className="text-destructive hover:text-destructive"
-                            title="Xóa tài khoản"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+
                         </div>
                       </TableCell>
                     </TableRow>

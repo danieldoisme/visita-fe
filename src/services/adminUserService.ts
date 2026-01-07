@@ -2,7 +2,6 @@ import {
     listUsers,
     getUserById,
     updateUserStatus,
-    deleteUser,
 } from "@/api/generated/sdk.gen";
 import type { UserResponse, PageObject } from "@/api/generated/types.gen";
 
@@ -129,16 +128,3 @@ export const updateUserStatusApi = async (
     }
 };
 
-// ============================================================================
-// ADMIN: DELETE USER
-// ============================================================================
-
-export const deleteUserApi = async (id: string): Promise<void> => {
-    const response = await deleteUser({
-        path: { id },
-    });
-
-    if (response.error) {
-        throw new Error("Failed to delete user");
-    }
-};

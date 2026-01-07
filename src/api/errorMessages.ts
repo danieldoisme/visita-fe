@@ -12,7 +12,7 @@ export const ERROR_MESSAGES: Record<number, string> = {
   1004: "Tên đăng nhập không hợp lệ - tối thiểu 5 ký tự",
   1005: "Mật khẩu không hợp lệ - tối thiểu 8 ký tự",
   1006: "Bạn không có quyền thực hiện thao tác này",
-  1007: "Phiên đăng nhập đã hết hạn",
+  1007: "Bạn chưa được xác thực",
 
   // Tour errors (1008)
   1008: "Tour không tồn tại",
@@ -36,6 +36,9 @@ export const ERROR_MESSAGES: Record<number, string> = {
 
   // Concurrent update (1020)
   1020: "Dữ liệu đã được thay đổi bởi người dùng khác. Vui lòng thử lại.",
+
+  // Booking errors (1021)
+  1021: "Đơn đặt tour không tồn tại",
 
   // System errors
   9999: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",

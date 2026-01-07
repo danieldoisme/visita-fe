@@ -434,9 +434,9 @@ export type PageObject = {
     totalElements?: number;
     totalPages?: number;
     pageable?: PageableObject;
-    numberOfElements?: number;
     first?: boolean;
     last?: boolean;
+    numberOfElements?: number;
     size?: number;
     content?: Array<TourEntity>;
     number?: number;
@@ -1413,24 +1413,6 @@ export type ListUsersResponses = {
 };
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
-
-export type DeleteUserData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/admins/users/{id}';
-};
-
-export type DeleteUserResponses = {
-    /**
-     * OK
-     */
-    200: ApiResponseString;
-};
-
-export type DeleteUserResponse = DeleteUserResponses[keyof DeleteUserResponses];
 
 export type GetUserByIdData = {
     body?: never;
