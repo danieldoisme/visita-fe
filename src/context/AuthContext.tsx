@@ -34,6 +34,14 @@ export interface User {
   role: UserRole;
 }
 
+export interface UserProfileUpdate {
+  fullName?: string;
+  phone?: string;
+  gender?: string;
+  dob?: string;
+  address?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -53,6 +61,8 @@ interface AuthContextType {
     name: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  updateProfile: (updates: UserProfileUpdate) => Promise<{ success: boolean; error?: string }>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -253,6 +263,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearBookingIdMap();
   };
 
+  /**
+   * Update current user's profile
+   */
+  const updateProfile = async (
+    updates: UserProfileUpdate
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: "Bạn chưa đăng nhập" };
+    }
+
+    try {
+      const response = await userService.updateUserProfile(user.userId, {
+        fullName: updates.fullName,
+        phone: updates.phone,
+        gender: updates.gender?.toUpperCase() as "MALE" | "FEMALE" | "OTHER" | undefined,
+        dob: updates.dob,
+        address: updates.address,
+      });
+
+      const updatedUser: User = {
+        ...user,
+        fullName: response.fullName || user.fullName,
+        phone: response.phone,
+        gender: response.gender,
+        dob: response.dob,
+        address: response.address,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser));
+
+      return { success: true };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: "Không thể cập nhật thông tin. Vui lòng thử lại." };
+    }
+  };
+
+  /**
+   * Refresh user data from API
+   */
+  const refreshUser = async (): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const response = await userService.getMyInfo();
+
+      const updatedUser: User = {
+        userId: response.userId,
+        email: response.email || user.email,
+        fullName: response.fullName || user.fullName,
+        phone: response.phone,
+        gender: response.gender,
+        dob: response.dob,
+        address: response.address,
+        isActive: response.isActive,
+        role: user.role, // Keep role from token
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -265,6 +343,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loginWithGoogle,
         register,
         logout,
+        updateProfile,
+        refreshUser,
       }}
     >
       {children}

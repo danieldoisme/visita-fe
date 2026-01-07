@@ -273,3 +273,37 @@ export const updateBookingStatusApi = async (
         params: { status: status.toUpperCase() },
     });
 };
+
+/**
+ * Search bookings by keyword (admin endpoint)
+ * GET /admins/bookings/search
+ * Note: Backend uses 1-based pagination
+ */
+export const searchBookingsApi = async (
+    keyword: string,
+    params?: PaginationParams
+): Promise<PaginatedResult<Booking>> => {
+    const response = await apiClient.get<ApiResponse<PageData<BookingDetailResponse>>>(
+        "/admins/bookings/search",
+        {
+            params: {
+                keyword,
+                page: (params?.page ?? 0) + 1, // Backend uses 1-based pagination
+                size: params?.size ?? 20,
+            },
+        }
+    );
+
+    const pageData = response.data.result;
+    const bookings = mapBookingDetailsToBookings(pageData?.content || []);
+
+    return {
+        content: bookings,
+        totalElements: pageData?.totalElements || 0,
+        totalPages: pageData?.totalPages || 0,
+        currentPage: pageData?.number || 0,
+        pageSize: pageData?.size || 20,
+        isFirst: pageData?.first ?? true,
+        isLast: pageData?.last ?? true,
+    };
+};

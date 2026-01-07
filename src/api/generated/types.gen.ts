@@ -584,60 +584,6 @@ export type UpdateUserResponses = {
 
 export type UpdateUserResponse = UpdateUserResponses[keyof UpdateUserResponses];
 
-export type DeleteUserData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/admins/users/{id}';
-};
-
-export type DeleteUserResponses = {
-    /**
-     * OK
-     */
-    200: ApiResponseString;
-};
-
-export type DeleteUserResponse = DeleteUserResponses[keyof DeleteUserResponses];
-
-export type GetUserByIdData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/admins/users/{id}';
-};
-
-export type GetUserByIdResponses = {
-    /**
-     * OK
-     */
-    200: ApiResponseOptionalUserResponse;
-};
-
-export type GetUserByIdResponse = GetUserByIdResponses[keyof GetUserByIdResponses];
-
-export type UpdateUser1Data = {
-    body: UserUpdateRequest;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/admins/users/{id}';
-};
-
-export type UpdateUser1Responses = {
-    /**
-     * OK
-     */
-    200: ApiResponseUserResponse;
-};
-
-export type UpdateUser1Response = UpdateUser1Responses[keyof UpdateUser1Responses];
-
 export type DeleteImageData = {
     body?: never;
     path: {
@@ -1467,6 +1413,42 @@ export type ListUsersResponses = {
 };
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
+
+export type DeleteUserData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admins/users/{id}';
+};
+
+export type DeleteUserResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseString;
+};
+
+export type DeleteUserResponse = DeleteUserResponses[keyof DeleteUserResponses];
+
+export type GetUserByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admins/users/{id}';
+};
+
+export type GetUserByIdResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseOptionalUserResponse;
+};
+
+export type GetUserByIdResponse = GetUserByIdResponses[keyof GetUserByIdResponses];
 
 export type GetAllReviewsData = {
     body?: never;

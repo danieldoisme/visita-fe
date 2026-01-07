@@ -32,6 +32,14 @@ export interface UserResponse {
     updatedAt?: string;
 }
 
+export interface UserUpdateRequest {
+    fullName?: string;
+    phone?: string;
+    gender?: "MALE" | "FEMALE" | "OTHER";
+    dob?: string;
+    address?: string;
+}
+
 /**
  * Create a new user account (public registration)
  */
@@ -60,8 +68,66 @@ export const createUser = async (
     }
 };
 
+/**
+ * Get current authenticated user's profile
+ * GET /users/myInfo
+ */
+export const getMyInfo = async (): Promise<UserResponse> => {
+    try {
+        const response = await apiClient.get<ApiResponse<UserResponse>>(
+            "/users/myInfo"
+        );
+
+        if (response.data.code === 1000 && response.data.result) {
+            return response.data.result;
+        }
+
+        throw new ApiError(
+            response.data.code,
+            getErrorMessage(response.data.code, response.data.message)
+        );
+    } catch (error) {
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        throw new ApiError(9999, NETWORK_ERRORS.SERVER_ERROR, error);
+    }
+};
+
+/**
+ * Update current user's profile
+ * PUT /users/update/{id}
+ */
+export const updateUserProfile = async (
+    userId: string,
+    update: UserUpdateRequest
+): Promise<UserResponse> => {
+    try {
+        const response = await apiClient.put<ApiResponse<UserResponse>>(
+            `/users/update/${userId}`,
+            update
+        );
+
+        if (response.data.code === 1000 && response.data.result) {
+            return response.data.result;
+        }
+
+        throw new ApiError(
+            response.data.code,
+            getErrorMessage(response.data.code, response.data.message)
+        );
+    } catch (error) {
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        throw new ApiError(9999, NETWORK_ERRORS.SERVER_ERROR, error);
+    }
+};
+
 export const userService = {
     createUser,
+    getMyInfo,
+    updateUserProfile,
 };
 
 export default userService;
