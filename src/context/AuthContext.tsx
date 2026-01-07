@@ -185,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const fullUser: User = {
               ...tokenUser,
               userId: userProfile.userId,
+              email: userProfile.email || tokenUser.email,
               fullName: userProfile.fullName || tokenUser.fullName,
               phone: userProfile.phone,
               gender: userProfile.gender,
@@ -253,6 +254,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const fullUser: User = {
               ...tokenUser,
               userId: userProfile.userId,
+              email: userProfile.email || tokenUser.email,
               fullName: userProfile.fullName || tokenUser.fullName,
               phone: userProfile.phone,
               gender: userProfile.gender,
