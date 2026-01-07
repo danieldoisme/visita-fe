@@ -167,7 +167,7 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
                                     e.stopPropagation();
                                     handlePrevious();
                                 }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2"
+                                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2 z-10"
                                 aria-label="Ảnh trước"
                             >
                                 <ChevronLeft className="h-10 w-10" />
@@ -177,7 +177,7 @@ export function TourImageGallery({ tour, className = "" }: TourImageGalleryProps
                                     e.stopPropagation();
                                     handleNext();
                                 }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2 z-10"
                                 aria-label="Ảnh tiếp"
                             >
                                 <ChevronRight className="h-10 w-10" />

@@ -14,6 +14,7 @@ import {
   deleteTourApi,
 } from "@/api/tourService";
 import { fetchStaffMembers, type StaffMember } from "@/api/staffService";
+import { syncTourImages } from "@/api/imageService";
 import { ApiError } from "@/api/apiClient";
 import { getRecommendations, getRecommendationsForUser } from "@/services/recommendationService";
 
@@ -220,6 +221,14 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     try {
       const newTour = await createTourApi(tourData, staffId);
+
+      // Sync images after tour is created
+      if (tourData.images && tourData.images.length > 0 && newTour.tourUuid) {
+        await syncTourImages(newTour.tourUuid, tourData.images);
+        // Update the tour with synced images
+        newTour.images = tourData.images;
+      }
+
       setTours((prev) => [...prev, newTour]);
     } catch (err) {
       const message = err instanceof ApiError
@@ -233,6 +242,14 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
   const updateTour = async (id: number, updatedData: Partial<Tour>, staffId: string) => {
     try {
       const updatedTour = await updateTourApi(id, updatedData, staffId);
+
+      // Sync images after tour is updated
+      if (updatedData.images && updatedTour.tourUuid) {
+        await syncTourImages(updatedTour.tourUuid, updatedData.images);
+        // Update the tour with synced images
+        updatedTour.images = updatedData.images;
+      }
+
       setTours((prev) =>
         prev.map((tour) => (tour.id === id ? updatedTour : tour))
       );
