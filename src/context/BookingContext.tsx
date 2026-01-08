@@ -81,7 +81,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [historyBookings, setHistoryBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, isAdmin, isStaff } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   // Load active bookings (PENDING, CONFIRMED, CANCELLED - not COMPLETED)
   const loadActiveBookings = useCallback(async () => {
@@ -94,12 +94,13 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      if (isAdmin || isStaff) {
-        // Admin/Staff: fetch all bookings
+      if (isAdmin) {
+        // Only Admin can fetch all bookings via /admins/bookings
+        // Staff should use /staffs/{id}/bookings for their assigned bookings (handled by individual pages)
         const result = await fetchAllBookingsAdmin({ page: 0, size: 100 });
         setActiveBookings(result.content);
       } else {
-        // Regular user: fetch only active bookings
+        // Regular user and Staff: fetch only their active bookings
         const result = await fetchActiveBookings({ page: 0, size: 100 });
         setActiveBookings(result.content);
       }
@@ -113,12 +114,13 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, [user, isAdmin, isStaff]);
+  }, [user, isAdmin]);
 
   // Load history bookings (COMPLETED only - for reviews)
   const loadHistoryBookings = useCallback(async () => {
-    if (!user || isAdmin || isStaff) {
-      // Admin/Staff already have all bookings in activeBookings
+    if (!user || isAdmin) {
+      // Admin already has all bookings in activeBookings
+      // Staff and regular users may need their history
       return;
     }
 
@@ -128,15 +130,15 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     } catch (err) {
       console.error("Error loading booking history:", err);
     }
-  }, [user, isAdmin, isStaff]);
+  }, [user, isAdmin]);
 
   // Combined bookings for backward compatibility
   const bookings = useMemo(() => {
-    if (isAdmin || isStaff) {
+    if (isAdmin) {
       return activeBookings;
     }
     return [...activeBookings, ...historyBookings];
-  }, [activeBookings, historyBookings, isAdmin, isStaff]);
+  }, [activeBookings, historyBookings, isAdmin]);
 
   // Auto-fetch active bookings when auth state changes
   useEffect(() => {

@@ -119,9 +119,10 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
   const { user, loading: authLoading } = useAuth();
 
   // Stabilize the fetch function selection based on user role
-  // Check user.role directly to avoid stale closure issues with derived isAdmin/isStaff
+  // Only admin users can access /admins/tours endpoint
+  // Staff users use the public /tours endpoint (or /staffs/{id}/tours for their own tours)
   const userRole = user?.role;
-  const shouldUseAdminEndpoint = Boolean(user && (userRole === 'admin' || userRole === 'staff'));
+  const shouldUseAdminEndpoint = Boolean(user && userRole === 'admin');
 
   // Load tours from API on mount
   // Admin/Staff: fetch all tours including inactive
@@ -176,10 +177,10 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
 
       try {
-        // Use admin endpoint only when user is confirmed admin/staff
-        // Check user.role directly to avoid stale closure issues with derived isAdmin/isStaff
+        // Use admin endpoint only for admin users
+        // Staff users use public endpoint (they access their own tours via /staffs/{id}/tours)
         const userRole = user?.role;
-        const useAdminEndpoint = Boolean(user && (userRole === 'admin' || userRole === 'staff'));
+        const useAdminEndpoint = Boolean(user && userRole === 'admin');
         let result;
         if (useAdminEndpoint) {
           result = await fetchAllToursAdmin();

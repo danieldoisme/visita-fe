@@ -181,14 +181,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (tokenUser) {
           // Fetch full user profile based on role
           try {
-            if (tokenUser.role === "admin" || tokenUser.role === "staff") {
-              // Admin and staff users use /admins/myInfo endpoint
+            if (tokenUser.role === "admin") {
+              // Admin users use /admins/myInfo endpoint (adminId is correct for admin)
               const adminProfile = await userService.getAdminMyInfo();
               const fullUser: User = {
                 ...tokenUser,
                 userId: adminProfile.adminId,
                 email: adminProfile.email || tokenUser.email,
                 fullName: adminProfile.fullName || tokenUser.fullName,
+              };
+              setUser(fullUser);
+              localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
+            } else if (tokenUser.role === "staff") {
+              // Staff users need userId from /users/myInfo for /staffs/{id}/tours endpoint
+              // The adminId from /admins/myInfo is different from their userId in users table
+              const userProfile = await userService.getMyInfo();
+              const fullUser: User = {
+                ...tokenUser,
+                userId: userProfile.userId,
+                email: userProfile.email || tokenUser.email,
+                fullName: userProfile.fullName || tokenUser.fullName,
+                phone: userProfile.phone,
               };
               setUser(fullUser);
               localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
@@ -362,8 +375,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
 
     try {
-      if (user.role === "admin" || user.role === "staff") {
-        // Admin and staff users use /admins/myInfo endpoint
+      if (user.role === "admin") {
+        // Admin users use /admins/myInfo endpoint
         const adminProfile = await userService.getAdminMyInfo();
         const updatedUser: User = {
           userId: adminProfile.adminId,
@@ -374,7 +387,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(updatedUser);
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser));
       } else {
-        // Regular users use /users/myInfo endpoint
+        // Staff and regular users use /users/myInfo endpoint
         const response = await userService.getMyInfo();
         const updatedUser: User = {
           userId: response.userId,

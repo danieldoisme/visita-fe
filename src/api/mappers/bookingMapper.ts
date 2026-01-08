@@ -189,6 +189,7 @@ export const mapStaffBookingToRequest = (
     numAdults: booking.adults,
     numChildren: booking.children || 0,
     specialRequest: booking.specialRequest,
+    promotionCode: booking.promoCode,
   };
 };
 

@@ -4,11 +4,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useTour, getCoverImage } from "@/context/TourContext";
+import { useTour, getCoverImage, type Tour } from "@/context/TourContext";
 import { useBooking } from "@/context/BookingContext";
 import { useAuth } from "@/context/AuthContext";
-// TODO: Replace with actual backend API calls when user management endpoints are ready
-// Stub types for future backend integration
+import { createCustomerForStaff, type CustomerResult } from "@/api/staffService";
+import { fetchTourByUuid } from "@/api/tourService";
+
 interface StaffUserLookup {
     userId: string;
     fullName: string;
@@ -27,19 +28,48 @@ type CreateUserResult =
     | { success: true; user: StaffUserLookup }
     | { success: false; error: string };
 
-// Stub functions - always return "user not found" / "not implemented" for now
+/**
+ * NOTE: Backend API Limitation
+ * There is no staff endpoint to search/lookup users by email.
+ * - /admins/users/{id} exists but is admin-only and requires userId (not email)
+ * - No /staffs/users/search or similar endpoint exists
+ * 
+ * Until such an endpoint is added, staff cannot look up existing customers.
+ * They can only create new customers via POST /staffs/customers.
+ */
 const findUserByEmail = (_email: string): StaffUserLookup | null => null;
 
-const createUserForStaff = (_data: CreateUserData): CreateUserResult => ({
-    success: false,
-    error: "Chức năng tạo tài khoản chưa được kích hoạt. Vui lòng liên hệ quản trị viên.",
-});
+// Create customer using the staff endpoint
+const createUserForStaff = async (data: CreateUserData): Promise<CreateUserResult> => {
+    try {
+        const result: CustomerResult = await createCustomerForStaff({
+            email: data.email,
+            password: data.password,
+            fullName: data.fullName,
+            phone: data.phone,
+        });
+        return {
+            success: true,
+            user: {
+                userId: result.userId,
+                fullName: result.fullName,
+                email: result.email,
+                phone: result.phone,
+            },
+        };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Không thể tạo tài khoản khách hàng";
+        return { success: false, error: message };
+    }
+};
 import { formatCurrency } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { PromoCodeInput } from "@/components/PromoCodeInput";
+import { AppliedDiscount } from "@/context/PromotionsContext";
 
 import {
     CalendarPlus,
@@ -67,14 +97,23 @@ import { Calendar } from "@/components/ui/calendar";
 const cn = (...inputs: (string | undefined | null | false)[]) => inputs.filter(Boolean).join(" ");
 
 const baseCustomerSchema = z.object({
-    email: z.string().email("Email không hợp lệ"),
-    fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
-    phone: z.string().min(10, "Số điện thoại không hợp lệ"),
+    email: z
+        .string()
+        .min(1, "Vui lòng nhập email")
+        .email("Email không hợp lệ"),
+    fullName: z.string().min(1, "Vui lòng nhập họ tên"),
+    phone: z
+        .string()
+        .min(1, "Vui lòng nhập số điện thoại")
+        .regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ (10-11 số)"),
     password: z.string().optional(),
 });
 
 const newCustomerSchema = baseCustomerSchema.extend({
-    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+    password: z
+        .string()
+        .min(1, "Vui lòng nhập mật khẩu")
+        .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
 });
 
 const bookingSchema = z.object({
@@ -119,8 +158,27 @@ export default function StaffBookingFormPage() {
     const [existingUser, setExistingUser] = useState<{ userId: string; fullName: string; email: string; phone?: string } | null>(null);
     const [isNewCustomer, setIsNewCustomer] = useState(false);
     const [customerData, setCustomerData] = useState<CustomerFormData | null>(null);
+    const [directTour, setDirectTour] = useState<Tour | null>(null);
+    const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
 
-    const tour = tours.find((t) => t.id === Number(tourId));
+    // Try to find tour in TourContext first, fall back to direct fetch
+    const contextTour = tours.find((t) => t.tourUuid === tourId);
+    const tour = contextTour || directTour;
+
+    // Fetch tour directly if not found in context (staff's assigned tours may not be in public list)
+    useEffect(() => {
+        if (!contextTour && tourId && !tourLoading) {
+            fetchTourByUuid(tourId)
+                .then((fetchedTour) => {
+                    if (fetchedTour) {
+                        setDirectTour(fetchedTour);
+                    }
+                })
+                .catch((err) => {
+                    console.error("Failed to fetch tour:", err);
+                });
+        }
+    }, [contextTour, tourId, tourLoading]);
 
     // Customer form
     const customerForm = useForm<CustomerFormData>({
@@ -153,9 +211,10 @@ export default function StaffBookingFormPage() {
     const children = bookingForm.watch("children");
 
     // Calculate total price
-    const totalPrice = tour
+    const basePrice = tour
         ? tour.price * adults + tour.price * 0.5 * children
         : 0;
+    const totalPrice = appliedDiscount ? appliedDiscount.finalPrice : basePrice;
 
     // Search for existing user by email
     const handleEmailSearch = async () => {
@@ -217,7 +276,7 @@ export default function StaffBookingFormPage() {
 
             // Create new user if needed
             if (isNewCustomer) {
-                const result = createUserForStaff({
+                const result = await createUserForStaff({
                     email: customerData.email,
                     fullName: customerData.fullName,
                     phone: customerData.phone,
@@ -240,6 +299,7 @@ export default function StaffBookingFormPage() {
                 {
                     userId,
                     tourId: tour.id,
+                    tourUuid: tour.tourUuid,
                     tourTitle: tour.title,
                     tourPrice: tour.price,
                     selectedDate: bookingData.selectedDate,
@@ -252,6 +312,8 @@ export default function StaffBookingFormPage() {
                     },
                     paymentMethod: "cash",
                     totalPrice,
+                    specialRequest: bookingData.specialRequest,
+                    ...(appliedDiscount && { promoCode: appliedDiscount.code }),
                 },
                 user.userId
             );
@@ -605,16 +667,38 @@ export default function StaffBookingFormPage() {
                                     {...bookingForm.register("specialRequest")}
                                 />
                             </div>
+
+                            {/* Promo Code */}
+                            <div className="mt-6">
+                                <PromoCodeInput
+                                    originalPrice={basePrice}
+                                    onDiscountApplied={setAppliedDiscount}
+                                    appliedDiscount={appliedDiscount}
+                                />
+                            </div>
                         </div>
 
                         {/* Price Summary */}
-                        <div className="bg-muted/50 rounded-lg p-4">
-                            <div className="flex justify-between items-center">
+                        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span>{adults} người lớn × {formatCurrency(tour.price)}</span>
+                                <span>{formatCurrency(tour.price * adults)}</span>
+                            </div>
+                            {children > 0 && (
+                                <div className="flex justify-between text-sm">
+                                    <span>{children} trẻ em × {formatCurrency(tour.price * 0.5)}</span>
+                                    <span>{formatCurrency(tour.price * 0.5 * children)}</span>
+                                </div>
+                            )}
+                            {appliedDiscount && (
+                                <div className="flex justify-between text-sm text-green-600">
+                                    <span>Giảm giá ({appliedDiscount.code})</span>
+                                    <span>-{formatCurrency(appliedDiscount.discountAmount)}</span>
+                                </div>
+                            )}
+                            <div className="border-t pt-2 flex justify-between items-center">
                                 <span className="font-medium">Tổng tiền</span>
                                 <span className="text-2xl font-bold text-primary">{formatCurrency(totalPrice)}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                                {adults} người lớn{children > 0 ? ` + ${children} trẻ em` : ""}
                             </div>
                         </div>
 

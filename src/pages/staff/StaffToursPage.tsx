@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { useTour, getCoverImage } from "@/context/TourContext";
+import { useAuth } from "@/context/AuthContext";
+import { getCoverImage, type Tour } from "@/context/TourContext";
+import { fetchStaffTours } from "@/api/staffService";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +17,7 @@ import {
     Loader2,
     ChevronLeft,
     ChevronRight,
+    AlertCircle,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -25,11 +28,37 @@ type SortField = "title" | "price" | "rating";
 type SortDirection = "asc" | "desc";
 
 export default function StaffToursPage() {
-    const { tours, loading } = useTour();
+    const { user } = useAuth();
+    const [tours, setTours] = useState<Tour[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortField, setSortField] = useState<SortField>("title");
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Fetch tours assigned to the current staff member
+    const loadStaffTours = useCallback(async () => {
+        if (!user?.userId) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Fetch all tours for this staff (size=100 to get all in one request)
+            const result = await fetchStaffTours(user.userId, { page: 0, size: 100 });
+            setTours(result.content);
+        } catch (err) {
+            console.error("Error loading staff tours:", err);
+            setError("Không thể tải danh sách tour. Vui lòng thử lại.");
+        } finally {
+            setLoading(false);
+        }
+    }, [user?.userId]);
+
+    useEffect(() => {
+        loadStaffTours();
+    }, [loadStaffTours]);
 
     // Filter active tours only and apply search
     const filteredTours = useMemo(() => {
@@ -80,6 +109,16 @@ export default function StaffToursPage() {
         return (
             <div className="flex items-center justify-center h-[50vh]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mb-4 text-destructive" />
+                <p className="mb-4">{error}</p>
+                <Button onClick={loadStaffTours}>Thử lại</Button>
             </div>
         );
     }
@@ -210,13 +249,13 @@ export default function StaffToursPage() {
 
                                 {/* Action Buttons */}
                                 <div className="flex gap-2 pt-2 border-t">
-                                    <Link to={`/staff/booking/${tour.id}`} className="flex-1">
+                                    <Link to={`/staff/booking/${tour.tourUuid}`} className="flex-1">
                                         <Button className="w-full" size="sm" title="Đặt tour cho khách">
                                             <Users className="h-4 w-4 mr-1" />
                                             Đặt tour
                                         </Button>
                                     </Link>
-                                    <Link to={`/tours/${tour.id}`} target="_blank">
+                                    <Link to={`/tours/${tour.tourUuid}`} target="_blank">
                                         <Button variant="outline" size="sm" title="Lịch trình">
                                             <Calendar className="h-4 w-4" />
                                         </Button>

@@ -129,6 +129,38 @@ export const createStaffBookingApi = async (
 };
 
 /**
+ * Fetch bookings for a specific staff member
+ * GET /staffs/{id}/bookings
+ */
+export const fetchStaffBookings = async (
+  staffId: string,
+  params?: PaginationParams
+): Promise<PaginatedResult<Booking>> => {
+  const response = await apiClient.get<
+    ApiResponse<PageData<BookingDetailResponse>>
+  >(`/staffs/${staffId}/bookings`, {
+    params: {
+      page: params?.page ?? 0,
+      size: params?.size ?? 20,
+    },
+  });
+
+  const pageData = response.data.result;
+  const bookings = mapBookingDetailsToBookings(pageData?.content || []);
+  const pageMeta = pageData?.page;
+
+  return {
+    content: bookings,
+    totalElements: pageMeta?.totalElements || 0,
+    totalPages: pageMeta?.totalPages || 0,
+    currentPage: pageMeta?.number || 0,
+    pageSize: pageMeta?.size || 20,
+    isFirst: (pageMeta?.number || 0) === 0,
+    isLast: (pageMeta?.number || 0) >= (pageMeta?.totalPages || 1) - 1,
+  };
+};
+
+/**
  * Fetch active bookings for current user
  * GET /bookings/active
  */
