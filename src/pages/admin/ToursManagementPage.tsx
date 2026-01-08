@@ -44,6 +44,7 @@ const BULK_DELETE_TOUR_KEY = "bulk_delete_tour";
 export default function ToursManagementPage() {
   const { tours, loading, addTour, updateTour, deleteTour, staffList, loadStaffs } = useTour();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -133,13 +134,17 @@ export default function ToursManagementPage() {
       images: [],
       image: "",
       description: "",
+      itinerary: "",
       staffId: "",
     },
   });
 
-  const handleOpenModal = (tour?: Tour) => {
-    // Load staff list when opening modal
-    loadStaffs();
+  const handleOpenModal = async (tour?: Tour) => {
+    setIsModalOpen(true);
+    setModalLoading(true);
+
+    // Await staff loading to get fresh data
+    const currentStaffList = await loadStaffs();
 
     if (tour) {
       setEditingTour(tour);
@@ -157,7 +162,8 @@ export default function ToursManagementPage() {
         images: tour.images || [],
         image: tour.image || "",
         description: tour.description || "",
-        staffId: tour.staffId || (staffList.length > 0 ? staffList[0].userId : ""),
+        itinerary: tour.itinerary || "",
+        staffId: tour.staffId || (currentStaffList.length > 0 ? currentStaffList[0].userId : ""),
       });
     } else {
       setEditingTour(null);
@@ -175,10 +181,11 @@ export default function ToursManagementPage() {
         images: [],
         image: "",
         description: "",
-        staffId: staffList.length > 0 ? staffList[0].userId : "",
+        itinerary: "",
+        staffId: currentStaffList.length > 0 ? currentStaffList[0].userId : "",
       });
     }
-    setIsModalOpen(true);
+    setModalLoading(false);
   };
 
   const handleCloseModal = () => {
@@ -191,7 +198,7 @@ export default function ToursManagementPage() {
     try {
       const { staffId, ...tourData } = data;
       if (editingTour) {
-        await updateTour(editingTour.id, tourData, staffId);
+        await updateTour(editingTour.id, { ...tourData, tourUuid: editingTour.tourUuid }, staffId);
         toast.success("Đã cập nhật tour thành công!");
       } else {
         await addTour(tourData as Tour, staffId);
@@ -488,258 +495,286 @@ export default function ToursManagementPage() {
         title={editingTour ? "Chỉnh sửa Tour" : "Thêm Tour mới"}
         className="max-w-2xl"
       >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Basic Info Section */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tên Tour</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập tên tour" autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Địa điểm</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập địa điểm" autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="region"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vùng miền</FormLabel>
-                    <FormControl>
-                      <RegionSelect
-                        aria-label="Vùng miền"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Thời lượng</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ví dụ: 3 Ngày 2 Đêm" autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Pricing Section */}
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Giá người lớn (VNĐ)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Nhập giá"
-                        autoComplete="off"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="priceChild"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Giá trẻ em (VNĐ)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Mặc định 50% giá người lớn"
-                        autoComplete="off"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Classification & Capacity Section */}
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Danh mục</FormLabel>
-                    <FormControl>
-                      <CategorySelect
-                        aria-label="Danh mục tour"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="capacity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sức chứa</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Số người tối đa"
-                        autoComplete="off"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Status Section */}
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trạng thái</FormLabel>
-                    <FormControl>
-                      <select
-                        aria-label="Trạng thái tour"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                      >
-                        <option value="Hoạt động">Hoạt động</option>
-                        <option value="Nháp">Nháp</option>
-                        <option value="Đã đóng">Đã đóng</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="availability"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel>Còn chỗ</FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Tour có thể đặt được
-                      </p>
-                    </div>
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="h-5 w-5 rounded border-gray-300"
-                        aria-label="Còn chỗ"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {/* Staff Assignment - Full Width */}
-              <FormField
-                control={form.control}
-                name="staffId"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Nhân viên phụ trách *</FormLabel>
-                    <FormControl>
-                      <select
-                        aria-label="Nhân viên phụ trách"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                      >
-                        <option value="">-- Chọn nhân viên --</option>
-                        {staffList.map((staff) => (
-                          <option key={staff.userId} value={staff.userId}>
-                            {staff.fullName} {staff.email ? `(${staff.email})` : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="col-span-2">
-                <TourImageManager
-                  images={form.watch("images") || []}
-                  onChange={(images) => {
-                    form.setValue("images", images);
-                    // Also set the legacy image field to the primary image URL
-                    const primaryImage = images.find((img) => img.isPrimary);
-                    form.setValue("image", primaryImage?.url || images[0]?.url || "");
-                  }}
-                />
-              </div>
-              <div className="col-span-2">
+        {modalLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3 text-muted-foreground">Đang tải...</span>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Basic Info Section */}
                 <FormField
                   control={form.control}
-                  name="description"
+                  name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Mô tả
-                      </span>
-                      <RichTextEditor
-                        id="tour-description-editor"
-                        name="description"
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        placeholder="Mô tả chi tiết về tour..."
-                      />
+                      <FormLabel>Tên Tour</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên tour" autoComplete="off" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Địa điểm</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập địa điểm" autoComplete="off" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="region"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vùng miền</FormLabel>
+                      <FormControl>
+                        <RegionSelect
+                          aria-label="Vùng miền"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Thời lượng</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ví dụ: 3 Ngày 2 Đêm" autoComplete="off" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Pricing Section */}
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Giá người lớn (VNĐ)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Nhập giá"
+                          autoComplete="off"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="priceChild"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Giá trẻ em (VNĐ)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Mặc định 50% giá người lớn"
+                          autoComplete="off"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Classification & Capacity Section */}
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Danh mục</FormLabel>
+                      <FormControl>
+                        <CategorySelect
+                          aria-label="Danh mục tour"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sức chứa</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Số người tối đa"
+                          autoComplete="off"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Status Section */}
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Trạng thái</FormLabel>
+                      <FormControl>
+                        <select
+                          aria-label="Trạng thái tour"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="Hoạt động">Hoạt động</option>
+                          <option value="Nháp">Nháp</option>
+                          <option value="Đã đóng">Đã đóng</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="availability"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Còn chỗ</FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Tour có thể đặt được
+                        </p>
+                      </div>
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="h-5 w-5 rounded border-gray-300"
+                          aria-label="Còn chỗ"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Staff Assignment - Full Width */}
+                <FormField
+                  control={form.control}
+                  name="staffId"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Nhân viên phụ trách *</FormLabel>
+                      <FormControl>
+                        <select
+                          aria-label="Nhân viên phụ trách"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="">-- Chọn nhân viên --</option>
+                          {staffList.map((staff) => (
+                            <option key={staff.userId} value={staff.userId}>
+                              {staff.fullName} {staff.email ? `(${staff.email})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="col-span-2">
+                  <TourImageManager
+                    images={form.watch("images") || []}
+                    onChange={(images) => {
+                      form.setValue("images", images);
+                      // Also set the legacy image field to the primary image URL
+                      const primaryImage = images.find((img) => img.isPrimary);
+                      form.setValue("image", primaryImage?.url || images[0]?.url || "");
+                    }}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Mô tả
+                        </span>
+                        <RichTextEditor
+                          id="tour-description-editor"
+                          name="description"
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="Mô tả chi tiết về tour..."
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="itinerary"
+                    render={({ field }) => (
+                      <FormItem>
+                        <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Lịch trình
+                        </span>
+                        <RichTextEditor
+                          id="tour-itinerary-editor"
+                          name="itinerary"
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          placeholder="Chi tiết lịch trình tour theo ngày..."
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={handleCloseModal}>
-                Hủy
-              </Button>
-              <Button type="submit">
-                {editingTour ? "Lưu thay đổi" : "Tạo Tour"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+              <div className="flex justify-end gap-2 pt-4 relative z-10">
+                <Button type="button" variant="outline" onClick={handleCloseModal}>
+                  Hủy
+                </Button>
+                <Button type="submit">
+                  {editingTour ? "Lưu thay đổi" : "Tạo Tour"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
       </Modal>
 
       {/* Confirmation Dialog */}

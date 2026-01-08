@@ -96,16 +96,22 @@ export const mapTourEntityToTour = (entity: TourEntity): Tour => {
         title: entity.title || "",
         location: entity.destination || "",
         price: entity.priceAdult || 0,
+        priceChild: entity.priceChild,
         duration: entity.duration || "",
         images,
         image: images[0]?.url || "",
         rating: Math.round(avgRating * 10) / 10,
         reviews: visibleReviews.length,
         category: CATEGORY_MAP[entity.category || ""] || entity.category,
+        region: REGION_MAP[entity.region || ""] || entity.region,
+        capacity: entity.capacity,
+        availability: entity.availability !== undefined ? entity.availability > 0 : true,
         status: entity.isActive ? "Hoạt động" : "Đã đóng",
         description: entity.description,
+        itinerary: entity.itinerary,
         startDate: entity.startDate,
         endDate: entity.endDate,
+        staffId: entity.staff?.userId,
     };
 };
 
@@ -134,6 +140,7 @@ export const mapTourToTourRequest = (
     return {
         title: tour.title || "",
         description: tour.description,
+        itinerary: tour.itinerary,
         priceAdult: tour.price || 0,
         priceChild,
         duration: tour.duration,
@@ -143,7 +150,7 @@ export const mapTourToTourRequest = (
         capacity: tour.capacity ?? 50,
         category,
         region,
-        availability: tour.availability === false ? 0 : (tour.capacity ?? 50),
+        availability: tour.availability === false ? 0 : 1,
         staff_id: staffId,
     };
 };

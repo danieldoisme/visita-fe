@@ -6,8 +6,10 @@ import {
   ReactNode,
   useCallback,
 } from "react";
+import { useAuth } from "./AuthContext";
 import {
   fetchAllTours,
+  fetchAllToursAdmin,
   fetchTourById,
   createTourApi,
   updateTourApi,
@@ -16,7 +18,10 @@ import {
 import { fetchStaffMembers, type StaffMember } from "@/api/staffService";
 import { syncTourImages } from "@/api/imageService";
 import { ApiError } from "@/api/apiClient";
-import { getRecommendations, getRecommendationsForUser } from "@/services/recommendationService";
+import {
+  getRecommendations,
+  getRecommendationsForUser,
+} from "@/services/recommendationService";
 
 // Tour image structure for multi-image support
 export interface TourImage {
@@ -46,6 +51,7 @@ export interface Tour {
   availability?: boolean;
   status: "Hoạt động" | "Nháp" | "Đã đóng";
   description?: string;
+  itinerary?: string;
   bookings?: number;
   originalPrice?: number;
   difficulty?: string;
@@ -74,13 +80,24 @@ interface TourContextType {
   staffLoading: boolean;
   error: string | null;
   getTour: (id: number) => Promise<Tour | undefined>;
-  getRecommendedTours: (currentTourId: number, category?: string, userId?: string) => Promise<Tour[]>;
+  getRecommendedTours: (
+    currentTourId: number,
+    category?: string,
+    userId?: string
+  ) => Promise<Tour[]>;
   getPersonalizedRecommendations: (userId: string) => Promise<Tour[]>;
-  addTour: (tour: Omit<Tour, "id" | "rating" | "reviews">, staffId: string) => Promise<void>;
-  updateTour: (id: number, tour: Partial<Tour>, staffId: string) => Promise<void>;
+  addTour: (
+    tour: Omit<Tour, "id" | "rating" | "reviews">,
+    staffId: string
+  ) => Promise<void>;
+  updateTour: (
+    id: number,
+    tour: Partial<Tour>,
+    staffId: string
+  ) => Promise<void>;
   deleteTour: (id: number) => Promise<void>;
   refreshTours: () => Promise<void>;
-  loadStaffs: () => Promise<void>;
+  loadStaffs: () => Promise<StaffMember[]>;
 }
 
 const TourContext = createContext<TourContextType | undefined>(undefined);
@@ -91,44 +108,85 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [staffLoading, setStaffLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+
+  // Stabilize the fetch function selection based on user role
+  // Check user.role directly to avoid stale closure issues with derived isAdmin/isStaff
+  const userRole = user?.role;
+  const shouldUseAdminEndpoint = Boolean(user && (userRole === 'admin' || userRole === 'staff'));
 
   // Load tours from API on mount
+  // Admin/Staff: fetch all tours including inactive
+  // Regular users: fetch only active tours
   const loadTours = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await fetchAllTours({ page: 0, size: 100 });
+      const fetchFn = shouldUseAdminEndpoint
+        ? fetchAllToursAdmin
+        : fetchAllTours;
+      const result = await fetchFn({ page: 0, size: 100 });
       setTours(result.content);
     } catch (err) {
-      const message = err instanceof ApiError
-        ? err.message
-        : "Không thể tải danh sách tour";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể tải danh sách tour";
       setError(message);
       console.error("Error loading tours:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [shouldUseAdminEndpoint]);
 
-  // Load staff list from API
-  const loadStaffs = useCallback(async () => {
-    if (staffList.length > 0) return; // Already loaded
+  // Load staff list from API - returns staff list for immediate use
+  const loadStaffs = useCallback(async (): Promise<StaffMember[]> => {
+    if (staffList.length > 0) return staffList; // Already loaded
 
     setStaffLoading(true);
     try {
       const staffs = await fetchStaffMembers();
       setStaffList(staffs);
+      return staffs;
     } catch (err) {
       console.error("Error loading staff list:", err);
+      return [];
     } finally {
       setStaffLoading(false);
     }
-  }, [staffList.length]);
+  }, [staffList]);
 
+  // Wait for auth to complete before fetching tours
+  // This ensures we use the correct endpoint (admin vs public) on the first fetch
   useEffect(() => {
-    loadTours();
-  }, [loadTours]);
+    // Don't fetch until auth has finished loading
+    if (authLoading) return;
+
+    const fetchTours = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Use admin endpoint only when user is confirmed admin/staff
+        // Check user.role directly to avoid stale closure issues with derived isAdmin/isStaff
+        const userRole = user?.role;
+        const useAdminEndpoint = Boolean(user && (userRole === 'admin' || userRole === 'staff'));
+        const fetchFn = useAdminEndpoint ? fetchAllToursAdmin : fetchAllTours;
+        const result = await fetchFn({ page: 0, size: 100 });
+        setTours(result.content);
+      } catch (err) {
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : "Không thể tải danh sách tour";
+        setError(message);
+        console.error("Error loading tours:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTours();
+  }, [authLoading, user]);
 
   const getTour = async (id: number): Promise<Tour | undefined> => {
     const cachedTour = tours.find((t) => t.id === id);
@@ -162,14 +220,19 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
           // Map recommended UUIDs to Tour objects
           const recommendedTours = recommendedIds
             .map((uuid) => tours.find((t) => t.tourUuid === uuid))
-            .filter((t): t is Tour => t !== undefined && t.status === "Hoạt động");
+            .filter(
+              (t): t is Tour => t !== undefined && t.status === "Hoạt động"
+            );
 
           if (recommendedTours.length > 0) {
             return recommendedTours;
           }
         }
       } catch (error) {
-        console.warn('AI recommendation failed, falling back to category filter:', error);
+        console.warn(
+          "AI recommendation failed, falling back to category filter:",
+          error
+        );
       }
     }
 
@@ -194,7 +257,9 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Get personalized recommendations for a user (without needing a current tour)
-  const getPersonalizedRecommendations = async (userId: string): Promise<Tour[]> => {
+  const getPersonalizedRecommendations = async (
+    userId: string
+  ): Promise<Tour[]> => {
     try {
       const recommendedIds = await getRecommendationsForUser(userId);
 
@@ -202,14 +267,16 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
         // Map recommended UUIDs to Tour objects
         const recommendedTours = recommendedIds
           .map((uuid) => tours.find((t) => t.tourUuid === uuid))
-          .filter((t): t is Tour => t !== undefined && t.status === "Hoạt động");
+          .filter(
+            (t): t is Tour => t !== undefined && t.status === "Hoạt động"
+          );
 
         if (recommendedTours.length > 0) {
           return recommendedTours;
         }
       }
     } catch (error) {
-      console.warn('Failed to get personalized recommendations:', error);
+      console.warn("Failed to get personalized recommendations:", error);
     }
 
     // Fallback: return popular active tours (sorted by rating)
@@ -235,15 +302,18 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
 
       setTours((prev) => [...prev, newTour]);
     } catch (err) {
-      const message = err instanceof ApiError
-        ? err.message
-        : "Không thể tạo tour mới";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể tạo tour mới";
       setError(message);
       throw err;
     }
   };
 
-  const updateTour = async (id: number, updatedData: Partial<Tour>, staffId: string) => {
+  const updateTour = async (
+    id: number,
+    updatedData: Partial<Tour>,
+    staffId: string
+  ) => {
     try {
       const updatedTour = await updateTourApi(id, updatedData, staffId);
 
@@ -258,9 +328,8 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
         prev.map((tour) => (tour.id === id ? updatedTour : tour))
       );
     } catch (err) {
-      const message = err instanceof ApiError
-        ? err.message
-        : "Không thể cập nhật tour";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể cập nhật tour";
       setError(message);
       throw err;
     }
@@ -271,9 +340,8 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
       await deleteTourApi(id);
       setTours((prev) => prev.filter((tour) => tour.id !== id));
     } catch (err) {
-      const message = err instanceof ApiError
-        ? err.message
-        : "Không thể xóa tour";
+      const message =
+        err instanceof ApiError ? err.message : "Không thể xóa tour";
       setError(message);
       throw err;
     }

@@ -61,7 +61,7 @@ export function RichTextEditor({
   }, [id, name]);
 
   return (
-    <div ref={containerRef} id={id} className={cn("rich-text-editor", className)}>
+    <div ref={containerRef} id={id} className={cn("rich-text-editor relative", className)}>
       <style>{`
         .rich-text-editor .ql-container {
           min-height: 150px;

@@ -8,7 +8,6 @@ import {
     getTourUuid,
     storeTourIdMapping,
 } from "./mappers/tourMapper";
-import { hashStringToNumber } from "@/utils/hashUtils";
 
 /**
  * Page info structure from backend
@@ -105,29 +104,34 @@ export const fetchTourById = async (id: number): Promise<Tour | undefined> => {
 
 /**
  * Fetch all tours including inactive (admin endpoint)
+ * Note: Backend returns a direct array, not a paginated wrapper
  */
 export const fetchAllToursAdmin = async (
     params?: PaginationParams
 ): Promise<PaginatedResult<Tour>> => {
-    const response = await apiClient.get<ApiResponse<PageData<TourEntity>>>("/admins/tours", {
+    const response = await apiClient.get<ApiResponse<TourEntity[] | PageData<TourEntity>>>("/admins/tours", {
         params: {
             page: (params?.page ?? 0) + 1, // Backend uses 1-based pagination
             size: params?.size ?? 20,
         },
     });
 
-    const pageData = response.data.result;
-    const pageInfo = pageData?.page;
-    const tours = mapTourEntitiesToTours(pageData?.content || []);
+    const result = response.data.result;
+
+    // Handle both array response (current backend) and paginated wrapper (future)
+    const isDirectArray = Array.isArray(result);
+    const tourEntities = isDirectArray ? result : (result?.content || []);
+    const pageInfo = isDirectArray ? undefined : result?.page;
+    const tours = mapTourEntitiesToTours(tourEntities);
 
     return {
         content: tours,
-        totalElements: pageInfo?.totalElements || 0,
-        totalPages: pageInfo?.totalPages || 0,
+        totalElements: pageInfo?.totalElements || tours.length,
+        totalPages: pageInfo?.totalPages || 1,
         currentPage: pageInfo?.number || 0,
-        pageSize: pageInfo?.size || 20,
-        isFirst: (pageInfo?.number || 0) === 0,
-        isLast: (pageInfo?.number || 0) >= ((pageInfo?.totalPages || 1) - 1),
+        pageSize: pageInfo?.size || tours.length,
+        isFirst: true,
+        isLast: true,
     };
 };
 
@@ -146,25 +150,8 @@ export const createTourApi = async (
         throw new ApiError(9999, "Không thể tạo tour mới");
     }
 
-    const entity = response.data.result;
-    const createdTour: Tour = {
-        id: hashStringToNumber(entity.tourId || ""),
-        title: entity.title || "",
-        location: entity.destination || "",
-        price: entity.priceAdult || 0,
-        duration: entity.duration || "",
-        images: [],
-        rating: 0,
-        reviews: 0,
-        status: entity.isActive ? "Hoạt động" : "Nháp",
-        description: entity.description,
-        startDate: entity.startDate,
-        endDate: entity.endDate,
-    };
-
-    if (entity.tourId) {
-        storeTourIdMapping(createdTour.id, entity.tourId);
-    }
+    // Use the mapper for consistent field mapping and tourUuid assignment
+    const createdTour = mapTourEntityToTour(response.data.result);
 
     return createdTour;
 };
@@ -177,7 +164,8 @@ export const updateTourApi = async (
     tourData: Partial<Tour>,
     staffId: string
 ): Promise<Tour> => {
-    const uuid = getTourUuid(id);
+    // Use tourUuid from data if available, fallback to the in-memory map
+    const uuid = tourData.tourUuid || getTourUuid(id);
     if (!uuid) {
         throw new ApiError(1021, "Tour không tồn tại");
     }
