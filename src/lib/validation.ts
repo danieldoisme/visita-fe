@@ -123,8 +123,18 @@ export const tourSchema = z.object({
   price: z
     .number()
     .min(0, "Giá phải lớn hơn hoặc bằng 0"),
+  priceChild: z
+    .number()
+    .min(0, "Giá trẻ em phải lớn hơn hoặc bằng 0")
+    .optional(),
   duration: z.string().min(1, "Vui lòng nhập thời lượng"),
   category: z.string().min(1, "Vui lòng chọn danh mục"),
+  region: z.string().min(1, "Vui lòng chọn miền"),
+  capacity: z
+    .number()
+    .min(1, "Sức chứa phải lớn hơn 0")
+    .max(1000, "Sức chứa không quá 1000"),
+  availability: z.boolean(),
   status: z.enum(["Hoạt động", "Nháp", "Đã đóng"]),
   images: z.array(tourImageSchema),
   image: z.string().optional(), // Legacy field for backwards compatibility

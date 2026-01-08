@@ -1,19 +1,19 @@
 import { forwardRef } from "react";
-import { CATEGORY_MAP } from "@/api/mappers/tourMapper";
+import { REGION_MAP } from "@/api/mappers/tourMapper";
 
-export interface CategorySelectProps
+export interface RegionSelectProps
     extends React.SelectHTMLAttributes<HTMLSelectElement> {
     placeholder?: string;
 }
 
 /**
- * Reusable category select dropdown.
- * Uses CATEGORY_MAP as single source of truth for category options.
+ * Reusable region select dropdown.
+ * Uses REGION_MAP as single source of truth for region options.
  */
-export const CategorySelect = forwardRef<HTMLSelectElement, CategorySelectProps>(
-    ({ className, placeholder = "-- Chọn danh mục --", ...props }, ref) => {
-        // Convert CATEGORY_MAP to array of [backendValue, vietnameseLabel]
-        const categoryOptions = Object.entries(CATEGORY_MAP);
+export const RegionSelect = forwardRef<HTMLSelectElement, RegionSelectProps>(
+    ({ className, placeholder = "-- Chọn miền --", ...props }, ref) => {
+        // Convert REGION_MAP to array of [backendValue, vietnameseLabel]
+        const regionOptions = Object.entries(REGION_MAP);
 
         return (
             <select
@@ -27,7 +27,7 @@ export const CategorySelect = forwardRef<HTMLSelectElement, CategorySelectProps>
                         {placeholder}
                     </option>
                 )}
-                {categoryOptions.map(([backendValue, vietnameseLabel]) => (
+                {regionOptions.map(([backendValue, vietnameseLabel]) => (
                     <option key={backendValue} value={vietnameseLabel}>
                         {vietnameseLabel}
                     </option>
@@ -37,7 +37,7 @@ export const CategorySelect = forwardRef<HTMLSelectElement, CategorySelectProps>
     }
 );
 
-CategorySelect.displayName = "CategorySelect";
+RegionSelect.displayName = "RegionSelect";
 
-// Export default category for form initialization
-export const DEFAULT_CATEGORY = CATEGORY_MAP.EXPLORATION; // "Phiêu lưu"
+// Export default region for form initialization
+export const DEFAULT_REGION = REGION_MAP.CENTRAL; // "Miền Trung"

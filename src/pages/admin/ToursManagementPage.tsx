@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { CategorySelect, DEFAULT_CATEGORY } from "@/components/ui/category-select";
+import { RegionSelect, DEFAULT_REGION } from "@/components/ui/region-select";
 import {
   Form,
   FormControl,
@@ -122,8 +123,12 @@ export default function ToursManagementPage() {
       title: "",
       location: "",
       price: 0,
+      priceChild: undefined,
       duration: "",
       category: DEFAULT_CATEGORY,
+      region: DEFAULT_REGION,
+      capacity: 50,
+      availability: true,
       status: "Nháp",
       images: [],
       image: "",
@@ -142,8 +147,12 @@ export default function ToursManagementPage() {
         title: tour.title,
         location: tour.location,
         price: tour.price,
+        priceChild: tour.priceChild,
         duration: tour.duration,
-        category: tour.category || "",
+        category: tour.category || DEFAULT_CATEGORY,
+        region: tour.region || DEFAULT_REGION,
+        capacity: tour.capacity ?? 50,
+        availability: tour.availability ?? true,
         status: tour.status,
         images: tour.images || [],
         image: tour.image || "",
@@ -156,8 +165,12 @@ export default function ToursManagementPage() {
         title: "",
         location: "",
         price: 0,
+        priceChild: undefined,
         duration: "",
         category: DEFAULT_CATEGORY,
+        region: DEFAULT_REGION,
+        capacity: 50,
+        availability: true,
         status: "Nháp",
         images: [],
         image: "",
@@ -478,6 +491,7 @@ export default function ToursManagementPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
+              {/* Basic Info Section */}
               <FormField
                 control={form.control}
                 name="title"
@@ -485,7 +499,7 @@ export default function ToursManagementPage() {
                   <FormItem>
                     <FormLabel>Tên Tour</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập tên tour" {...field} />
+                      <Input placeholder="Nhập tên tour" autoComplete="off" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -498,7 +512,7 @@ export default function ToursManagementPage() {
                   <FormItem>
                     <FormLabel>Địa điểm</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập địa điểm" {...field} />
+                      <Input placeholder="Nhập địa điểm" autoComplete="off" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -506,16 +520,14 @@ export default function ToursManagementPage() {
               />
               <FormField
                 control={form.control}
-                name="price"
+                name="region"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Giá (VNĐ)</FormLabel>
+                    <FormLabel>Vùng miền</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Nhập giá"
+                      <RegionSelect
+                        aria-label="Vùng miền"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -529,12 +541,55 @@ export default function ToursManagementPage() {
                   <FormItem>
                     <FormLabel>Thời lượng</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ví dụ: 3 Ngày 2 Đêm" {...field} />
+                      <Input placeholder="Ví dụ: 3 Ngày 2 Đêm" autoComplete="off" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Pricing Section */}
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Giá người lớn (VNĐ)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Nhập giá"
+                        autoComplete="off"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="priceChild"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Giá trẻ em (VNĐ)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Mặc định 50% giá người lớn"
+                        autoComplete="off"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Classification & Capacity Section */}
               <FormField
                 control={form.control}
                 name="category"
@@ -551,6 +606,27 @@ export default function ToursManagementPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="capacity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sức chứa</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Số người tối đa"
+                        autoComplete="off"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Status Section */}
               <FormField
                 control={form.control}
                 name="status"
@@ -572,6 +648,31 @@ export default function ToursManagementPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="availability"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Còn chỗ</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Tour có thể đặt được
+                      </p>
+                    </div>
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="h-5 w-5 rounded border-gray-300"
+                        aria-label="Còn chỗ"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* Staff Assignment - Full Width */}
               <FormField
                 control={form.control}
                 name="staffId"
@@ -658,6 +759,6 @@ export default function ToursManagementPage() {
         showDontShowAgain
         onDontShowAgainChange={handleDontShowAgain}
       />
-    </div>
+    </div >
   );
 }

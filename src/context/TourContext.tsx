@@ -34,12 +34,16 @@ export interface Tour {
   title: string;
   location: string;
   price: number;
+  priceChild?: number;
   duration: string;
   images: TourImage[];
   image?: string;
   rating: number;
   reviews: number;
   category?: string;
+  region?: string;
+  capacity?: number;
+  availability?: boolean;
   status: "Hoạt động" | "Nháp" | "Đã đóng";
   description?: string;
   bookings?: number;

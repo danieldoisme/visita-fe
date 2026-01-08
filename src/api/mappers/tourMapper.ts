@@ -29,6 +29,24 @@ export const CATEGORY_REVERSE_MAP: Record<string, TourRequest["category"]> = {
 };
 
 /**
+ * Backend region enum to Vietnamese display text
+ */
+export const REGION_MAP: Record<string, string> = {
+    NORTH: "Miền Bắc",
+    CENTRAL: "Miền Trung",
+    SOUTH: "Miền Nam",
+};
+
+/**
+ * Vietnamese region to backend enum
+ */
+export const REGION_REVERSE_MAP: Record<string, "NORTH" | "CENTRAL" | "SOUTH"> = {
+    "Miền Bắc": "NORTH",
+    "Miền Trung": "CENTRAL",
+    "Miền Nam": "SOUTH",
+};
+
+/**
  * Store original tourId for API calls (UUID string)
  */
 const tourIdMap = new Map<number, string>();
@@ -98,22 +116,34 @@ export const mapTourToTourRequest = (
     tour: Partial<Tour>,
     staffId: string
 ): TourRequest => {
+    // Calculate child price: use provided value or default to 50% of adult price
+    const priceChild = tour.priceChild ?? Math.round((tour.price || 0) * 0.5);
+
+    // Map region from Vietnamese to backend enum
+    const region = REGION_REVERSE_MAP[tour.region || ""] ?? (() => {
+        console.error(`Invalid region: ${tour.region}`);
+        throw new Error(`Invalid region: ${tour.region}. Valid regions: ${Object.keys(REGION_REVERSE_MAP).join(", ")}`);
+    })();
+
+    // Map category from Vietnamese to backend enum
+    const category = CATEGORY_REVERSE_MAP[tour.category || ""] ?? (() => {
+        console.error(`Invalid category: ${tour.category}`);
+        throw new Error(`Invalid category: ${tour.category}. Valid categories: ${Object.keys(CATEGORY_REVERSE_MAP).join(", ")}`);
+    })();
+
     return {
         title: tour.title || "",
         description: tour.description,
         priceAdult: tour.price || 0,
-        priceChild: Math.round((tour.price || 0) * 0.7),
+        priceChild,
         duration: tour.duration,
         destination: tour.location || "",
         startDate: tour.startDate,
         endDate: tour.endDate,
-        capacity: 50,
-        category: CATEGORY_REVERSE_MAP[tour.category || ""] ?? (() => {
-            console.error(`Invalid category: ${tour.category}`);
-            throw new Error(`Invalid category: ${tour.category}. Valid categories: ${Object.keys(CATEGORY_REVERSE_MAP).join(", ")}`);
-        })(),
-        region: "CENTRAL",
-        availability: 50,
+        capacity: tour.capacity ?? 50,
+        category,
+        region,
+        availability: tour.availability === false ? 0 : (tour.capacity ?? 50),
         staff_id: staffId,
     };
 };
