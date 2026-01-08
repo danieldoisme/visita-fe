@@ -125,6 +125,7 @@ export const mapBookingDetailToBooking = (
     createdAt: response.bookingDate
       ? new Date(response.bookingDate)
       : new Date(),
+    promoCode: response.promotionCode,
   };
 };
 

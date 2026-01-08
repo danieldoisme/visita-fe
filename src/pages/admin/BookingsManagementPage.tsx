@@ -233,7 +233,7 @@ export default function BookingsManagementPage() {
             case "cancel":
                 return {
                     title: "Hủy booking",
-                    message: "Bạn có chắc chắn muốn hủy booking này không? Hành động này không thể hoàn tác.",
+                    message: "Bạn có chắc chắn muốn hủy booking này không?",
                     variant: "danger" as const,
                 };
             case "bulk_confirm":
@@ -245,7 +245,7 @@ export default function BookingsManagementPage() {
             case "bulk_cancel":
                 return {
                     title: "Hủy các booking đã chọn",
-                    message: `Bạn có chắc chắn muốn hủy ${selectedCancellableBookings.length} booking? Hành động này không thể hoàn tác.`,
+                    message: `Bạn có chắc chắn muốn hủy ${selectedCancellableBookings.length} booking?`,
                     variant: "danger" as const,
                 };
         }
