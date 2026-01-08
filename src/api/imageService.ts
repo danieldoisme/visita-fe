@@ -115,12 +115,12 @@ export const syncTourImages = async (
                     tourId,
                     newImage.id,
                     newImage.url,
-                    newImage.caption
+                    newImage.caption ?? undefined
                 );
             }
         } else {
             // New image - add it
-            await addTourImageApi(tourId, newImage.url, newImage.caption);
+            await addTourImageApi(tourId, newImage.url, newImage.caption ?? undefined);
         }
     }
 

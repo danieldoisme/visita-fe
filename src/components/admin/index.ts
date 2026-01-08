@@ -15,3 +15,4 @@ export {
 } from "./StatusBadge";
 export { TourImageManager } from "./TourImageManager";
 export { BookingDetailsModal } from "./BookingDetailsModal";
+export { StatusToggleButton } from "./StatusToggleButton";

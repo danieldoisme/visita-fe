@@ -45,6 +45,7 @@ export interface Booking {
   specialRequest?: string;
   status: "pending" | "confirmed" | "cancelled" | "completed";
   createdAt: Date;
+  promoCode?: string;
 }
 
 interface BookingContextType {
@@ -105,7 +106,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       setBookings(allBookings);
     } catch (err) {
       const message =
-        err instanceof ApiError ? err.message : "Không thể tải danh sách đặt tour";
+        err instanceof ApiError
+          ? err.message
+          : "Không thể tải danh sách đặt tour";
       setError(message);
       console.error("Error loading bookings:", err);
     } finally {
@@ -163,7 +166,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       await updateBookingStatusApi(id, "cancelled");
       setBookings((prev) =>
         prev.map((booking) =>
-          booking.id === id ? { ...booking, status: "cancelled" as const } : booking
+          booking.id === id
+            ? { ...booking, status: "cancelled" as const }
+            : booking
         )
       );
     } catch (err) {
@@ -179,7 +184,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       await updateBookingStatusApi(id, "confirmed");
       setBookings((prev) =>
         prev.map((booking) =>
-          booking.id === id ? { ...booking, status: "confirmed" as const } : booking
+          booking.id === id
+            ? { ...booking, status: "confirmed" as const }
+            : booking
         )
       );
     } catch (err) {
@@ -195,7 +202,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       await updateBookingStatusApi(id, "completed");
       setBookings((prev) =>
         prev.map((booking) =>
-          booking.id === id ? { ...booking, status: "completed" as const } : booking
+          booking.id === id
+            ? { ...booking, status: "completed" as const }
+            : booking
         )
       );
     } catch (err) {
@@ -230,7 +239,9 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       );
     } catch (err) {
       const message =
-        err instanceof ApiError ? err.message : "Không thể cập nhật trạng thái thanh toán";
+        err instanceof ApiError
+          ? err.message
+          : "Không thể cập nhật trạng thái thanh toán";
       setError(message);
       throw err;
     }

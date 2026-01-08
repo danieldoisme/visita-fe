@@ -48,7 +48,7 @@ export function TourCard({
     return (
       <div className={cn("group bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl p-3 border border-purple-100 hover:border-purple-200 transition-all overflow-hidden", className)}>
         <div className="flex gap-3">
-          <Link to={`/tours/${tour.id}`} className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+          <Link to={`/tours/${tour.tourUuid}`} className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
             <img
               src={imageUrl}
               alt={tour.title}
@@ -56,7 +56,7 @@ export function TourCard({
             />
           </Link>
           <div className="flex-1 min-w-0 flex flex-col">
-            <Link to={`/tours/${tour.id}`}>
+            <Link to={`/tours/${tour.tourUuid}`}>
               <h4 className="font-semibold text-sm line-clamp-2 group-hover:text-purple-600 transition-colors">
                 {tour.title}
               </h4>
@@ -82,7 +82,7 @@ export function TourCard({
                   {formatCurrency(tour.price)}
                 </p>
               </div>
-              <Link to={`/tours/${tour.id}`} className="w-full">
+              <Link to={`/tours/${tour.tourUuid}`} className="w-full">
                 <Button
                   size="sm"
                   className="h-7 w-full text-xs rounded-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
@@ -159,7 +159,7 @@ export function TourCard({
                 {tour.price.toLocaleString("vi-VN")}đ
               </p>
             </div>
-            <Link to={`/tours/${tour.id}`} className="flex-shrink-0 w-full xs:w-auto">
+            <Link to={`/tours/${tour.tourUuid}`} className="flex-shrink-0 w-full xs:w-auto">
               <Button
                 size="sm"
                 className={cn(
@@ -261,7 +261,7 @@ export function TourCard({
               </span>
             </div>
           </div>
-          <Link to={`/tours/${tour.id}`} className="w-full xs:w-auto">
+          <Link to={`/tours/${tour.tourUuid}`} className="w-full xs:w-auto">
             <Button className="rounded-xl px-6 font-semibold shadow-none hover:shadow-md transition-all w-full xs:w-auto">
               Xem chi tiết
             </Button>

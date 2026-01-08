@@ -21,7 +21,7 @@ const TOURS_PER_PAGE = 2;
 export default function TourDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getTour, getRecommendedTours } = useTour();
+  const { getTourByUuid, getRecommendedTours } = useTour();
   const { loadReviewsByTour } = useReview();
   const [reviews, setReviews] = useState<Review[]>([]);
   const { user } = useAuth();
@@ -38,7 +38,9 @@ export default function TourDetailsPage() {
   useEffect(() => {
     const fetchReviews = async () => {
       if (tour) {
-        const fetchedReviews = await loadReviewsByTour(tour.id.toString());
+        // Use tourUuid for API call if available, otherwise fall back to numeric ID (though backend likely needs UUID)
+        const tourIdForApi = tour.tourUuid || tour.id.toString();
+        const fetchedReviews = await loadReviewsByTour(tourIdForApi);
         setReviews(fetchedReviews);
       }
     };
@@ -71,13 +73,14 @@ export default function TourDetailsPage() {
   useEffect(() => {
     const fetchTour = async () => {
       if (id) {
-        const data = await getTour(parseInt(id));
+        // The URL now contains the UUID directly
+        const data = await getTourByUuid(id);
         setTour(data);
       }
       setLoading(false);
     };
     fetchTour();
-  }, [id, getTour]);
+  }, [id, getTourByUuid]);
 
   // Fetch recommended tours when tour is loaded
   useEffect(() => {
@@ -207,12 +210,39 @@ export default function TourDetailsPage() {
             {tour.description ? (
               <div
                 className="text-gray-600 leading-relaxed mb-6"
-                dangerouslySetInnerHTML={{ __html: tour.description.replace(/&nbsp;/g, ' ') }}
+                dangerouslySetInnerHTML={{
+                  __html: tour.description
+                    .replace(/&nbsp;/g, ' ')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&amp;/g, '&')
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#39;/g, "'")
+                }}
               />
             ) : (
               <p className="text-gray-600 leading-relaxed mb-6">
                 Chưa có mô tả chi tiết cho tour này.
               </p>
+            )}
+
+            {/* Itinerary Section */}
+            {tour.itinerary && (
+              <>
+                <h3 className="text-xl font-semibold mb-2 mt-6">Lịch trình</h3>
+                <div
+                  className="text-gray-600 leading-relaxed mb-6"
+                  dangerouslySetInnerHTML={{
+                    __html: tour.itinerary
+                      .replace(/&nbsp;/g, ' ')
+                      .replace(/&lt;/g, '<')
+                      .replace(/&gt;/g, '>')
+                      .replace(/&amp;/g, '&')
+                      .replace(/&quot;/g, '"')
+                      .replace(/&#39;/g, "'")
+                  }}
+                />
+              </>
             )}
 
             {tour.features && tour.features.length > 0 && (

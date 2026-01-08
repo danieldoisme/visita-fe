@@ -10,10 +10,11 @@ import { useAuth } from "./AuthContext";
 import {
   fetchAllTours,
   fetchAllToursAdmin,
-  fetchTourById,
+  fetchTourByUuid,
   createTourApi,
   updateTourApi,
   deleteTourApi,
+  updateTourStatusApi,
 } from "@/api/tourService";
 import { fetchStaffMembers, type StaffMember } from "@/api/staffService";
 import { syncTourImages } from "@/api/imageService";
@@ -29,8 +30,8 @@ export interface TourImage {
   url: string;
   isPrimary: boolean;
   order: number;
-  caption?: string;
-  altText?: string;
+  caption?: string | null;
+  altText?: string | null;
 }
 
 export interface Tour {
@@ -48,8 +49,8 @@ export interface Tour {
   category?: string;
   region?: string;
   capacity?: number;
-  availability?: boolean;
-  status: "Hoạt động" | "Nháp" | "Đã đóng";
+  availability?: number;
+  status: "Hoạt động" | "Đã đóng";
   description?: string;
   itinerary?: string;
   bookings?: number;
@@ -79,7 +80,7 @@ interface TourContextType {
   loading: boolean;
   staffLoading: boolean;
   error: string | null;
-  getTour: (id: number) => Promise<Tour | undefined>;
+  getTourByUuid: (uuid: string) => Promise<Tour | undefined>;
   getRecommendedTours: (
     currentTourId: number,
     category?: string,
@@ -95,6 +96,7 @@ interface TourContextType {
     tour: Partial<Tour>,
     staffId: string
   ) => Promise<void>;
+  updateTourStatus: (id: number, isActive: boolean) => Promise<void>;
   deleteTour: (id: number) => Promise<void>;
   refreshTours: () => Promise<void>;
   loadStaffs: () => Promise<StaffMember[]>;
@@ -123,10 +125,12 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      const fetchFn = shouldUseAdminEndpoint
-        ? fetchAllToursAdmin
-        : fetchAllTours;
-      const result = await fetchFn({ page: 0, size: 100 });
+      let result;
+      if (shouldUseAdminEndpoint) {
+        result = await fetchAllToursAdmin();
+      } else {
+        result = await fetchAllTours({ page: 0, size: 100 });
+      }
       setTours(result.content);
     } catch (err) {
       const message =
@@ -170,8 +174,12 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
         // Check user.role directly to avoid stale closure issues with derived isAdmin/isStaff
         const userRole = user?.role;
         const useAdminEndpoint = Boolean(user && (userRole === 'admin' || userRole === 'staff'));
-        const fetchFn = useAdminEndpoint ? fetchAllToursAdmin : fetchAllTours;
-        const result = await fetchFn({ page: 0, size: 100 });
+        let result;
+        if (useAdminEndpoint) {
+          result = await fetchAllToursAdmin();
+        } else {
+          result = await fetchAllTours({ page: 0, size: 100 });
+        }
         setTours(result.content);
       } catch (err) {
         const message =
@@ -188,16 +196,20 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     fetchTours();
   }, [authLoading, user]);
 
-  const getTour = async (id: number): Promise<Tour | undefined> => {
-    const cachedTour = tours.find((t) => t.id === id);
+
+
+  const getTourByUuid = async (uuid: string): Promise<Tour | undefined> => {
+    // First check cached tours by UUID
+    const cachedTour = tours.find((t) => t.tourUuid === uuid);
     if (cachedTour) {
       return cachedTour;
     }
 
+    // Fetch from API if not in cache
     try {
-      return await fetchTourById(id);
+      return await fetchTourByUuid(uuid);
     } catch (err) {
-      console.error("Error fetching tour:", err);
+      console.error("Error fetching tour by UUID:", err);
       return undefined;
     }
   };
@@ -351,6 +363,25 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     await loadTours();
   };
 
+  const updateTourStatus = async (id: number, isActive: boolean) => {
+    try {
+      await updateTourStatusApi(id, isActive);
+      // Update local state
+      setTours((prev) =>
+        prev.map((tour) =>
+          tour.id === id
+            ? { ...tour, status: isActive ? "Hoạt động" : "Đã đóng" }
+            : tour
+        )
+      );
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Không thể cập nhật trạng thái tour";
+      setError(message);
+      throw err;
+    }
+  };
+
   return (
     <TourContext.Provider
       value={{
@@ -359,11 +390,12 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
         loading,
         staffLoading,
         error,
-        getTour,
+        getTourByUuid,
         getRecommendedTours,
         getPersonalizedRecommendations,
         addTour,
         updateTour,
+        updateTourStatus,
         deleteTour,
         refreshTours,
         loadStaffs,

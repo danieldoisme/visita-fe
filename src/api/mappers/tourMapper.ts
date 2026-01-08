@@ -105,7 +105,7 @@ export const mapTourEntityToTour = (entity: TourEntity): Tour => {
         category: CATEGORY_MAP[entity.category || ""] || entity.category,
         region: REGION_MAP[entity.region || ""] || entity.region,
         capacity: entity.capacity,
-        availability: entity.availability !== undefined ? entity.availability > 0 : true,
+        availability: entity.availability,
         status: entity.isActive ? "Hoạt động" : "Đã đóng",
         description: entity.description,
         itinerary: entity.itinerary,
@@ -150,7 +150,7 @@ export const mapTourToTourRequest = (
         capacity: tour.capacity ?? 50,
         category,
         region,
-        availability: tour.availability === false ? 0 : 1,
+        availability: tour.availability ?? (tour.capacity || 50),
         staff_id: staffId,
     };
 };

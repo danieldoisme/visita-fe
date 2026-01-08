@@ -51,6 +51,7 @@ export type BookingEntity = {
     staff?: UserEntity;
     promotion?: PromotionEntity;
     bookingDate?: string;
+    phone?: string;
     numAdults?: number;
     numChildren?: number;
     totalPrice?: number;
@@ -187,6 +188,7 @@ export type UserEntity = {
 };
 
 export type TourRequest = {
+    images?: Array<TourImageRequest>;
     title: string;
     description?: string;
     itinerary?: string;
@@ -354,6 +356,7 @@ export type BookingRequest = {
     paymentMethod: 'DIRECT' | 'MOMO' | 'PAYPAL' | 'CASH';
     specialRequest?: string;
     promotionCode?: string;
+    phone: string;
 };
 
 export type RefreshTokenRequest = {

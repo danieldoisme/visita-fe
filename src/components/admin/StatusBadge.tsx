@@ -114,16 +114,12 @@ export const contactStatusConfig: Record<"new" | "read", StatusConfig> = {
 
 /** Tour status configuration */
 export const tourStatusConfig: Record<
-    "Hoạt động" | "Nháp" | "Đã đóng",
+    "Hoạt động" | "Đã đóng",
     StatusConfig
 > = {
     "Hoạt động": {
         label: "Hoạt động",
         className: "bg-green-100 text-green-800 hover:bg-green-100",
-    },
-    "Nháp": {
-        label: "Nháp",
-        className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
     },
     "Đã đóng": {
         label: "Đã đóng",

@@ -78,11 +78,9 @@ export const fetchAllTours = async (
 };
 
 /**
- * Fetch a single tour by ID (public endpoint)
+ * Fetch a single tour by UUID (public endpoint)
  */
-export const fetchTourById = async (id: number): Promise<Tour | undefined> => {
-    const uuid = getTourUuid(id) || String(id);
-
+export const fetchTourByUuid = async (uuid: string): Promise<Tour | undefined> => {
     try {
         const response = await apiClient.get<ApiResponse<TourEntity>>(`/tours/${uuid}`);
 
@@ -106,15 +104,8 @@ export const fetchTourById = async (id: number): Promise<Tour | undefined> => {
  * Fetch all tours including inactive (admin endpoint)
  * Note: Backend returns a direct array, not a paginated wrapper
  */
-export const fetchAllToursAdmin = async (
-    params?: PaginationParams
-): Promise<PaginatedResult<Tour>> => {
-    const response = await apiClient.get<ApiResponse<TourEntity[] | PageData<TourEntity>>>("/admins/tours", {
-        params: {
-            page: (params?.page ?? 0) + 1, // Backend uses 1-based pagination
-            size: params?.size ?? 20,
-        },
-    });
+export const fetchAllToursAdmin = async (): Promise<PaginatedResult<Tour>> => {
+    const response = await apiClient.get<ApiResponse<TourEntity[] | PageData<TourEntity>>>("/admins/tours");
 
     const result = response.data.result;
 
@@ -178,9 +169,13 @@ export const updateTourApi = async (
         throw new ApiError(9999, "Không thể cập nhật tour");
     }
 
-    const updatedTour = await fetchTourById(id);
-    if (!updatedTour) {
-        throw new ApiError(9999, "Không thể lấy thông tin tour sau khi cập nhật");
+    // Use the response directly instead of fetching again
+    // (fetchTourById uses public endpoint which fails for inactive tours)
+    const updatedTour = mapTourEntityToTour(response.data.result);
+
+    // Ensure the UUID mapping is stored
+    if (response.data.result.tourId) {
+        storeTourIdMapping(updatedTour.id, response.data.result.tourId);
     }
 
     return updatedTour;
