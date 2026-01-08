@@ -313,12 +313,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     const accessToken = tokenStorage.getAccessToken();
 
-    // Call logout API to invalidate token on server
-    if (accessToken) {
-      await authService.logout({ token: accessToken });
-    }
-
-    // Clear local state
+    // Clear local state FIRST to immediately invalidate isAuthenticated
+    // This prevents other components from making API calls during logout
     setUser(null);
     tokenStorage.clearTokens();
     localStorage.removeItem(AUTH_USER_KEY);
@@ -326,6 +322,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Clear ID mappings to prevent memory leak
     clearTourIdMap();
     clearBookingIdMap();
+
+    // Call logout API to invalidate token on server (best effort, don't block)
+    if (accessToken) {
+      try {
+        await authService.logout({ token: accessToken });
+      } catch {
+        // Ignore logout API errors - token is already cleared locally
+      }
+    }
   };
 
   /**

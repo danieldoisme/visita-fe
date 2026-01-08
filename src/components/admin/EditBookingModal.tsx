@@ -24,6 +24,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Users, Plus, Minus, Loader2 } from "lucide-react";
 
 interface EditBookingModalProps {
@@ -34,10 +35,10 @@ interface EditBookingModalProps {
 }
 
 const STATUS_OPTIONS = [
-    { value: "pending", label: "Đang chờ" },
-    { value: "confirmed", label: "Đã xác nhận" },
-    { value: "cancelled", label: "Đã hủy" },
-    { value: "completed", label: "Hoàn thành" },
+    { value: "pending", label: "Đang chờ", color: "bg-yellow-100 text-yellow-800" },
+    { value: "confirmed", label: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
+    { value: "cancelled", label: "Đã hủy", color: "bg-red-100 text-red-800" },
+    { value: "completed", label: "Hoàn thành", color: "bg-green-100 text-green-800" },
 ] as const;
 
 export function EditBookingModal({ isOpen, onClose, booking, onSave }: EditBookingModalProps) {
@@ -281,26 +282,37 @@ export function EditBookingModal({ isOpen, onClose, booking, onSave }: EditBooki
                     <FormField
                         control={form.control}
                         name="status"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel htmlFor="edit-status">Trạng thái</FormLabel>
-                                <Select name="status" onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger id="edit-status">
-                                            <SelectValue placeholder="Chọn trạng thái" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {STATUS_OPTIONS.map((option) => (
-                                            <SelectItem key={option.value} value={option.value}>
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        render={({ field }) => {
+                            const currentStatus = STATUS_OPTIONS.find(opt => opt.value === field.value);
+                            return (
+                                <FormItem>
+                                    <FormLabel htmlFor="edit-status">Trạng thái</FormLabel>
+                                    <Select name="status" onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger id="edit-status">
+                                                {currentStatus ? (
+                                                    <Badge className={`${currentStatus.color} hover:${currentStatus.color}`}>
+                                                        {currentStatus.label}
+                                                    </Badge>
+                                                ) : (
+                                                    <SelectValue placeholder="Chọn trạng thái" />
+                                                )}
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {STATUS_OPTIONS.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    <Badge className={`${option.color} hover:${option.color}`}>
+                                                        {option.label}
+                                                    </Badge>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            );
+                        }}
                     />
 
                     {/* Price Summary */}

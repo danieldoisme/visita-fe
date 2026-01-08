@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, DollarSign, ShoppingBag, Activity, LayoutDashboard, Download, TrendingUp, ChevronDown, UserPlus, CalendarCheck, Loader2 } from "lucide-react";
+import { Users, DollarSign, ShoppingBag, Activity, LayoutDashboard, Download, TrendingUp, ChevronDown, UserPlus, CalendarCheck, Loader2, FileSpreadsheet } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import {
   ResponsiveContainer,
   BarChart,
@@ -33,7 +34,6 @@ import {
   fetchUsersChart,
   fetchBookingsChart,
   fetchRecentTransactions,
-  downloadDashboardExport,
 } from "@/services/dashboardService";
 import {
   type ViewMode,
@@ -48,6 +48,7 @@ import {
   viewModeToGranularity,
   formatVND,
 } from "@/api/mappers/dashboardMapper";
+import { useExcelExport, type ExportColumn } from "@/hooks/useExcelExport";
 
 // ============================================================================
 // HELPERS
@@ -154,7 +155,9 @@ function ChartSkeleton() {
 // ============================================================================
 
 export default function DashboardPage() {
+  const { isAuthenticated } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const { exportMultiSheet, isExporting } = useExcelExport();
 
   // Data states
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -168,7 +171,6 @@ export default function DashboardPage() {
   const [isLoadingRevenue, setIsLoadingRevenue] = useState(true);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [isLoadingBookings, setIsLoadingBookings] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
 
   // Error state
   const [error, setError] = useState<string | null>(null);
@@ -191,6 +193,8 @@ export default function DashboardPage() {
 
   // Fetch stats and transactions on mount
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const loadInitialData = async () => {
       try {
         const [statsData, txData] = await Promise.all([
@@ -207,10 +211,12 @@ export default function DashboardPage() {
       }
     };
     loadInitialData();
-  }, []);
+  }, [isAuthenticated]);
 
   // Fetch revenue chart data
   const loadRevenueData = useCallback(async () => {
+    if (!isAuthenticated) return;
+
     setIsLoadingRevenue(true);
     try {
       const dateRange = revenueViewMode === 'daily'
@@ -226,7 +232,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoadingRevenue(false);
     }
-  }, [revenueViewMode, revenueDayRange]);
+  }, [isAuthenticated, revenueViewMode, revenueDayRange]);
 
   useEffect(() => {
     loadRevenueData();
@@ -234,6 +240,8 @@ export default function DashboardPage() {
 
   // Fetch users chart data
   const loadUsersData = useCallback(async () => {
+    if (!isAuthenticated) return;
+
     setIsLoadingUsers(true);
     try {
       const dateRange = usersViewMode === 'daily'
@@ -249,7 +257,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoadingUsers(false);
     }
-  }, [usersViewMode, usersDayRange]);
+  }, [isAuthenticated, usersViewMode, usersDayRange]);
 
   useEffect(() => {
     loadUsersData();
@@ -257,6 +265,8 @@ export default function DashboardPage() {
 
   // Fetch bookings chart data
   const loadBookingsData = useCallback(async () => {
+    if (!isAuthenticated) return;
+
     setIsLoadingBookings(true);
     try {
       const dateRange = toursViewMode === 'daily'
@@ -272,22 +282,95 @@ export default function DashboardPage() {
     } finally {
       setIsLoadingBookings(false);
     }
-  }, [toursViewMode, toursDayRange]);
+  }, [isAuthenticated, toursViewMode, toursDayRange]);
 
   useEffect(() => {
     loadBookingsData();
   }, [loadBookingsData]);
 
-  // Export handler
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      await downloadDashboardExport();
-    } catch (err) {
-      console.error("Failed to export data:", err);
-    } finally {
-      setIsExporting(false);
-    }
+  // Column definitions for exports
+  const revenueColumns: ExportColumn<RevenueDataPoint>[] = [
+    { header: "Thời gian", key: "label", width: 15 },
+    { header: "Doanh thu (VNĐ)", key: "revenue", formatter: (v) => formatVND(v as number), width: 20 },
+  ];
+
+  const usersColumns: ExportColumn<UsersDataPoint>[] = [
+    { header: "Thời gian", key: "label", width: 15 },
+    { header: "Người dùng mới", key: "users", width: 18 },
+  ];
+
+  const bookingsColumns: ExportColumn<BookingsDataPoint>[] = [
+    { header: "Thời gian", key: "label", width: 15 },
+    { header: "Số đặt tour", key: "bookings", width: 15 },
+  ];
+
+  const transactionsColumns: ExportColumn<RecentTransaction>[] = [
+    { header: "Khách hàng", key: "name", width: 25 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Số tiền", key: "amount", width: 20 },
+  ];
+
+  // Export handlers
+  const handleExportAll = () => {
+    const summaryData = stats ? [{
+      metric: "Tổng doanh thu",
+      value: formatVND(stats.totalRevenue),
+      growth: `${stats.revenueGrowth >= 0 ? "+" : ""}${stats.revenueGrowth.toFixed(1)}%`,
+    }, {
+      metric: "Người dùng mới",
+      value: stats.newUsers.toLocaleString("vi-VN"),
+      growth: `${stats.userGrowth >= 0 ? "+" : ""}${stats.userGrowth.toFixed(1)}%`,
+    }, {
+      metric: "Tổng đặt tour",
+      value: stats.totalBookings.toLocaleString("vi-VN"),
+      growth: `${stats.bookingGrowth >= 0 ? "+" : ""}${stats.bookingGrowth.toFixed(1)}%`,
+    }, {
+      metric: "Người dùng hoạt động",
+      value: stats.activeUsers.toLocaleString("vi-VN"),
+      growth: "-",
+    }] : [];
+
+    const summaryColumns: ExportColumn<{ metric: string; value: string; growth: string }>[] = [
+      { header: "Chỉ số", key: "metric", width: 25 },
+      { header: "Giá trị", key: "value", width: 20 },
+      { header: "Tăng trưởng", key: "growth", width: 15 },
+    ];
+
+    exportMultiSheet(`bao_cao_dashboard_${new Date().toISOString().split("T")[0]}`, {
+      title: "Báo Cáo Dashboard Tổng Hợp",
+      includeTimestamp: true,
+      sheets: [
+        { name: "Thống kê tổng quan", data: summaryData, columns: summaryColumns },
+        { name: "Doanh thu", data: revenueData, columns: revenueColumns },
+        { name: "Người dùng mới", data: usersData, columns: usersColumns },
+        { name: "Đặt tour", data: bookingsData, columns: bookingsColumns },
+        { name: "Giao dịch gần đây", data: transactions, columns: transactionsColumns },
+      ],
+    });
+  };
+
+  const handleExportRevenue = () => {
+    exportMultiSheet(`bao_cao_doanh_thu_${new Date().toISOString().split("T")[0]}`, {
+      title: "Báo Cáo Doanh Thu",
+      includeTimestamp: true,
+      sheets: [{ name: "Doanh thu", data: revenueData, columns: revenueColumns }],
+    });
+  };
+
+  const handleExportUsers = () => {
+    exportMultiSheet(`bao_cao_nguoi_dung_${new Date().toISOString().split("T")[0]}`, {
+      title: "Báo Cáo Người Dùng Mới",
+      includeTimestamp: true,
+      sheets: [{ name: "Người dùng mới", data: usersData, columns: usersColumns }],
+    });
+  };
+
+  const handleExportBookings = () => {
+    exportMultiSheet(`bao_cao_dat_tour_${new Date().toISOString().split("T")[0]}`, {
+      title: "Báo Cáo Đặt Tour",
+      includeTimestamp: true,
+      sheets: [{ name: "Đặt tour", data: bookingsData, columns: bookingsColumns }],
+    });
   };
 
   // Format growth percentage
@@ -335,9 +418,22 @@ export default function DashboardPage() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Báo Cáo & Thống Kê</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleExport}>
-              <TrendingUp className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onClick={handleExportAll}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
               Xuất báo cáo tổng hợp
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleExportRevenue}>
+              <TrendingUp className="mr-2 h-4 w-4" />
+              Xuất báo cáo doanh thu
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportUsers}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Xuất báo cáo người dùng
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportBookings}>
+              <CalendarCheck className="mr-2 h-4 w-4" />
+              Xuất báo cáo đặt tour
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
