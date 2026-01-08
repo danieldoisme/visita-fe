@@ -1,16 +1,16 @@
 import {
-    getAllPromotions,
-    createPromotion,
-    updatePromotion,
-    deletePromotion,
-    updatePromotionStatus,
-    validatePromoCode,
+  getAllPromotions,
+  createPromotion,
+  updatePromotion,
+  deletePromotion,
+  updatePromotionStatus,
+  validatePromoCode,
 } from "@/api/generated/sdk.gen";
 import {
-    type Promotion,
-    mapPromotionEntities,
-    mapPromotionEntity,
-    mapToPromotionRequest,
+  type Promotion,
+  mapPromotionEntities,
+  mapPromotionEntity,
+  mapToPromotionRequest,
 } from "@/api/mappers/promotionMapper";
 
 // ============================================================================
@@ -18,13 +18,13 @@ import {
 // ============================================================================
 
 export const fetchAllPromotions = async (): Promise<Promotion[]> => {
-    const response = await getAllPromotions();
+  const response = await getAllPromotions();
 
-    if (response.data?.result) {
-        return mapPromotionEntities(response.data.result);
-    }
+  if (response.data?.result) {
+    return mapPromotionEntities(response.data.result);
+  }
 
-    throw new Error("Failed to fetch promotions");
+  throw new Error("Failed to fetch promotions");
 };
 
 // ============================================================================
@@ -32,19 +32,19 @@ export const fetchAllPromotions = async (): Promise<Promotion[]> => {
 // ============================================================================
 
 export const createPromotionApi = async (
-    promotion: Omit<Promotion, "id" | "status" | "usedCount">
+  promotion: Omit<Promotion, "id" | "status">
 ): Promise<Promotion> => {
-    const request = mapToPromotionRequest(promotion);
+  const request = mapToPromotionRequest(promotion);
 
-    const response = await createPromotion({
-        body: request,
-    });
+  const response = await createPromotion({
+    body: request,
+  });
 
-    if (response.data?.result) {
-        return mapPromotionEntity(response.data.result);
-    }
+  if (response.data?.result) {
+    return mapPromotionEntity(response.data.result);
+  }
 
-    throw new Error("Failed to create promotion");
+  throw new Error("Failed to create promotion");
 };
 
 // ============================================================================
@@ -52,21 +52,21 @@ export const createPromotionApi = async (
 // ============================================================================
 
 export const updatePromotionApi = async (
-    id: string,
-    promotion: Omit<Promotion, "id" | "status" | "usedCount">
+  id: string,
+  promotion: Omit<Promotion, "id" | "status">
 ): Promise<Promotion> => {
-    const request = mapToPromotionRequest(promotion);
+  const request = mapToPromotionRequest(promotion);
 
-    const response = await updatePromotion({
-        path: { id },
-        body: request,
-    });
+  const response = await updatePromotion({
+    path: { id },
+    body: request,
+  });
 
-    if (response.data?.result) {
-        return mapPromotionEntity(response.data.result);
-    }
+  if (response.data?.result) {
+    return mapPromotionEntity(response.data.result);
+  }
 
-    throw new Error("Failed to update promotion");
+  throw new Error("Failed to update promotion");
 };
 
 // ============================================================================
@@ -74,13 +74,13 @@ export const updatePromotionApi = async (
 // ============================================================================
 
 export const deletePromotionApi = async (id: string): Promise<void> => {
-    const response = await deletePromotion({
-        path: { id },
-    });
+  const response = await deletePromotion({
+    path: { id },
+  });
 
-    if (response.error) {
-        throw new Error("Failed to delete promotion");
-    }
+  if (response.error) {
+    throw new Error("Failed to delete promotion");
+  }
 };
 
 // ============================================================================
@@ -88,17 +88,17 @@ export const deletePromotionApi = async (id: string): Promise<void> => {
 // ============================================================================
 
 export const updatePromotionStatusApi = async (
-    id: string,
-    isActive: boolean
+  id: string,
+  isActive: boolean
 ): Promise<void> => {
-    const response = await updatePromotionStatus({
-        path: { id },
-        query: { isActive },
-    });
+  const response = await updatePromotionStatus({
+    path: { id },
+    query: { isActive },
+  });
 
-    if (response.error) {
-        throw new Error("Failed to update promotion status");
-    }
+  if (response.error) {
+    throw new Error("Failed to update promotion status");
+  }
 };
 
 // ============================================================================
@@ -106,30 +106,30 @@ export const updatePromotionStatusApi = async (
 // ============================================================================
 
 export interface PromoValidationResult {
-    valid: boolean;
-    discountType?: "percent" | "amount";
-    discountValue?: number;
-    description?: string;
-    message?: string;
+  valid: boolean;
+  discountType?: "percent" | "amount";
+  discountValue?: number;
+  description?: string;
+  message?: string;
 }
 
 export const validatePromoCodeApi = async (
-    code: string
+  code: string
 ): Promise<PromoValidationResult> => {
-    const response = await validatePromoCode({
-        body: { code },
-    });
+  const response = await validatePromoCode({
+    body: { code },
+  });
 
-    if (response.data?.result) {
-        const result = response.data.result;
-        return {
-            valid: result.valid ?? false,
-            discountType: result.discountType?.toLowerCase() as "percent" | "amount",
-            discountValue: result.discountValue,
-            description: result.description,
-            message: result.message,
-        };
-    }
+  if (response.data?.result) {
+    const result = response.data.result;
+    return {
+      valid: result.valid ?? false,
+      discountType: result.discountType?.toLowerCase() as "percent" | "amount",
+      discountValue: result.discountValue,
+      description: result.description,
+      message: result.message,
+    };
+  }
 
-    return { valid: false, message: "Failed to validate promo code" };
+  return { valid: false, message: "Failed to validate promo code" };
 };
