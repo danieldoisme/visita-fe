@@ -433,10 +433,10 @@ export type ApiResponsePageTourEntity = {
 export type PageObject = {
     totalElements?: number;
     totalPages?: number;
-    pageable?: PageableObject;
     first?: boolean;
     last?: boolean;
     numberOfElements?: number;
+    pageable?: PageableObject;
     size?: number;
     content?: Array<TourEntity>;
     number?: number;
@@ -445,17 +445,17 @@ export type PageObject = {
 };
 
 export type PageableObject = {
+    unpaged?: boolean;
     paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
-    unpaged?: boolean;
     offset?: number;
     sort?: SortObject;
 };
 
 export type SortObject = {
-    sorted?: boolean;
     unsorted?: boolean;
+    sorted?: boolean;
     empty?: boolean;
 };
 
@@ -583,6 +583,60 @@ export type UpdateUserResponses = {
 };
 
 export type UpdateUserResponse = UpdateUserResponses[keyof UpdateUserResponses];
+
+export type DeleteUserData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admins/users/{id}';
+};
+
+export type DeleteUserResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseString;
+};
+
+export type DeleteUserResponse = DeleteUserResponses[keyof DeleteUserResponses];
+
+export type GetUserByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admins/users/{id}';
+};
+
+export type GetUserByIdResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseOptionalUserResponse;
+};
+
+export type GetUserByIdResponse = GetUserByIdResponses[keyof GetUserByIdResponses];
+
+export type UpdateUser1Data = {
+    body: UserUpdateRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/admins/users/{id}';
+};
+
+export type UpdateUser1Responses = {
+    /**
+     * OK
+     */
+    200: ApiResponseUserResponse;
+};
+
+export type UpdateUser1Response = UpdateUser1Responses[keyof UpdateUser1Responses];
 
 export type DeleteImageData = {
     body?: never;
@@ -1413,24 +1467,6 @@ export type ListUsersResponses = {
 };
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
-
-export type GetUserByIdData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/admins/users/{id}';
-};
-
-export type GetUserByIdResponses = {
-    /**
-     * OK
-     */
-    200: ApiResponseOptionalUserResponse;
-};
-
-export type GetUserByIdResponse = GetUserByIdResponses[keyof GetUserByIdResponses];
 
 export type GetAllReviewsData = {
     body?: never;

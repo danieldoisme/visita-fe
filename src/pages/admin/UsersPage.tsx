@@ -5,6 +5,7 @@ import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { UserDetailsModal } from "@/components/UserDetailsModal";
+import { UserEditModal } from "@/components/UserEditModal";
 import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, StatusBadge, userStatusConfig, type BulkAction } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,13 +18,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Lock, Unlock, Eye, Users } from "lucide-react";
+import { Search, Lock, Unlock, Eye, Users, Pencil, Trash2 } from "lucide-react";
 
 import {
   fetchUsers,
   updateUserStatusApi,
+  updateUserById,
+  deleteUserApi,
   type User,
   type PaginatedUsers,
+  type UserUpdateData,
 } from "@/services/adminUserService";
 
 // Page size for pagination
@@ -52,6 +56,8 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -85,10 +91,22 @@ export default function UsersPage() {
     isOpen: boolean;
     type: "lock" | "unlock" | "bulk_lock" | "bulk_unlock";
     userId: string | null;
+    action?: "delete";
+    id?: string;
   }>({
     isOpen: false,
     type: "lock",
     userId: null,
+  });
+
+  const [dialogContent, setDialogContent] = useState<{
+    title: string;
+    message: string;
+    variant: "default" | "danger" | "warning";
+  }>({
+    title: "",
+    message: "",
+    variant: "default",
   });
 
   // Fetch users from API
@@ -218,6 +236,13 @@ export default function UsersPage() {
     const key = user.isActive ? LOCK_USER_KEY : UNLOCK_USER_KEY;
 
     if (shouldShowConfirmation(key)) {
+      setDialogContent({
+        title: user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản",
+        message: user.isActive
+          ? "Bạn có chắc chắn muốn khóa tài khoản này? Người dùng sẽ không thể đăng nhập."
+          : "Bạn có chắc chắn muốn mở khóa tài khoản này?",
+        variant: user.isActive ? "warning" : "default",
+      });
       setConfirmDialog({ isOpen: true, type: dialogType, userId: user.id });
     } else {
       executeToggleLock(user.id);
@@ -229,6 +254,11 @@ export default function UsersPage() {
   // Handle bulk lock click
   const handleBulkLockClick = () => {
     if (shouldShowConfirmation(BULK_LOCK_USER_KEY)) {
+      setDialogContent({
+        title: "Khóa các tài khoản đã chọn",
+        message: `Bạn có chắc chắn muốn khóa ${selectedCount} tài khoản đã chọn?`,
+        variant: "warning",
+      });
       setConfirmDialog({ isOpen: true, type: "bulk_lock", userId: null });
     } else {
       executeBulkLock();
@@ -238,6 +268,11 @@ export default function UsersPage() {
   // Handle bulk unlock click
   const handleBulkUnlockClick = () => {
     if (shouldShowConfirmation(BULK_UNLOCK_USER_KEY)) {
+      setDialogContent({
+        title: "Mở khóa các tài khoản đã chọn",
+        message: `Bạn có chắc chắn muốn mở khóa ${selectedCount} tài khoản đã chọn?`,
+        variant: "default",
+      });
       setConfirmDialog({ isOpen: true, type: "bulk_unlock", userId: null });
     } else {
       executeBulkUnlock();
@@ -247,20 +282,36 @@ export default function UsersPage() {
 
 
   // Dialog confirm handler
-  const handleDialogConfirm = () => {
+  const handleDialogConfirm = async () => {
     switch (confirmDialog.type) {
       case "lock":
       case "unlock":
-        if (confirmDialog.userId) executeToggleLock(confirmDialog.userId);
+        if (confirmDialog.userId) await executeToggleLock(confirmDialog.userId);
         break;
       case "bulk_lock":
-        executeBulkLock();
+        await executeBulkLock();
         break;
       case "bulk_unlock":
-        executeBulkUnlock();
+        await executeBulkUnlock();
         break;
     }
-    setConfirmDialog({ isOpen: false, type: "lock", userId: null });
+
+    if (confirmDialog.action === "delete") {
+      try {
+        await deleteUserApi(confirmDialog.id as string);
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === confirmDialog.id ? { ...u, isActive: false } : u
+          )
+        );
+        toast.success("Vô hiệu hóa tài khoản thành công!");
+      } catch (error) {
+        toast.error("Không thể vô hiệu hóa tài khoản");
+        console.error("Failed to delete user", error);
+      }
+    }
+    setActionLoading(null);
+    setConfirmDialog({ ...confirmDialog, isOpen: false, type: "lock", userId: null });
   };
 
   // Dialog cancel handler
@@ -279,39 +330,7 @@ export default function UsersPage() {
     setDontShowAgain(keyMap[confirmDialog.type]);
   };
 
-  // Get dialog content based on type
-  const getDialogContent = () => {
-    switch (confirmDialog.type) {
-      case "lock":
-        return {
-          title: "Khóa tài khoản",
-          message: "Bạn có chắc chắn muốn khóa tài khoản này? Người dùng sẽ không thể đăng nhập.",
-          variant: "warning" as const,
-        };
-      case "unlock":
-        return {
-          title: "Mở khóa tài khoản",
-          message: "Bạn có chắc chắn muốn mở khóa tài khoản này?",
-          variant: "default" as const,
-        };
 
-      case "bulk_lock":
-        return {
-          title: "Khóa các tài khoản đã chọn",
-          message: `Bạn có chắc chắn muốn khóa ${selectedCount} tài khoản đã chọn?`,
-          variant: "warning" as const,
-        };
-      case "bulk_unlock":
-        return {
-          title: "Mở khóa các tài khoản đã chọn",
-          message: `Bạn có chắc chắn muốn mở khóa ${selectedCount} tài khoản đã chọn?`,
-          variant: "default" as const,
-        };
-
-    }
-  };
-
-  const dialogContent = getDialogContent();
 
   // View details handlers
   const handleViewDetails = (user: User) => {
@@ -322,6 +341,46 @@ export default function UsersPage() {
   const handleCloseDetails = () => {
     setIsDetailsModalOpen(false);
     setSelectedUser(null);
+  };
+
+  // Edit user handlers
+  const handleEditUser = (user: User) => {
+    setUserToEdit(user);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setUserToEdit(null);
+  };
+
+  const handleSaveUser = async (id: string, data: UserUpdateData) => {
+    try {
+      const updatedUser = await updateUserById(id, data);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === id ? updatedUser : u))
+      );
+      toast.success("Cập nhật thông tin người dùng thành công!");
+    } catch {
+      toast.error("Không thể cập nhật thông tin người dùng");
+      throw new Error("Failed to update user");
+    }
+  };
+
+  // Delete user handlers
+  const handleDeleteUser = (user: User) => {
+    setDialogContent({
+      title: "Vô hiệu hóa tài khoản",
+      message: `Bạn có chắc chắn muốn vô hiệu hóa tài khoản của ${user.fullName}? Người dùng này, nếu xóa, sẽ không thể đăng nhập cho đến khi được kích hoạt lại.`,
+      variant: "danger",
+    });
+    setConfirmDialog({
+      isOpen: true,
+      action: "delete",
+      id: user.id,
+      type: "lock",
+      userId: null,
+    });
   };
 
   // Clear search filter
@@ -498,6 +557,15 @@ export default function UsersPage() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => handleEditUser(user)}
+                            disabled={user.role === "admin"}
+                            title="Chỉnh sửa"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleToggleLockClick(user)}
                             disabled={user.role === "admin" || actionLoading === user.id}
                             title={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}
@@ -508,7 +576,16 @@ export default function UsersPage() {
                               <Unlock className="h-4 w-4" />
                             )}
                           </Button>
-
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteUser(user)}
+                            disabled={user.role === "admin" || !user.isActive}
+                            title="Xóa (Vô hiệu hóa)"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -536,6 +613,14 @@ export default function UsersPage() {
         } : null}
         isOpen={isDetailsModalOpen}
         onClose={handleCloseDetails}
+      />
+
+      {/* User Edit Modal */}
+      <UserEditModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        user={userToEdit}
+        onSave={handleSaveUser}
       />
 
       {/* Confirmation Dialog */}

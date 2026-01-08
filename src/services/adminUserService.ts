@@ -1,7 +1,10 @@
+
 import {
     listUsers,
     getUserById,
     updateUserStatus,
+    updateUser1,
+    deleteUser,
 } from "@/api/generated/sdk.gen";
 import type { UserResponse, PageObject } from "@/api/generated/types.gen";
 
@@ -21,6 +24,14 @@ export interface User {
     isActive: boolean;
     createdAt?: string;
     updatedAt?: string;
+}
+
+export interface UserUpdateData {
+    fullName?: string;
+    phone?: string;
+    gender?: "male" | "female" | "other";
+    dob?: string;
+    address?: string;
 }
 
 export interface PaginatedUsers {
@@ -128,3 +139,41 @@ export const updateUserStatusApi = async (
     }
 };
 
+// ============================================================================
+// ADMIN: UPDATE USER BY ID
+// ============================================================================
+
+export const updateUserById = async (
+    id: string,
+    data: UserUpdateData
+): Promise<User> => {
+    const response = await updateUser1({
+        path: { id },
+        body: {
+            fullName: data.fullName,
+            phone: data.phone,
+            gender: data.gender?.toUpperCase() as "MALE" | "FEMALE" | "OTHER" | undefined,
+            dob: data.dob,
+            address: data.address,
+        },
+    });
+
+    if (response.data?.result) {
+        return mapUserResponse(response.data.result);
+    }
+
+    throw new Error("Failed to update user");
+};
+// ============================================================================
+// ADMIN: DELETE USER (SOFT DELETE)
+// ============================================================================
+
+export const deleteUserApi = async (id: string): Promise<void> => {
+    const response = await deleteUser({
+        path: { id },
+    });
+
+    if (response.error) {
+        throw new Error("Failed to delete user");
+    }
+};
