@@ -29,7 +29,7 @@ import {
   Loader2,
   Shield,
 } from "lucide-react";
-import { PromoCodeInput } from "@/components/PromoCodeInput";
+import { PromoCodeInput } from "./PromoCodeInput";
 import { AppliedDiscount } from "@/context/PromotionsContext";
 
 interface BookingModalProps {

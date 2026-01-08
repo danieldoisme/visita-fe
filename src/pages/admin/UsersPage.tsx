@@ -3,10 +3,19 @@ import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
-import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { UserDetailsModal } from "@/components/UserDetailsModal";
-import { UserEditModal } from "@/components/UserEditModal";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, StatusBadge, userStatusConfig, type BulkAction } from "@/components/admin";
+import { ConfirmationDialog } from "@/components/common/ConfirmationDialog";
+import { UserDetailsModal } from "@/components/user/UserDetailsModal";
+import { UserEditModal } from "@/components/user/UserEditModal";
+import {
+  TableSkeleton,
+  EmptyState,
+  BulkActionBar,
+  SortableHeader,
+  PaginationControls,
+  StatusBadge,
+  userStatusConfig,
+  type BulkAction,
+} from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -28,7 +37,7 @@ import {
   type User,
   type PaginatedUsers,
   type UserUpdateData,
-} from "@/services/adminUserService";
+} from "@/api/services/adminUserService";
 
 // Page size for pagination
 const PAGE_SIZE = 10;
@@ -43,11 +52,17 @@ const BULK_UNLOCK_USER_KEY = "bulk_unlock_user";
 const getRoleDisplay = (role: "admin" | "staff" | "user") => {
   switch (role) {
     case "admin":
-      return { label: "Quản trị viên", className: "bg-primary text-primary-foreground" };
+      return {
+        label: "Quản trị viên",
+        className: "bg-primary text-primary-foreground",
+      };
     case "staff":
       return { label: "Nhân viên", className: "bg-blue-500 text-white" };
     default:
-      return { label: "Người dùng", className: "bg-secondary text-secondary-foreground" };
+      return {
+        label: "Người dùng",
+        className: "bg-secondary text-secondary-foreground",
+      };
   }
 };
 
@@ -86,7 +101,8 @@ export default function UsersPage() {
   } = useTableSelection<string>();
 
   // Confirmation dialog state
-  const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
+  const { shouldShowConfirmation, setDontShowAgain } =
+    useConfirmationPreferences();
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     type: "lock" | "unlock" | "bulk_lock" | "bulk_unlock";
@@ -147,7 +163,9 @@ export default function UsersPage() {
 
   // Count selected users by status for disabling bulk actions
   const selectedUsersWithStatus = useMemo(() => {
-    const selectedUsers = users.filter((u) => selectedArray.includes(u.id) && u.role !== "admin");
+    const selectedUsers = users.filter(
+      (u) => selectedArray.includes(u.id) && u.role !== "admin"
+    );
     return {
       active: selectedUsers.filter((u) => u.isActive).length,
       locked: selectedUsers.filter((u) => !u.isActive).length,
@@ -166,9 +184,7 @@ export default function UsersPage() {
     try {
       await updateUserStatusApi(userId, newStatus);
       setUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId ? { ...u, isActive: newStatus } : u
-        )
+        prev.map((u) => (u.id === userId ? { ...u, isActive: newStatus } : u))
       );
       toast.success(newStatus ? "Đã mở khóa tài khoản!" : "Đã khóa tài khoản!");
     } catch {
@@ -177,8 +193,6 @@ export default function UsersPage() {
       setActionLoading(null);
     }
   };
-
-
 
   // Execute bulk lock
   const executeBulkLock = async () => {
@@ -189,7 +203,9 @@ export default function UsersPage() {
     });
 
     try {
-      await Promise.all(usersToLock.map((id) => updateUserStatusApi(id, false)));
+      await Promise.all(
+        usersToLock.map((id) => updateUserStatusApi(id, false))
+      );
       setUsers((prev) =>
         prev.map((user) =>
           usersToLock.includes(user.id) ? { ...user, isActive: false } : user
@@ -213,7 +229,9 @@ export default function UsersPage() {
     });
 
     try {
-      await Promise.all(usersToUnlock.map((id) => updateUserStatusApi(id, true)));
+      await Promise.all(
+        usersToUnlock.map((id) => updateUserStatusApi(id, true))
+      );
       setUsers((prev) =>
         prev.map((user) =>
           usersToUnlock.includes(user.id) ? { ...user, isActive: true } : user
@@ -227,8 +245,6 @@ export default function UsersPage() {
       setActionLoading(null);
     }
   };
-
-
 
   // Handle lock/unlock click
   const handleToggleLockClick = (user: User) => {
@@ -248,8 +264,6 @@ export default function UsersPage() {
       executeToggleLock(user.id);
     }
   };
-
-
 
   // Handle bulk lock click
   const handleBulkLockClick = () => {
@@ -278,8 +292,6 @@ export default function UsersPage() {
       executeBulkUnlock();
     }
   };
-
-
 
   // Dialog confirm handler
   const handleDialogConfirm = async () => {
@@ -311,7 +323,12 @@ export default function UsersPage() {
       }
     }
     setActionLoading(null);
-    setConfirmDialog({ ...confirmDialog, isOpen: false, type: "lock", userId: null });
+    setConfirmDialog({
+      ...confirmDialog,
+      isOpen: false,
+      type: "lock",
+      userId: null,
+    });
   };
 
   // Dialog cancel handler
@@ -329,8 +346,6 @@ export default function UsersPage() {
     };
     setDontShowAgain(keyMap[confirmDialog.type]);
   };
-
-
 
   // View details handlers
   const handleViewDetails = (user: User) => {
@@ -357,9 +372,7 @@ export default function UsersPage() {
   const handleSaveUser = async (id: string, data: UserUpdateData) => {
     try {
       const updatedUser = await updateUserById(id, data);
-      setUsers((prev) =>
-        prev.map((u) => (u.id === id ? updatedUser : u))
-      );
+      setUsers((prev) => prev.map((u) => (u.id === id ? updatedUser : u)));
       toast.success("Cập nhật thông tin người dùng thành công!");
     } catch {
       toast.error("Không thể cập nhật thông tin người dùng");
@@ -400,15 +413,18 @@ export default function UsersPage() {
       label: "Khóa",
       icon: <Lock className="h-4 w-4 mr-1" />,
       onClick: handleBulkLockClick,
-      disabled: selectedUsersWithStatus.locked === selectedUsersWithStatus.total || actionLoading === "bulk",
+      disabled:
+        selectedUsersWithStatus.locked === selectedUsersWithStatus.total ||
+        actionLoading === "bulk",
     },
     {
       label: "Mở khóa",
       icon: <Unlock className="h-4 w-4 mr-1" />,
       onClick: handleBulkUnlockClick,
-      disabled: selectedUsersWithStatus.active === selectedUsersWithStatus.total || actionLoading === "bulk",
+      disabled:
+        selectedUsersWithStatus.active === selectedUsersWithStatus.total ||
+        actionLoading === "bulk",
     },
-
   ];
 
   // Show loading skeleton
@@ -473,7 +489,11 @@ export default function UsersPage() {
       <div className="rounded-md border bg-card">
         {filteredUsers.length === 0 ? (
           <EmptyState
-            message={searchTerm ? "Không tìm thấy người dùng nào" : "Chưa có người dùng nào"}
+            message={
+              searchTerm
+                ? "Không tìm thấy người dùng nào"
+                : "Chưa có người dùng nào"
+            }
             showClearFilters={!!searchTerm}
             onClearFilters={handleClearFilters}
           />
@@ -489,7 +509,8 @@ export default function UsersPage() {
                       type="checkbox"
                       checked={isAllSelected(selectableUserIds)}
                       ref={(el) => {
-                        if (el) el.indeterminate = isSomeSelected(selectableUserIds);
+                        if (el)
+                          el.indeterminate = isSomeSelected(selectableUserIds);
                       }}
                       onChange={() => toggleAll(selectableUserIds)}
                       className="h-4 w-4 rounded border-gray-300"
@@ -498,10 +519,18 @@ export default function UsersPage() {
                   </TableHead>
                   <TableHead>Người dùng</TableHead>
                   <TableHead>Email</TableHead>
-                  <SortableHeader sortKey="role" currentSort={sort} onSort={toggleSort}>
+                  <SortableHeader
+                    sortKey="role"
+                    currentSort={sort}
+                    onSort={toggleSort}
+                  >
                     Vai trò
                   </SortableHeader>
-                  <SortableHeader sortKey="isActive" currentSort={sort} onSort={toggleSort}>
+                  <SortableHeader
+                    sortKey="isActive"
+                    currentSort={sort}
+                    onSort={toggleSort}
+                  >
                     Trạng thái
                   </SortableHeader>
                   <TableHead className="text-right">Hành động</TableHead>
@@ -511,7 +540,10 @@ export default function UsersPage() {
                 {filteredUsers.map((user) => {
                   const roleDisplay = getRoleDisplay(user.role);
                   return (
-                    <TableRow key={user.id} className={isSelected(user.id) ? "bg-muted/50" : ""}>
+                    <TableRow
+                      key={user.id}
+                      className={isSelected(user.id) ? "bg-muted/50" : ""}
+                    >
                       <TableCell>
                         <input
                           id={`user-checkbox-${user.id}`}
@@ -532,9 +564,13 @@ export default function UsersPage() {
                           <span className="font-medium">{user.fullName}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {user.email}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">
-                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${roleDisplay.className}`}>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${roleDisplay.className}`}
+                        >
                           {roleDisplay.label}
                         </span>
                       </TableCell>
@@ -567,8 +603,14 @@ export default function UsersPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleToggleLockClick(user)}
-                            disabled={user.role === "admin" || actionLoading === user.id}
-                            title={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                            disabled={
+                              user.role === "admin" || actionLoading === user.id
+                            }
+                            title={
+                              user.isActive
+                                ? "Khóa tài khoản"
+                                : "Mở khóa tài khoản"
+                            }
                           >
                             {user.isActive ? (
                               <Lock className="h-4 w-4" />
@@ -593,24 +635,32 @@ export default function UsersPage() {
                 })}
               </TableBody>
             </Table>
-            <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </>
         )}
       </div>
 
       {/* User Details Modal */}
       <UserDetailsModal
-        user={selectedUser ? {
-          id: selectedUser.id,
-          email: selectedUser.email,
-          name: selectedUser.fullName,
-          phone: selectedUser.phone,
-          dob: selectedUser.dob,
-          gender: selectedUser.gender,
-          address: selectedUser.address,
-          role: selectedUser.role,
-          status: selectedUser.isActive ? "active" : "locked",
-        } : null}
+        user={
+          selectedUser
+            ? {
+                id: selectedUser.id,
+                email: selectedUser.email,
+                name: selectedUser.fullName,
+                phone: selectedUser.phone,
+                dob: selectedUser.dob,
+                gender: selectedUser.gender,
+                address: selectedUser.address,
+                role: selectedUser.role,
+                status: selectedUser.isActive ? "active" : "locked",
+              }
+            : null
+        }
         isOpen={isDetailsModalOpen}
         onClose={handleCloseDetails}
       />
@@ -636,6 +686,6 @@ export default function UsersPage() {
         showDontShowAgain
         onDontShowAgainChange={handleDontShowAgain}
       />
-    </div >
+    </div>
   );
 }

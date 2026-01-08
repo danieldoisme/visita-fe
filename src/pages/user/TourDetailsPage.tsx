@@ -2,14 +2,23 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTour, Tour } from "@/context/TourContext";
 import { useAuth } from "@/context/AuthContext";
-import { BookingModal } from "@/components/BookingModal";
-import { AuthRequiredModal } from "@/components/AuthRequiredModal";
-import { TourImageGallery } from "@/components/TourImageGallery";
-import { TourCard } from "@/components/TourCard";
+import { BookingModal } from "@/components/booking/BookingModal";
+import { AuthRequiredModal } from "@/components/common/AuthRequiredModal";
+import { TourImageGallery } from "@/components/tour/TourImageGallery";
+import { TourCard } from "@/components/tour/TourCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, Star, ArrowLeft, Calendar, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  Star,
+  ArrowLeft,
+  Calendar,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { useReview, Review } from "@/context/ReviewContext";
@@ -49,9 +58,14 @@ export default function TourDetailsPage() {
   }, [tour, loadReviewsByTour]);
 
   // Calculate average rating from valid reviews
-  const averageRating = reviews.length > 0
-    ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1))
-    : tour?.rating || 0;
+  const averageRating =
+    reviews.length > 0
+      ? Number(
+          (
+            reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
+          ).toFixed(1)
+        )
+      : tour?.rating || 0;
 
   const reviewCount = reviews.length > 0 ? reviews.length : tour?.reviews || 0;
 
@@ -88,7 +102,11 @@ export default function TourDetailsPage() {
     const fetchRecommendations = async () => {
       if (tour) {
         // Pass userId for personalized recommendations (if logged in)
-        const recommendations = await getRecommendedTours(tour.id, tour.category, user?.userId);
+        const recommendations = await getRecommendedTours(
+          tour.id,
+          tour.category,
+          user?.userId
+        );
         setRecommendedTours(recommendations);
         setCurrentPage(0); // Reset pagination when tour changes
       }
@@ -225,12 +243,12 @@ export default function TourDetailsPage() {
                 className="text-gray-600 leading-relaxed mb-6"
                 dangerouslySetInnerHTML={{
                   __html: tour.description
-                    .replace(/&nbsp;/g, ' ')
-                    .replace(/&lt;/g, '<')
-                    .replace(/&gt;/g, '>')
-                    .replace(/&amp;/g, '&')
+                    .replace(/&nbsp;/g, " ")
+                    .replace(/&lt;/g, "<")
+                    .replace(/&gt;/g, ">")
+                    .replace(/&amp;/g, "&")
                     .replace(/&quot;/g, '"')
-                    .replace(/&#39;/g, "'")
+                    .replace(/&#39;/g, "'"),
                 }}
               />
             ) : (
@@ -247,12 +265,12 @@ export default function TourDetailsPage() {
                   className="text-gray-600 leading-relaxed mb-6"
                   dangerouslySetInnerHTML={{
                     __html: tour.itinerary
-                      .replace(/&nbsp;/g, ' ')
-                      .replace(/&lt;/g, '<')
-                      .replace(/&gt;/g, '>')
-                      .replace(/&amp;/g, '&')
+                      .replace(/&nbsp;/g, " ")
+                      .replace(/&lt;/g, "<")
+                      .replace(/&gt;/g, ">")
+                      .replace(/&amp;/g, "&")
                       .replace(/&quot;/g, '"')
-                      .replace(/&#39;/g, "'")
+                      .replace(/&#39;/g, "'"),
                   }}
                 />
               </>
@@ -271,7 +289,10 @@ export default function TourDetailsPage() {
           </div>
 
           {/* Customer Reviews Section */}
-          <div id="reviews" className="bg-slate-50 rounded-xl p-6 mt-8 scroll-mt-24">
+          <div
+            id="reviews"
+            className="bg-slate-50 rounded-xl p-6 mt-8 scroll-mt-24"
+          >
             <h3 className="text-xl font-semibold mb-4">
               Đánh giá từ khách hàng ({reviewCount} đánh giá)
             </h3>
@@ -279,17 +300,20 @@ export default function TourDetailsPage() {
             {/* Rating Summary Banner */}
             <div className="bg-white rounded-lg p-4 mb-6 flex items-center gap-4 shadow-sm">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">{averageRating}</div>
+                <div className="text-3xl font-bold text-primary">
+                  {averageRating}
+                </div>
                 <div className="text-sm text-gray-500">/5</div>
               </div>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`h-6 w-6 ${star <= Math.round(averageRating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "fill-gray-200 text-gray-200"
-                      }`}
+                    className={`h-6 w-6 ${
+                      star <= Math.round(averageRating)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "fill-gray-200 text-gray-200"
+                    }`}
                   />
                 ))}
               </div>
@@ -302,7 +326,10 @@ export default function TourDetailsPage() {
             <div className="space-y-4">
               {reviews.length > 0 ? (
                 reviews.map((review) => (
-                  <div key={review.id} className="bg-white rounded-lg p-4 shadow-sm">
+                  <div
+                    key={review.id}
+                    className="bg-white rounded-lg p-4 shadow-sm"
+                  >
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
                         {review.userName.charAt(0).toUpperCase()}
@@ -311,17 +338,20 @@ export default function TourDetailsPage() {
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium">{review.userName}</span>
                           <span className="text-sm text-gray-500">
-                            {format(new Date(review.createdAt), "dd/MM/yyyy", { locale: vi })}
+                            {format(new Date(review.createdAt), "dd/MM/yyyy", {
+                              locale: vi,
+                            })}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 mb-2">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <Star
                               key={star}
-                              className={`h-4 w-4 ${star <= review.rating
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "fill-gray-200 text-gray-200"
-                                }`}
+                              className={`h-4 w-4 ${
+                                star <= review.rating
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "fill-gray-200 text-gray-200"
+                              }`}
                             />
                           ))}
                         </div>
@@ -334,7 +364,8 @@ export default function TourDetailsPage() {
                 ))
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  Chưa có đánh giá nào cho tour này. Hãy là người đầu tiên trải nghiệm và để lại đánh giá!
+                  Chưa có đánh giá nào cho tour này. Hãy là người đầu tiên trải
+                  nghiệm và để lại đánh giá!
                 </div>
               )}
             </div>
@@ -372,8 +403,14 @@ export default function TourDetailsPage() {
                 </div>
               </div>
 
-              <Button className="w-full h-12 text-lg" onClick={handleBookNow}>Đặt Tour Ngay</Button>
-              <FavoriteButton tourId={tour.id} variant="inline" className="w-full mt-3" />
+              <Button className="w-full h-12 text-lg" onClick={handleBookNow}>
+                Đặt Tour Ngay
+              </Button>
+              <FavoriteButton
+                tourId={tour.id}
+                variant="inline"
+                className="w-full mt-3"
+              />
               <p className="text-xs text-center text-gray-500 mt-4">
                 Không tính phí đặt chỗ. Xác nhận ngay lập tức.
               </p>
@@ -387,7 +424,9 @@ export default function TourDetailsPage() {
                   {totalPages > 1 && (
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(0, p - 1))
+                        }
                         disabled={currentPage === 0}
                         className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         aria-label="Trang trước"
@@ -398,7 +437,9 @@ export default function TourDetailsPage() {
                         {currentPage + 1}/{totalPages}
                       </span>
                       <button
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                        onClick={() =>
+                          setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
+                        }
                         disabled={currentPage >= totalPages - 1}
                         className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         aria-label="Trang sau"

@@ -25,8 +25,7 @@ import {
   Facebook,
   AlertCircle,
 } from "lucide-react";
-import GoogleAuthButton from "@/components/GoogleAuthButton";
-import "@/styles/login.css";
+import GoogleAuthButton from "@/components/common/GoogleAuthButton";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -73,8 +72,6 @@ export default function LoginPage() {
     setIsLoading(false);
   };
 
-
-
   return (
     <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
       {/* Left Side: Login Form */}
@@ -112,7 +109,10 @@ export default function LoginPage() {
             )}
 
             <Form {...form}>
-              <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
+              <form
+                className="grid gap-4"
+                onSubmit={form.handleSubmit(onSubmit)}
+              >
                 <FormField
                   control={form.control}
                   name="email"
@@ -146,7 +146,11 @@ export default function LoginPage() {
                         <FormLabel>Mật khẩu</FormLabel>
                         <button
                           type="button"
-                          onClick={() => toast.info("Tính năng quên mật khẩu chưa được triển khai")}
+                          onClick={() =>
+                            toast.info(
+                              "Tính năng quên mật khẩu chưa được triển khai"
+                            )
+                          }
                           className="text-sm font-medium text-primary hover:underline"
                         >
                           Quên mật khẩu?
@@ -203,7 +207,13 @@ export default function LoginPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <GoogleAuthButton disabled={isLoading} />
-              <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng nhập với Facebook chưa được triển khai")}>
+              <Button
+                variant="outline"
+                className="social-btn"
+                onClick={() =>
+                  toast.info("Đăng nhập với Facebook chưa được triển khai")
+                }
+              >
                 <Facebook className="mr-2 h-4 w-4 text-blue-600" />
                 Facebook
               </Button>
@@ -239,7 +249,8 @@ export default function LoginPage() {
           <div className="glass-quote rounded-2xl p-8 max-w-lg">
             <blockquote className="space-y-2">
               <p className="text-lg font-medium leading-relaxed">
-                &ldquo;Việt Nam - Vẻ đẹp bất tận, nơi mỗi bước chân là một hành trình khám phá và mỗi điểm đến là một câu chuyện để kể.&rdquo;
+                &ldquo;Việt Nam - Vẻ đẹp bất tận, nơi mỗi bước chân là một hành
+                trình khám phá và mỗi điểm đến là một câu chuyện để kể.&rdquo;
               </p>
               <footer className="text-sm font-semibold pt-4 border-t border-white/20 mt-4">
                 Visita TEAM

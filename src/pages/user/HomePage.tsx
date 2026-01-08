@@ -30,8 +30,8 @@ import {
   Plus,
 } from "lucide-react";
 import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
-import { TourCard } from "@/components/TourCard";
-import { TourCardSkeleton } from "@/components/TourCardSkeleton";
+import { TourCard } from "@/components/tour/TourCard";
+import { TourCardSkeleton } from "@/components/tour/TourCardSkeleton";
 import { Tour, useTour } from "@/context/TourContext";
 
 const TRENDING_DESTINATIONS = [
@@ -47,23 +47,36 @@ const TRENDING_DESTINATIONS = [
 
 // Curated destination images (fallback for destinations without tour images)
 const DESTINATION_IMAGES: Record<string, string> = {
-  "Đà Nẵng": "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2070&auto=format&fit=crop",
-  "Hà Nội": "https://images.unsplash.com/photo-1576513500959-4f29b3fed28f?q=80&w=2070&auto=format&fit=crop",
-  "Hồ Chí Minh": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop",
-  "Sapa": "https://images.unsplash.com/photo-1570366583862-f91883984fde?q=80&w=2070&auto=format&fit=crop",
-  "Phú Quốc": "https://images.unsplash.com/photo-1730714103959-5d5a30acf547?q=80&w=2938&auto=format&fit=crop",
-  "Nha Trang": "https://images.unsplash.com/photo-1570366290364-5e76a15ae408?q=80&w=2070&auto=format&fit=crop",
-  "Hội An": "https://images.unsplash.com/photo-1712580415180-6ef0a0a7a3a7?q=80&w=2070&auto=format&fit=crop",
-  "Huế": "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop",
-  "Hạ Long": "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
-  "Đà Lạt": "https://images.unsplash.com/photo-1552310065-aad9ebece999?q=80&w=2070&auto=format&fit=crop",
+  "Đà Nẵng":
+    "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2070&auto=format&fit=crop",
+  "Hà Nội":
+    "https://images.unsplash.com/photo-1576513500959-4f29b3fed28f?q=80&w=2070&auto=format&fit=crop",
+  "Hồ Chí Minh":
+    "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop",
+  Sapa: "https://images.unsplash.com/photo-1570366583862-f91883984fde?q=80&w=2070&auto=format&fit=crop",
+  "Phú Quốc":
+    "https://images.unsplash.com/photo-1730714103959-5d5a30acf547?q=80&w=2938&auto=format&fit=crop",
+  "Nha Trang":
+    "https://images.unsplash.com/photo-1570366290364-5e76a15ae408?q=80&w=2070&auto=format&fit=crop",
+  "Hội An":
+    "https://images.unsplash.com/photo-1712580415180-6ef0a0a7a3a7?q=80&w=2070&auto=format&fit=crop",
+  Huế: "https://images.unsplash.com/photo-1674798201360-745535e67e6e?q=80&w=2070&auto=format&fit=crop",
+  "Hạ Long":
+    "https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=2070&auto=format&fit=crop",
+  "Đà Lạt":
+    "https://images.unsplash.com/photo-1552310065-aad9ebece999?q=80&w=2070&auto=format&fit=crop",
 };
-const DEFAULT_DESTINATION_IMAGE = "https://images.unsplash.com/photo-1739595414767-0b5015743b43?q=80&w=2070&auto=format&fit=crop";
+const DEFAULT_DESTINATION_IMAGE =
+  "https://images.unsplash.com/photo-1739595414767-0b5015743b43?q=80&w=2070&auto=format&fit=crop";
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const { tours, loading: toursLoading, getPersonalizedRecommendations } = useTour();
+  const {
+    tours,
+    loading: toursLoading,
+    getPersonalizedRecommendations,
+  } = useTour();
   const [locationQuery, setLocationQuery] = useState("");
   const [showDestinations, setShowDestinations] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>();
@@ -106,10 +119,12 @@ export default function HomePage() {
       if (isAuthenticated && user?.userId) {
         setRecommendationsLoading(true);
         try {
-          const recommendations = await getPersonalizedRecommendations(user.userId);
+          const recommendations = await getPersonalizedRecommendations(
+            user.userId
+          );
           setRecommendedTours(recommendations.slice(0, 3));
         } catch (error) {
-          console.warn('Failed to fetch recommendations:', error);
+          console.warn("Failed to fetch recommendations:", error);
         } finally {
           setRecommendationsLoading(false);
         }
@@ -172,7 +187,10 @@ export default function HomePage() {
             <div className="bg-white rounded-3xl lg:rounded-full shadow-2xl p-3 md:p-4 lg:p-3">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.5fr,2fr,1fr,auto] gap-3 md:gap-4 lg:gap-0 lg:divide-x divide-slate-100">
                 {/* Location Input */}
-                <Popover open={showDestinations} onOpenChange={setShowDestinations}>
+                <Popover
+                  open={showDestinations}
+                  onOpenChange={setShowDestinations}
+                >
                   <div
                     data-search-widget
                     className="relative group px-4 py-3 md:py-2 hover:bg-slate-50 rounded-2xl transition-colors overflow-hidden"
@@ -292,7 +310,10 @@ export default function HomePage() {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align={isMobile ? "center" : "start"}>
+                    <PopoverContent
+                      className="w-auto p-0"
+                      align={isMobile ? "center" : "start"}
+                    >
                       <CalendarPicker
                         mode="range"
                         defaultMonth={date?.from}
@@ -420,11 +441,15 @@ export default function HomePage() {
                   Gợi ý dành riêng cho bạn
                 </h2>
                 <p className="text-muted-foreground text-lg">
-                  Dựa trên lịch sử tìm kiếm và sở thích của bạn, AI của chúng tôi
-                  đề xuất những hành trình phù hợp nhất.
+                  Dựa trên lịch sử tìm kiếm và sở thích của bạn, AI của chúng
+                  tôi đề xuất những hành trình phù hợp nhất.
                 </p>
               </div>
-              <Button variant="outline" className="group" onClick={() => navigate('/tours')}>
+              <Button
+                variant="outline"
+                className="group"
+                onClick={() => navigate("/tours")}
+              >
                 Xem thêm gợi ý{" "}
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -467,8 +492,8 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold mb-2">Điểm đến đa dạng</h3>
               <p className="text-muted-foreground">
-                Tiếp cận 34 tỉnh thành trên toàn quốc với hướng dẫn viên
-                chuyên nghiệp.
+                Tiếp cận 34 tỉnh thành trên toàn quốc với hướng dẫn viên chuyên
+                nghiệp.
               </p>
             </div>
             <div className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
@@ -530,7 +555,9 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 p-6 text-white">
                     <h3 className="text-2xl font-bold mb-1">{dest.name}</h3>
-                    <p className="text-sm font-medium opacity-90">{dest.count}</p>
+                    <p className="text-sm font-medium opacity-90">
+                      {dest.count}
+                    </p>
                   </div>
                 </Link>
               ))
@@ -638,7 +665,7 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-      </section >
-    </div >
+      </section>
+    </div>
   );
 }

@@ -1,5 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, DollarSign, ShoppingBag, Activity, LayoutDashboard, Download, TrendingUp, ChevronDown, UserPlus, CalendarCheck, Loader2, FileSpreadsheet } from "lucide-react";
+import {
+  Users,
+  DollarSign,
+  ShoppingBag,
+  Activity,
+  LayoutDashboard,
+  Download,
+  TrendingUp,
+  ChevronDown,
+  UserPlus,
+  CalendarCheck,
+  Loader2,
+  FileSpreadsheet,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   ResponsiveContainer,
@@ -34,7 +47,7 @@ import {
   fetchUsersChart,
   fetchBookingsChart,
   fetchRecentTransactions,
-} from "@/services/dashboardService";
+} from "@/api/services/dashboardService";
 import {
   type ViewMode,
   type DayRange,
@@ -54,15 +67,24 @@ import { useExcelExport, type ExportColumn } from "@/hooks/useExcelExport";
 // HELPERS
 // ============================================================================
 
-const CustomTooltip = ({ active, payload, label, valueFormatter, valueSuffix = "" }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  valueFormatter,
+  valueSuffix = "",
+}: any) => {
   if (active && payload && payload.length) {
     const value = payload[0].value;
-    const formattedValue = valueFormatter ? valueFormatter(value) : value.toLocaleString("vi-VN");
+    const formattedValue = valueFormatter
+      ? valueFormatter(value)
+      : value.toLocaleString("vi-VN");
     return (
       <div className="bg-card border rounded-lg shadow-lg p-3">
         <p className="font-medium text-sm">{label}</p>
         <p className="text-primary font-semibold">
-          {formattedValue}{valueSuffix}
+          {formattedValue}
+          {valueSuffix}
         </p>
       </div>
     );
@@ -81,34 +103,44 @@ interface ChartControlsProps {
   onDayRangeChange: (range: DayRange) => void;
 }
 
-function ChartControls({ viewMode, onViewModeChange, dayRange, onDayRangeChange }: ChartControlsProps) {
+function ChartControls({
+  viewMode,
+  onViewModeChange,
+  dayRange,
+  onDayRangeChange,
+}: ChartControlsProps) {
   return (
     <div className="flex items-center gap-2">
       {/* View Mode Toggle */}
       <div className="flex rounded-lg border bg-muted p-0.5">
         <button
-          onClick={() => onViewModeChange('daily')}
-          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${viewMode === 'daily'
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
-            }`}
+          onClick={() => onViewModeChange("daily")}
+          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+            viewMode === "daily"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
           Ngày
         </button>
         <button
-          onClick={() => onViewModeChange('monthly')}
-          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${viewMode === 'monthly'
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
-            }`}
+          onClick={() => onViewModeChange("monthly")}
+          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+            viewMode === "monthly"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
           Tháng
         </button>
       </div>
 
       {/* Day Range Selector - only visible in daily mode */}
-      {viewMode === 'daily' && (
-        <Select value={String(dayRange)} onValueChange={(v) => onDayRangeChange(Number(v) as DayRange)}>
+      {viewMode === "daily" && (
+        <Select
+          value={String(dayRange)}
+          onValueChange={(v) => onDayRangeChange(Number(v) as DayRange)}
+        >
           <SelectTrigger className="w-[100px] h-8">
             <SelectValue />
           </SelectTrigger>
@@ -176,15 +208,15 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Revenue chart state
-  const [revenueViewMode, setRevenueViewMode] = useState<ViewMode>('monthly');
+  const [revenueViewMode, setRevenueViewMode] = useState<ViewMode>("monthly");
   const [revenueDayRange, setRevenueDayRange] = useState<DayRange>(7);
 
   // New Users chart state
-  const [usersViewMode, setUsersViewMode] = useState<ViewMode>('monthly');
+  const [usersViewMode, setUsersViewMode] = useState<ViewMode>("monthly");
   const [usersDayRange, setUsersDayRange] = useState<DayRange>(7);
 
   // Booked Tours chart state
-  const [toursViewMode, setToursViewMode] = useState<ViewMode>('monthly');
+  const [toursViewMode, setToursViewMode] = useState<ViewMode>("monthly");
   const [toursDayRange, setToursDayRange] = useState<DayRange>(7);
 
   useEffect(() => {
@@ -219,9 +251,10 @@ export default function DashboardPage() {
 
     setIsLoadingRevenue(true);
     try {
-      const dateRange = revenueViewMode === 'daily'
-        ? calculateDateRange(revenueDayRange)
-        : calculateMonthlyRange();
+      const dateRange =
+        revenueViewMode === "daily"
+          ? calculateDateRange(revenueDayRange)
+          : calculateMonthlyRange();
       const data = await fetchRevenueChart({
         ...dateRange,
         granularity: viewModeToGranularity(revenueViewMode),
@@ -244,9 +277,10 @@ export default function DashboardPage() {
 
     setIsLoadingUsers(true);
     try {
-      const dateRange = usersViewMode === 'daily'
-        ? calculateDateRange(usersDayRange)
-        : calculateMonthlyRange();
+      const dateRange =
+        usersViewMode === "daily"
+          ? calculateDateRange(usersDayRange)
+          : calculateMonthlyRange();
       const data = await fetchUsersChart({
         ...dateRange,
         granularity: viewModeToGranularity(usersViewMode),
@@ -269,9 +303,10 @@ export default function DashboardPage() {
 
     setIsLoadingBookings(true);
     try {
-      const dateRange = toursViewMode === 'daily'
-        ? calculateDateRange(toursDayRange)
-        : calculateMonthlyRange();
+      const dateRange =
+        toursViewMode === "daily"
+          ? calculateDateRange(toursDayRange)
+          : calculateMonthlyRange();
       const data = await fetchBookingsChart({
         ...dateRange,
         granularity: viewModeToGranularity(toursViewMode),
@@ -291,7 +326,12 @@ export default function DashboardPage() {
   // Column definitions for exports
   const revenueColumns: ExportColumn<RevenueDataPoint>[] = [
     { header: "Thời gian", key: "label", width: 15 },
-    { header: "Doanh thu (VNĐ)", key: "revenue", formatter: (v) => formatVND(v as number), width: 20 },
+    {
+      header: "Doanh thu (VNĐ)",
+      key: "revenue",
+      formatter: (v) => formatVND(v as number),
+      width: 20,
+    },
   ];
 
   const usersColumns: ExportColumn<UsersDataPoint>[] = [
@@ -312,65 +352,108 @@ export default function DashboardPage() {
 
   // Export handlers
   const handleExportAll = () => {
-    const summaryData = stats ? [{
-      metric: "Tổng doanh thu",
-      value: formatVND(stats.totalRevenue),
-      growth: `${stats.revenueGrowth >= 0 ? "+" : ""}${stats.revenueGrowth.toFixed(1)}%`,
-    }, {
-      metric: "Người dùng mới",
-      value: stats.newUsers.toLocaleString("vi-VN"),
-      growth: `${stats.userGrowth >= 0 ? "+" : ""}${stats.userGrowth.toFixed(1)}%`,
-    }, {
-      metric: "Tổng đặt tour",
-      value: stats.totalBookings.toLocaleString("vi-VN"),
-      growth: `${stats.bookingGrowth >= 0 ? "+" : ""}${stats.bookingGrowth.toFixed(1)}%`,
-    }, {
-      metric: "Người dùng hoạt động",
-      value: stats.activeUsers.toLocaleString("vi-VN"),
-      growth: "-",
-    }] : [];
+    const summaryData = stats
+      ? [
+          {
+            metric: "Tổng doanh thu",
+            value: formatVND(stats.totalRevenue),
+            growth: `${
+              stats.revenueGrowth >= 0 ? "+" : ""
+            }${stats.revenueGrowth.toFixed(1)}%`,
+          },
+          {
+            metric: "Người dùng mới",
+            value: stats.newUsers.toLocaleString("vi-VN"),
+            growth: `${
+              stats.userGrowth >= 0 ? "+" : ""
+            }${stats.userGrowth.toFixed(1)}%`,
+          },
+          {
+            metric: "Tổng đặt tour",
+            value: stats.totalBookings.toLocaleString("vi-VN"),
+            growth: `${
+              stats.bookingGrowth >= 0 ? "+" : ""
+            }${stats.bookingGrowth.toFixed(1)}%`,
+          },
+          {
+            metric: "Người dùng hoạt động",
+            value: stats.activeUsers.toLocaleString("vi-VN"),
+            growth: "-",
+          },
+        ]
+      : [];
 
-    const summaryColumns: ExportColumn<{ metric: string; value: string; growth: string }>[] = [
+    const summaryColumns: ExportColumn<{
+      metric: string;
+      value: string;
+      growth: string;
+    }>[] = [
       { header: "Chỉ số", key: "metric", width: 25 },
       { header: "Giá trị", key: "value", width: 20 },
       { header: "Tăng trưởng", key: "growth", width: 15 },
     ];
 
-    exportMultiSheet(`bao_cao_dashboard_${new Date().toISOString().split("T")[0]}`, {
-      title: "Báo Cáo Dashboard Tổng Hợp",
-      includeTimestamp: true,
-      sheets: [
-        { name: "Thống kê tổng quan", data: summaryData, columns: summaryColumns },
-        { name: "Doanh thu", data: revenueData, columns: revenueColumns },
-        { name: "Người dùng mới", data: usersData, columns: usersColumns },
-        { name: "Đặt tour", data: bookingsData, columns: bookingsColumns },
-        { name: "Giao dịch gần đây", data: transactions, columns: transactionsColumns },
-      ],
-    });
+    exportMultiSheet(
+      `bao_cao_dashboard_${new Date().toISOString().split("T")[0]}`,
+      {
+        title: "Báo Cáo Dashboard Tổng Hợp",
+        includeTimestamp: true,
+        sheets: [
+          {
+            name: "Thống kê tổng quan",
+            data: summaryData,
+            columns: summaryColumns,
+          },
+          { name: "Doanh thu", data: revenueData, columns: revenueColumns },
+          { name: "Người dùng mới", data: usersData, columns: usersColumns },
+          { name: "Đặt tour", data: bookingsData, columns: bookingsColumns },
+          {
+            name: "Giao dịch gần đây",
+            data: transactions,
+            columns: transactionsColumns,
+          },
+        ],
+      }
+    );
   };
 
   const handleExportRevenue = () => {
-    exportMultiSheet(`bao_cao_doanh_thu_${new Date().toISOString().split("T")[0]}`, {
-      title: "Báo Cáo Doanh Thu",
-      includeTimestamp: true,
-      sheets: [{ name: "Doanh thu", data: revenueData, columns: revenueColumns }],
-    });
+    exportMultiSheet(
+      `bao_cao_doanh_thu_${new Date().toISOString().split("T")[0]}`,
+      {
+        title: "Báo Cáo Doanh Thu",
+        includeTimestamp: true,
+        sheets: [
+          { name: "Doanh thu", data: revenueData, columns: revenueColumns },
+        ],
+      }
+    );
   };
 
   const handleExportUsers = () => {
-    exportMultiSheet(`bao_cao_nguoi_dung_${new Date().toISOString().split("T")[0]}`, {
-      title: "Báo Cáo Người Dùng Mới",
-      includeTimestamp: true,
-      sheets: [{ name: "Người dùng mới", data: usersData, columns: usersColumns }],
-    });
+    exportMultiSheet(
+      `bao_cao_nguoi_dung_${new Date().toISOString().split("T")[0]}`,
+      {
+        title: "Báo Cáo Người Dùng Mới",
+        includeTimestamp: true,
+        sheets: [
+          { name: "Người dùng mới", data: usersData, columns: usersColumns },
+        ],
+      }
+    );
   };
 
   const handleExportBookings = () => {
-    exportMultiSheet(`bao_cao_dat_tour_${new Date().toISOString().split("T")[0]}`, {
-      title: "Báo Cáo Đặt Tour",
-      includeTimestamp: true,
-      sheets: [{ name: "Đặt tour", data: bookingsData, columns: bookingsColumns }],
-    });
+    exportMultiSheet(
+      `bao_cao_dat_tour_${new Date().toISOString().split("T")[0]}`,
+      {
+        title: "Báo Cáo Đặt Tour",
+        includeTimestamp: true,
+        sheets: [
+          { name: "Đặt tour", data: bookingsData, columns: bookingsColumns },
+        ],
+      }
+    );
   };
 
   // Format growth percentage
@@ -399,13 +482,15 @@ export default function DashboardPage() {
             <LayoutDashboard className="h-6 w-6" />
             Dashboard
           </h2>
-          <p className="text-muted-foreground">
-            Tổng quan hệ thống quản trị
-          </p>
+          <p className="text-muted-foreground">Tổng quan hệ thống quản trị</p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" disabled={isExporting} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              disabled={isExporting}
+              className="w-full sm:w-auto"
+            >
               {isExporting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -498,8 +583,14 @@ export default function DashboardPage() {
               <ChartSkeleton />
             ) : (
               <ResponsiveContainer width="100%" height={300} debounce={100}>
-                <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <BarChart
+                  data={revenueData}
+                  margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 12 }}
@@ -509,8 +600,9 @@ export default function DashboardPage() {
                   />
                   <YAxis
                     tickFormatter={(value) => {
-                      if (value === 0) return '0';
-                      if (value >= 1000000) return `${(value / 1000000).toFixed(0)}M`;
+                      if (value === 0) return "0";
+                      if (value >= 1000000)
+                        return `${(value / 1000000).toFixed(0)}M`;
                       if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
                       return value.toString();
                     }}
@@ -519,12 +611,11 @@ export default function DashboardPage() {
                     axisLine={false}
                     className="text-muted-foreground"
                   />
-                  <Tooltip content={<CustomTooltip valueFormatter={formatVND} />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
-                  <Bar
-                    dataKey="revenue"
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
+                  <Tooltip
+                    content={<CustomTooltip valueFormatter={formatVND} />}
+                    cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
                   />
+                  <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -545,13 +636,19 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium leading-none truncate">
                       {sale.name}
                     </p>
-                    <p className="text-sm text-muted-foreground truncate hidden sm:block">{sale.email}</p>
+                    <p className="text-sm text-muted-foreground truncate hidden sm:block">
+                      {sale.email}
+                    </p>
                   </div>
-                  <div className="font-medium text-sm shrink-0">{sale.amount}</div>
+                  <div className="font-medium text-sm shrink-0">
+                    {sale.amount}
+                  </div>
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground text-sm">Chưa có giao dịch nào</p>
+              <p className="text-muted-foreground text-sm">
+                Chưa có giao dịch nào
+              </p>
             )}
           </div>
         </div>
@@ -578,8 +675,14 @@ export default function DashboardPage() {
               <ChartSkeleton />
             ) : (
               <ResponsiveContainer width="100%" height={250} debounce={100}>
-                <LineChart data={usersData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <LineChart
+                  data={usersData}
+                  margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 12 }}
@@ -593,7 +696,10 @@ export default function DashboardPage() {
                     axisLine={false}
                     className="text-muted-foreground"
                   />
-                  <Tooltip content={<CustomTooltip valueSuffix=" người" />} cursor={{ strokeDasharray: '3 3' }} />
+                  <Tooltip
+                    content={<CustomTooltip valueSuffix=" người" />}
+                    cursor={{ strokeDasharray: "3 3" }}
+                  />
                   <Line
                     type="monotone"
                     dataKey="users"
@@ -627,8 +733,14 @@ export default function DashboardPage() {
               <ChartSkeleton />
             ) : (
               <ResponsiveContainer width="100%" height={250} debounce={100}>
-                <BarChart data={bookingsData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <BarChart
+                  data={bookingsData}
+                  margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 12 }}
@@ -642,7 +754,10 @@ export default function DashboardPage() {
                     axisLine={false}
                     className="text-muted-foreground"
                   />
-                  <Tooltip content={<CustomTooltip valueSuffix=" đặt tour" />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                  <Tooltip
+                    content={<CustomTooltip valueSuffix=" đặt tour" />}
+                    cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
+                  />
                   <Bar
                     dataKey="bookings"
                     fill="#8B5CF6"

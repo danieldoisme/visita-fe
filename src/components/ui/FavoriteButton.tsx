@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useAuth } from "@/context/AuthContext";
-import { AuthRequiredModal } from "@/components/AuthRequiredModal";
+import { AuthRequiredModal } from "@/components/common/AuthRequiredModal";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 

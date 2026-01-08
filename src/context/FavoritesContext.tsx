@@ -8,7 +8,11 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { fetchFavorites, addToFavorites, removeFromFavorites } from "@/services/favoriteService";
+import {
+  fetchFavorites,
+  addToFavorites,
+  removeFromFavorites,
+} from "@/api/services/favoriteService";
 import { getTourUuid } from "@/api/mappers/tourMapper";
 import type { Tour } from "@/context/TourContext";
 
@@ -42,7 +46,9 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   // Pending favorite for auth-gated flow
-  const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(null);
+  const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(
+    null
+  );
 
   // Load favorites from API when user authenticates
   const loadFavorites = useCallback(async () => {

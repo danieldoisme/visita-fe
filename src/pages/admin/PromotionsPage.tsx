@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
-import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { ConfirmationDialog } from "@/components/common/ConfirmationDialog";
 import {
   TableSkeleton,
   EmptyState,
@@ -61,7 +61,7 @@ import {
   updatePromotionApi,
   deletePromotionApi,
   updatePromotionStatusApi,
-} from "@/services/promotionService";
+} from "@/api/services/promotionService";
 
 // ============== Helper Functions ==============
 import { formatCurrency, formatDateRange } from "@/lib/formatters";

@@ -7,15 +7,30 @@ import { tourSchema, TourFormData } from "@/lib/validation";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
-import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { TableSkeleton, EmptyState, BulkActionBar, SortableHeader, PaginationControls, ITEMS_PER_PAGE, TourImageManager, StatusBadge, tourStatusConfig, StatusToggleButton, type BulkAction } from "@/components/admin";
+import { ConfirmationDialog } from "@/components/common/ConfirmationDialog";
+import {
+  TableSkeleton,
+  EmptyState,
+  BulkActionBar,
+  SortableHeader,
+  PaginationControls,
+  ITEMS_PER_PAGE,
+  TourImageManager,
+  StatusBadge,
+  tourStatusConfig,
+  StatusToggleButton,
+  type BulkAction,
+} from "@/components/admin";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { Modal } from "@/components/ui/modal";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { CategorySelect, DEFAULT_CATEGORY } from "@/components/ui/category-select";
+import {
+  CategorySelect,
+  DEFAULT_CATEGORY,
+} from "@/components/ui/category-select";
 import { RegionSelect, DEFAULT_REGION } from "@/components/ui/region-select";
 import {
   Form,
@@ -33,16 +48,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, Check, XCircle, Map } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Check,
+  XCircle,
+  Map,
+} from "lucide-react";
 
 // Confirmation dialog keys
 const DELETE_TOUR_KEY = "delete_tour";
 const BULK_DELETE_TOUR_KEY = "bulk_delete_tour";
 
-
-
 export default function ToursManagementPage() {
-  const { tours, loading, addTour, updateTour, updateTourStatus, deleteTour, staffList, loadStaffs } = useTour();
+  const {
+    tours,
+    loading,
+    addTour,
+    updateTour,
+    updateTourStatus,
+    deleteTour,
+    staffList,
+    loadStaffs,
+  } = useTour();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [editingTour, setEditingTour] = useState<Tour | null>(null);
@@ -73,7 +103,8 @@ export default function ToursManagementPage() {
   } = useTableSelection<number>();
 
   // Confirmation dialog state
-  const { shouldShowConfirmation, setDontShowAgain } = useConfirmationPreferences();
+  const { shouldShowConfirmation, setDontShowAgain } =
+    useConfirmationPreferences();
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     type: "delete" | "bulk_delete" | "bulk_status";
@@ -105,7 +136,10 @@ export default function ToursManagementPage() {
   }, [filteredTours, currentPage]);
 
   // Get IDs of paginated tours for selection
-  const paginatedTourIds = useMemo(() => paginatedTours.map((t) => t.id), [paginatedTours]);
+  const paginatedTourIds = useMemo(
+    () => paginatedTours.map((t) => t.id),
+    [paginatedTours]
+  );
 
   // Count selected tours by status for disabling bulk actions
   const selectedToursWithStatus = useMemo(() => {
@@ -156,7 +190,9 @@ export default function ToursManagementPage() {
         image: tour.image || "",
         description: tour.description || "",
         itinerary: tour.itinerary || "",
-        staffId: tour.staffId || (currentStaffList.length > 0 ? currentStaffList[0].userId : ""),
+        staffId:
+          tour.staffId ||
+          (currentStaffList.length > 0 ? currentStaffList[0].userId : ""),
       });
     } else {
       setEditingTour(null);
@@ -188,7 +224,11 @@ export default function ToursManagementPage() {
     try {
       const { staffId, ...tourData } = data;
       if (editingTour) {
-        await updateTour(editingTour.id, { ...tourData, tourUuid: editingTour.tourUuid }, staffId);
+        await updateTour(
+          editingTour.id,
+          { ...tourData, tourUuid: editingTour.tourUuid },
+          staffId
+        );
         toast.success("Đã cập nhật tour thành công!");
       } else {
         await addTour(tourData as Tour, staffId);
@@ -222,7 +262,9 @@ export default function ToursManagementPage() {
   };
 
   // Execute bulk status change
-  const executeBulkStatusChange = async (newStatus: "Hoạt động" | "Đã đóng") => {
+  const executeBulkStatusChange = async (
+    newStatus: "Hoạt động" | "Đã đóng"
+  ) => {
     const isActive = newStatus === "Hoạt động";
     for (const id of selectedArray) {
       await updateTourStatus(id, isActive);
@@ -271,7 +313,10 @@ export default function ToursManagementPage() {
 
   // Don't show again handler
   const handleDontShowAgain = () => {
-    const key = confirmDialog.type === "bulk_delete" ? BULK_DELETE_TOUR_KEY : DELETE_TOUR_KEY;
+    const key =
+      confirmDialog.type === "bulk_delete"
+        ? BULK_DELETE_TOUR_KEY
+        : DELETE_TOUR_KEY;
     setDontShowAgain(key);
   };
 
@@ -287,14 +332,16 @@ export default function ToursManagementPage() {
       label: "Hoạt động",
       icon: <Check className="h-4 w-4 mr-1" />,
       onClick: () => handleBulkStatusChange("Hoạt động"),
-      disabled: selectedToursWithStatus.active === selectedToursWithStatus.total,
+      disabled:
+        selectedToursWithStatus.active === selectedToursWithStatus.total,
     },
     {
       label: "Đã đóng",
       icon: <XCircle className="h-4 w-4 mr-1" />,
       onClick: () => handleBulkStatusChange("Đã đóng"),
       variant: "outline",
-      disabled: selectedToursWithStatus.closed === selectedToursWithStatus.total,
+      disabled:
+        selectedToursWithStatus.closed === selectedToursWithStatus.total,
     },
     {
       label: "Xóa",
@@ -375,8 +422,14 @@ export default function ToursManagementPage() {
       <div className="rounded-md border bg-card">
         {filteredTours.length === 0 ? (
           <EmptyState
-            message={searchTerm ? "Không tìm thấy tour nào" : "Chưa có tour nào"}
-            description={searchTerm ? "Thử thay đổi từ khóa tìm kiếm" : "Tạo tour đầu tiên để bắt đầu"}
+            message={
+              searchTerm ? "Không tìm thấy tour nào" : "Chưa có tour nào"
+            }
+            description={
+              searchTerm
+                ? "Thử thay đổi từ khóa tìm kiếm"
+                : "Tạo tour đầu tiên để bắt đầu"
+            }
             showClearFilters={!!searchTerm}
             onClearFilters={handleClearFilters}
           />
@@ -392,7 +445,8 @@ export default function ToursManagementPage() {
                       type="checkbox"
                       checked={isAllSelected(paginatedTourIds)}
                       ref={(el) => {
-                        if (el) el.indeterminate = isSomeSelected(paginatedTourIds);
+                        if (el)
+                          el.indeterminate = isSomeSelected(paginatedTourIds);
                       }}
                       onChange={() => toggleAll(paginatedTourIds)}
                       className="h-4 w-4 rounded border-gray-300"
@@ -401,13 +455,25 @@ export default function ToursManagementPage() {
                   </TableHead>
                   <TableHead>Tên Tour</TableHead>
                   <TableHead>Địa điểm</TableHead>
-                  <SortableHeader sortKey="price" currentSort={sort} onSort={toggleSort}>
+                  <SortableHeader
+                    sortKey="price"
+                    currentSort={sort}
+                    onSort={toggleSort}
+                  >
                     Giá
                   </SortableHeader>
-                  <SortableHeader sortKey="status" currentSort={sort} onSort={toggleSort}>
+                  <SortableHeader
+                    sortKey="status"
+                    currentSort={sort}
+                    onSort={toggleSort}
+                  >
                     Trạng thái
                   </SortableHeader>
-                  <SortableHeader sortKey="bookings" currentSort={sort} onSort={toggleSort}>
+                  <SortableHeader
+                    sortKey="bookings"
+                    currentSort={sort}
+                    onSort={toggleSort}
+                  >
                     Chỗ còn
                   </SortableHeader>
                   <TableHead className="text-right">Hành động</TableHead>
@@ -415,7 +481,10 @@ export default function ToursManagementPage() {
               </TableHeader>
               <TableBody>
                 {paginatedTours.map((tour) => (
-                  <TableRow key={tour.id} className={isSelected(tour.id) ? "bg-muted/50" : ""}>
+                  <TableRow
+                    key={tour.id}
+                    className={isSelected(tour.id) ? "bg-muted/50" : ""}
+                  >
                     <TableCell>
                       <input
                         id={`tour-checkbox-${tour.id}`}
@@ -429,16 +498,16 @@ export default function ToursManagementPage() {
                     </TableCell>
                     <TableCell className="font-medium">{tour.title}</TableCell>
                     <TableCell>{tour.location}</TableCell>
-                    <TableCell>
-                      {formatCurrency(tour.price)}
-                    </TableCell>
+                    <TableCell>{formatCurrency(tour.price)}</TableCell>
                     <TableCell>
                       <StatusBadge
                         status={tour.status as "Hoạt động" | "Đã đóng"}
                         config={tourStatusConfig}
                       />
                     </TableCell>
-                    <TableCell>{tour.availability ?? tour.capacity}/{tour.capacity}</TableCell>
+                    <TableCell>
+                      {tour.availability ?? tour.capacity}/{tour.capacity}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button
@@ -454,7 +523,9 @@ export default function ToursManagementPage() {
                           onToggle={async () => {
                             const newStatus = tour.status !== "Hoạt động";
                             await updateTourStatus(tour.id, newStatus);
-                            toast.success(newStatus ? "Tour đã Hoạt động" : "Tour đã Đóng");
+                            toast.success(
+                              newStatus ? "Tour đã Hoạt động" : "Tour đã Đóng"
+                            );
                           }}
                         />
                         <Button
@@ -472,7 +543,11 @@ export default function ToursManagementPage() {
                 ))}
               </TableBody>
             </Table>
-            <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </>
         )}
       </div>
@@ -501,7 +576,11 @@ export default function ToursManagementPage() {
                     <FormItem className="col-span-2">
                       <FormLabel>Tên Tour</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập tên tour" autoComplete="off" {...field} />
+                        <Input
+                          placeholder="Nhập tên tour"
+                          autoComplete="off"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -514,7 +593,11 @@ export default function ToursManagementPage() {
                     <FormItem>
                       <FormLabel>Địa điểm</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập địa điểm" autoComplete="off" {...field} />
+                        <Input
+                          placeholder="Nhập địa điểm"
+                          autoComplete="off"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -527,10 +610,7 @@ export default function ToursManagementPage() {
                     <FormItem>
                       <FormLabel>Vùng miền</FormLabel>
                       <FormControl>
-                        <RegionSelect
-                          aria-label="Vùng miền"
-                          {...field}
-                        />
+                        <RegionSelect aria-label="Vùng miền" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -543,7 +623,11 @@ export default function ToursManagementPage() {
                     <FormItem>
                       <FormLabel>Thời lượng</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ví dụ: 3 Ngày 2 Đêm" autoComplete="off" {...field} />
+                        <Input
+                          placeholder="Ví dụ: 3 Ngày 2 Đêm"
+                          autoComplete="off"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -556,10 +640,7 @@ export default function ToursManagementPage() {
                     <FormItem>
                       <FormLabel>Danh mục</FormLabel>
                       <FormControl>
-                        <CategorySelect
-                          aria-label="Danh mục tour"
-                          {...field}
-                        />
+                        <CategorySelect aria-label="Danh mục tour" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -579,7 +660,9 @@ export default function ToursManagementPage() {
                           placeholder="Số người tối đa"
                           autoComplete="off"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -601,7 +684,8 @@ export default function ToursManagementPage() {
                           <option value="">-- Chọn nhân viên --</option>
                           {staffList.map((staff) => (
                             <option key={staff.userId} value={staff.userId}>
-                              {staff.fullName} {staff.email ? `(${staff.email})` : ""}
+                              {staff.fullName}{" "}
+                              {staff.email ? `(${staff.email})` : ""}
                             </option>
                           ))}
                         </select>
@@ -624,7 +708,9 @@ export default function ToursManagementPage() {
                           placeholder="Nhập giá"
                           autoComplete="off"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -644,7 +730,9 @@ export default function ToursManagementPage() {
                       aria-label="Giá trẻ em (tự động tính 50% giá người lớn)"
                     />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">Tự động tính = 50% giá người lớn</p>
+                  <p className="text-xs text-muted-foreground">
+                    Tự động tính = 50% giá người lớn
+                  </p>
                 </FormItem>
                 <div className="col-span-2">
                   <TourImageManager
@@ -653,7 +741,10 @@ export default function ToursManagementPage() {
                       form.setValue("images", images);
                       // Also set the legacy image field to the primary image URL
                       const primaryImage = images.find((img) => img.isPrimary);
-                      form.setValue("image", primaryImage?.url || images[0]?.url || "");
+                      form.setValue(
+                        "image",
+                        primaryImage?.url || images[0]?.url || ""
+                      );
                     }}
                   />
                 </div>
@@ -701,7 +792,11 @@ export default function ToursManagementPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4 relative z-10">
-                <Button type="button" variant="outline" onClick={handleCloseModal}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseModal}
+                >
                   Hủy
                 </Button>
                 <Button type="submit">
@@ -718,7 +813,11 @@ export default function ToursManagementPage() {
         isOpen={confirmDialog.isOpen}
         onConfirm={handleDialogConfirm}
         onCancel={handleDialogCancel}
-        title={confirmDialog.type === "bulk_delete" ? "Xóa các tour đã chọn" : "Xóa tour"}
+        title={
+          confirmDialog.type === "bulk_delete"
+            ? "Xóa các tour đã chọn"
+            : "Xóa tour"
+        }
         message={
           confirmDialog.type === "bulk_delete"
             ? `Bạn có chắc chắn muốn xóa ${selectedCount} tour đã chọn? Hành động này không thể hoàn tác.`
@@ -730,6 +829,6 @@ export default function ToursManagementPage() {
         showDontShowAgain
         onDontShowAgainChange={handleDontShowAgain}
       />
-    </div >
+    </div>
   );
 }

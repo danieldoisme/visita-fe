@@ -6,16 +6,16 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { tokenStorage } from "../utils/tokenStorage";
+import { tokenStorage } from "../lib/tokenStorage";
 import {
   decodeJwt,
   extractRolesFromScope,
   getPrimaryRole,
   isTokenExpired,
   type UserRole,
-} from "../utils/jwtUtils";
-import authService from "../services/authService";
-import userService from "../services/userService";
+} from "../lib/jwtUtils";
+import authService from "../api/services/authService";
+import userService from "../api/services/userService";
 import { ApiError } from "../api/apiClient";
 import { clearTourIdMap } from "../api/mappers/tourMapper";
 import { clearBookingIdMap } from "../api/mappers/bookingMapper";
@@ -61,7 +61,9 @@ interface AuthContextType {
     fullName: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  updateProfile: (updates: UserProfileUpdate) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (
+    updates: UserProfileUpdate
+  ) => Promise<{ success: boolean; error?: string }>;
   refreshUser: () => Promise<void>;
 }
 
@@ -128,7 +130,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Access token expired, try refresh
     if (refreshToken) {
       try {
-        const response = await authService.refreshToken({ token: refreshToken });
+        const response = await authService.refreshToken({
+          token: refreshToken,
+        });
         tokenStorage.setAccessToken(response.token);
         tokenStorage.setRefreshToken(response.refreshToken);
 
@@ -267,7 +271,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     googleAccessToken: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const response = await authService.outboundAuthenticate(googleAccessToken);
+      const response = await authService.outboundAuthenticate(
+        googleAccessToken
+      );
 
       if (response.authenticated && response.token) {
         tokenStorage.setAccessToken(response.token);
@@ -347,7 +353,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await userService.updateUserProfile(user.userId, {
         fullName: updates.fullName,
         phone: updates.phone,
-        gender: updates.gender?.toUpperCase() as "MALE" | "FEMALE" | "OTHER" | undefined,
+        gender: updates.gender?.toUpperCase() as
+          | "MALE"
+          | "FEMALE"
+          | "OTHER"
+          | undefined,
         dob: updates.dob,
         address: updates.address,
       });
@@ -369,7 +379,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error instanceof ApiError) {
         return { success: false, error: error.message };
       }
-      return { success: false, error: "Không thể cập nhật thông tin. Vui lòng thử lại." };
+      return {
+        success: false,
+        error: "Không thể cập nhật thông tin. Vui lòng thử lại.",
+      };
     }
   };
 

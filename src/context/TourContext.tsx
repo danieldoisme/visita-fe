@@ -24,7 +24,7 @@ import { ApiError } from "@/api/apiClient";
 import {
   getRecommendations,
   getRecommendationsForUser,
-} from "@/services/recommendationService";
+} from "@/api/services/recommendationService";
 
 // Tour image structure for multi-image support
 export interface TourImage {
@@ -122,7 +122,7 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
   // Only admin users can access /admins/tours endpoint
   // Staff users use the public /tours endpoint (or /staffs/{id}/tours for their own tours)
   const userRole = user?.role;
-  const shouldUseAdminEndpoint = Boolean(user && userRole === 'admin');
+  const shouldUseAdminEndpoint = Boolean(user && userRole === "admin");
 
   // Load tours from API on mount
   // Admin/Staff: fetch all tours including inactive
@@ -180,7 +180,7 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
         // Use admin endpoint only for admin users
         // Staff users use public endpoint (they access their own tours via /staffs/{id}/tours)
         const userRole = user?.role;
-        const useAdminEndpoint = Boolean(user && userRole === 'admin');
+        const useAdminEndpoint = Boolean(user && userRole === "admin");
         let result;
         if (useAdminEndpoint) {
           result = await fetchAllToursAdmin();
@@ -202,8 +202,6 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
 
     fetchTours();
   }, [authLoading, user]);
-
-
 
   const getTourByUuid = async (uuid: string): Promise<Tour | undefined> => {
     // First check cached tours by UUID
@@ -371,7 +369,9 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Search tours with filters (returns paginated result from API)
-  const searchTours = async (params: TourSearchParams): Promise<PaginatedResult<Tour>> => {
+  const searchTours = async (
+    params: TourSearchParams
+  ): Promise<PaginatedResult<Tour>> => {
     return await fetchAllTours(params);
   };
 
@@ -388,7 +388,9 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
       );
     } catch (err) {
       const message =
-        err instanceof ApiError ? err.message : "Không thể cập nhật trạng thái tour";
+        err instanceof ApiError
+          ? err.message
+          : "Không thể cập nhật trạng thái tour";
       setError(message);
       throw err;
     }

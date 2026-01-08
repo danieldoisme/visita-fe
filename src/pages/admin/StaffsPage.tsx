@@ -3,10 +3,10 @@ import { toast } from "sonner";
 import { useTableSelection } from "@/hooks/useTableSelection";
 import { useConfirmationPreferences } from "@/hooks/useConfirmationPreferences";
 import { useSorting } from "@/hooks/useSorting";
-import { ConfirmationDialog } from "@/components/ConfirmationDialog";
-import { UserDetailsModal } from "@/components/UserDetailsModal";
-import { UserEditModal } from "@/components/UserEditModal";
-import { StaffCreateModal } from "@/components/StaffCreateModal";
+import { ConfirmationDialog } from "@/components/common/ConfirmationDialog";
+import { UserDetailsModal } from "@/components/user/UserDetailsModal";
+import { UserEditModal } from "@/components/user/UserEditModal";
+import { StaffCreateModal } from "@/components/user/StaffCreateModal";
 import {
   TableSkeleton,
   EmptyState,
@@ -48,7 +48,7 @@ import {
   type PaginatedStaffs,
   type StaffCreateData,
   type StaffUpdateData,
-} from "@/services/adminStaffService";
+} from "@/api/services/adminStaffService";
 
 // Page size for pagination
 const PAGE_SIZE = 10;
@@ -653,16 +653,16 @@ export default function StaffsPage() {
         user={
           selectedStaff
             ? {
-              id: selectedStaff.id,
-              email: selectedStaff.email,
-              name: selectedStaff.fullName,
-              phone: selectedStaff.phone,
-              dob: selectedStaff.dob,
-              gender: selectedStaff.gender,
-              address: selectedStaff.address,
-              role: "staff",
-              status: selectedStaff.isActive ? "active" : "locked",
-            }
+                id: selectedStaff.id,
+                email: selectedStaff.email,
+                name: selectedStaff.fullName,
+                phone: selectedStaff.phone,
+                dob: selectedStaff.dob,
+                gender: selectedStaff.gender,
+                address: selectedStaff.address,
+                role: "staff",
+                status: selectedStaff.isActive ? "active" : "locked",
+              }
             : null
         }
         isOpen={isDetailsModalOpen}
@@ -676,16 +676,16 @@ export default function StaffsPage() {
         user={
           staffToEdit
             ? {
-              id: staffToEdit.id,
-              email: staffToEdit.email,
-              fullName: staffToEdit.fullName,
-              phone: staffToEdit.phone,
-              dob: staffToEdit.dob,
-              gender: staffToEdit.gender,
-              address: staffToEdit.address,
-              role: "staff",
-              isActive: staffToEdit.isActive,
-            }
+                id: staffToEdit.id,
+                email: staffToEdit.email,
+                fullName: staffToEdit.fullName,
+                phone: staffToEdit.phone,
+                dob: staffToEdit.dob,
+                gender: staffToEdit.gender,
+                address: staffToEdit.address,
+                role: "staff",
+                isActive: staffToEdit.isActive,
+              }
             : null
         }
         onSave={handleSaveStaff}

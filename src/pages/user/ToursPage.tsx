@@ -15,9 +15,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
-import { AuthRequiredModal } from "@/components/AuthRequiredModal";
-import { TourCard } from "@/components/TourCard";
-import { TourCardSkeleton } from "@/components/TourCardSkeleton";
+import { AuthRequiredModal } from "@/components/common/AuthRequiredModal";
+import { TourCard } from "@/components/tour/TourCard";
+import { TourCardSkeleton } from "@/components/tour/TourCardSkeleton";
 import { useAuth } from "@/context/AuthContext";
 import {
   Search,

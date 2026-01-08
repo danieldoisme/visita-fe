@@ -26,8 +26,7 @@ import {
   Facebook,
   AlertCircle,
 } from "lucide-react";
-import GoogleAuthButton from "@/components/GoogleAuthButton";
-import "@/styles/login.css";
+import GoogleAuthButton from "@/components/common/GoogleAuthButton";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -64,8 +63,6 @@ export default function RegisterPage() {
     setIsLoading(false);
   };
 
-
-
   return (
     <div className="w-full h-screen lg:grid lg:grid-cols-2 overflow-hidden bg-background">
       {/* Left Side: Image & Quote (Flipped for Register) */}
@@ -85,7 +82,8 @@ export default function RegisterPage() {
           <div className="glass-quote rounded-2xl p-8 max-w-lg">
             <blockquote className="space-y-2">
               <p className="text-lg font-medium leading-relaxed">
-                &ldquo;Hãy cùng Visita khám phá những nẻo đường đất nước, để thêm yêu từng dải đất hình chữ S thân thương.&rdquo;
+                &ldquo;Hãy cùng Visita khám phá những nẻo đường đất nước, để
+                thêm yêu từng dải đất hình chữ S thân thương.&rdquo;
               </p>
               <footer className="text-sm font-semibold pt-4 border-t border-white/20 mt-4">
                 Visita TEAM
@@ -133,7 +131,10 @@ export default function RegisterPage() {
               )}
 
               <Form {...form}>
-                <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
+                <form
+                  className="grid gap-4"
+                  onSubmit={form.handleSubmit(onSubmit)}
+                >
                   <FormField
                     control={form.control}
                     name="name"
@@ -276,7 +277,13 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <GoogleAuthButton disabled={isLoading} />
-                <Button variant="outline" className="social-btn" onClick={() => toast.info("Đăng ký với Facebook chưa được triển khai")}>
+                <Button
+                  variant="outline"
+                  className="social-btn"
+                  onClick={() =>
+                    toast.info("Đăng ký với Facebook chưa được triển khai")
+                  }
+                >
                   <Facebook className="mr-2 h-4 w-4 text-blue-600" />
                   Facebook
                 </Button>

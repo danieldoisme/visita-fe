@@ -9,7 +9,7 @@ import type {
   StaffBookingRequest,
 } from "../generated/types.gen";
 import { getTourUuid } from "./tourMapper";
-import { hashStringToNumber } from "@/utils/hashUtils";
+import { hashStringToNumber } from "@/lib/hashUtils";
 
 /**
  * Store original bookingId for API calls (UUID string)
