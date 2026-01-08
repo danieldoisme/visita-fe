@@ -179,22 +179,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const tokenUser = getUserFromToken(response.token);
         if (tokenUser) {
-          // Fetch full user profile to get correct fullName and userId
+          // Fetch full user profile based on role
           try {
-            const userProfile = await userService.getMyInfo();
-            const fullUser: User = {
-              ...tokenUser,
-              userId: userProfile.userId,
-              email: userProfile.email || tokenUser.email,
-              fullName: userProfile.fullName || tokenUser.fullName,
-              phone: userProfile.phone,
-              gender: userProfile.gender,
-              dob: userProfile.dob,
-              address: userProfile.address,
-              isActive: userProfile.isActive,
-            };
-            setUser(fullUser);
-            localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
+            if (tokenUser.role === "admin" || tokenUser.role === "staff") {
+              // Admin and staff users use /admins/myInfo endpoint
+              const adminProfile = await userService.getAdminMyInfo();
+              const fullUser: User = {
+                ...tokenUser,
+                userId: adminProfile.adminId,
+                email: adminProfile.email || tokenUser.email,
+                fullName: adminProfile.fullName || tokenUser.fullName,
+              };
+              setUser(fullUser);
+              localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
+            } else {
+              // Regular users use /users/myInfo endpoint
+              const userProfile = await userService.getMyInfo();
+              const fullUser: User = {
+                ...tokenUser,
+                userId: userProfile.userId,
+                email: userProfile.email || tokenUser.email,
+                fullName: userProfile.fullName || tokenUser.fullName,
+                phone: userProfile.phone,
+                gender: userProfile.gender,
+                dob: userProfile.dob,
+                address: userProfile.address,
+                isActive: userProfile.isActive,
+              };
+              setUser(fullUser);
+              localStorage.setItem(AUTH_USER_KEY, JSON.stringify(fullUser));
+            }
           } catch {
             // Fallback to token user if profile fetch fails
             setUser(tokenUser);
@@ -348,22 +362,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
 
     try {
-      const response = await userService.getMyInfo();
-
-      const updatedUser: User = {
-        userId: response.userId,
-        email: response.email || user.email,
-        fullName: response.fullName || user.fullName,
-        phone: response.phone,
-        gender: response.gender,
-        dob: response.dob,
-        address: response.address,
-        isActive: response.isActive,
-        role: user.role, // Keep role from token
-      };
-
-      setUser(updatedUser);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser));
+      if (user.role === "admin" || user.role === "staff") {
+        // Admin and staff users use /admins/myInfo endpoint
+        const adminProfile = await userService.getAdminMyInfo();
+        const updatedUser: User = {
+          userId: adminProfile.adminId,
+          email: adminProfile.email || user.email,
+          fullName: adminProfile.fullName || user.fullName,
+          role: user.role,
+        };
+        setUser(updatedUser);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser));
+      } else {
+        // Regular users use /users/myInfo endpoint
+        const response = await userService.getMyInfo();
+        const updatedUser: User = {
+          userId: response.userId,
+          email: response.email || user.email,
+          fullName: response.fullName || user.fullName,
+          phone: response.phone,
+          gender: response.gender,
+          dob: response.dob,
+          address: response.address,
+          isActive: response.isActive,
+          role: user.role,
+        };
+        setUser(updatedUser);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser));
+      }
     } catch (error) {
       console.error("Failed to refresh user data:", error);
     }

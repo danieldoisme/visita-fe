@@ -33,7 +33,7 @@ export interface IntrospectResponse {
     valid: boolean;
 }
 
-interface ApiIntrospectResponse {
+export interface ApiIntrospectResponse {
     valid?: string;
 }
 
