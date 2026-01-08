@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTour, Tour } from "@/context/TourContext";
 import { useAuth } from "@/context/AuthContext";
 import { BookingModal } from "@/components/BookingModal";
@@ -21,6 +21,7 @@ const TOURS_PER_PAGE = 2;
 export default function TourDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { getTourByUuid, getRecommendedTours } = useTour();
   const { loadReviewsByTour } = useReview();
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -94,6 +95,18 @@ export default function TourDetailsPage() {
     };
     fetchRecommendations();
   }, [tour, getRecommendedTours, user?.userId]);
+
+  // Scroll to reviews section if URL has #reviews hash
+  useEffect(() => {
+    if (location.hash === "#reviews" && !loading && tour) {
+      const reviewsSection = document.getElementById("reviews");
+      if (reviewsSection) {
+        setTimeout(() => {
+          reviewsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
+    }
+  }, [location.hash, loading, tour]);
 
   // Pagination calculations
   const totalPages = Math.ceil(recommendedTours.length / TOURS_PER_PAGE);
@@ -258,7 +271,7 @@ export default function TourDetailsPage() {
           </div>
 
           {/* Customer Reviews Section */}
-          <div className="bg-slate-50 rounded-xl p-6 mt-8">
+          <div id="reviews" className="bg-slate-50 rounded-xl p-6 mt-8 scroll-mt-24">
             <h3 className="text-xl font-semibold mb-4">
               Đánh giá từ khách hàng ({reviewCount} đánh giá)
             </h3>

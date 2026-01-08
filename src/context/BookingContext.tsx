@@ -5,6 +5,7 @@ import {
   useEffect,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
 import { useAuth } from "./AuthContext";
 import {
@@ -29,6 +30,7 @@ export type PaymentStatus = "pending" | "success" | "failed" | "refunded";
 
 export interface Booking {
   id: number;
+  bookingUuid?: string; // Original booking UUID for API calls
   userId?: string;
   staffId?: string;
   tourId: number;
@@ -50,6 +52,8 @@ export interface Booking {
 
 interface BookingContextType {
   bookings: Booking[];
+  activeBookings: Booking[];
+  historyBookings: Booking[];
   loading: boolean;
   error: string | null;
   addBooking: (
@@ -67,20 +71,22 @@ interface BookingContextType {
   updateBooking: (id: number, data: Partial<Booking>) => Promise<void>;
   updatePaymentStatus: (id: number, status: PaymentStatus) => Promise<void>;
   refreshBookings: () => Promise<void>;
+  loadHistoryBookings: () => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [activeBookings, setActiveBookings] = useState<Booking[]>([]);
+  const [historyBookings, setHistoryBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, isAdmin, isStaff } = useAuth();
 
-  // Load bookings from API
-  const loadBookings = useCallback(async () => {
+  // Load active bookings (PENDING, CONFIRMED, CANCELLED - not COMPLETED)
+  const loadActiveBookings = useCallback(async () => {
     if (!user) {
-      setBookings([]);
+      setActiveBookings([]);
       return;
     }
 
@@ -88,38 +94,54 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      let allBookings: Booking[] = [];
-
       if (isAdmin || isStaff) {
         // Admin/Staff: fetch all bookings
         const result = await fetchAllBookingsAdmin({ page: 0, size: 100 });
-        allBookings = result.content;
+        setActiveBookings(result.content);
       } else {
-        // Regular user: fetch active + history
-        const [activeResult, historyResult] = await Promise.all([
-          fetchActiveBookings({ page: 0, size: 100 }),
-          fetchBookingHistory({ page: 0, size: 100 }),
-        ]);
-        allBookings = [...activeResult.content, ...historyResult.content];
+        // Regular user: fetch only active bookings
+        const result = await fetchActiveBookings({ page: 0, size: 100 });
+        setActiveBookings(result.content);
       }
-
-      setBookings(allBookings);
     } catch (err) {
       const message =
         err instanceof ApiError
           ? err.message
           : "Không thể tải danh sách đặt tour";
       setError(message);
-      console.error("Error loading bookings:", err);
+      console.error("Error loading active bookings:", err);
     } finally {
       setLoading(false);
     }
   }, [user, isAdmin, isStaff]);
 
-  // Auto-fetch bookings when auth state changes
+  // Load history bookings (COMPLETED only - for reviews)
+  const loadHistoryBookings = useCallback(async () => {
+    if (!user || isAdmin || isStaff) {
+      // Admin/Staff already have all bookings in activeBookings
+      return;
+    }
+
+    try {
+      const result = await fetchBookingHistory({ page: 0, size: 100 });
+      setHistoryBookings(result.content);
+    } catch (err) {
+      console.error("Error loading booking history:", err);
+    }
+  }, [user, isAdmin, isStaff]);
+
+  // Combined bookings for backward compatibility
+  const bookings = useMemo(() => {
+    if (isAdmin || isStaff) {
+      return activeBookings;
+    }
+    return [...activeBookings, ...historyBookings];
+  }, [activeBookings, historyBookings, isAdmin, isStaff]);
+
+  // Auto-fetch active bookings when auth state changes
   useEffect(() => {
-    loadBookings();
-  }, [loadBookings]);
+    loadActiveBookings();
+  }, [loadActiveBookings]);
 
   const addBooking = async (
     bookingData: Omit<Booking, "id" | "status" | "createdAt" | "paymentStatus">
@@ -127,7 +149,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     try {
       const result = await createBookingApi(bookingData);
       // Refresh bookings to get the newly created one
-      await loadBookings();
+      await loadActiveBookings();
       return { paymentUrl: result.paymentUrl, message: result.message };
     } catch (err) {
       const message =
@@ -143,7 +165,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   ): Promise<{ paymentUrl?: string; message?: string }> => {
     try {
       const result = await createStaffBookingApi(bookingData, userId);
-      await loadBookings();
+      await loadActiveBookings();
       return { paymentUrl: result.paymentUrl, message: result.message };
     } catch (err) {
       const message =
@@ -164,8 +186,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const cancelBooking = async (id: number) => {
     try {
       await updateBookingStatusApi(id, "cancelled");
-      setBookings((prev) =>
-        prev.map((booking) =>
+      setActiveBookings((prev: Booking[]) =>
+        prev.map((booking: Booking) =>
           booking.id === id
             ? { ...booking, status: "cancelled" as const }
             : booking
@@ -182,8 +204,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const confirmBooking = async (id: number) => {
     try {
       await updateBookingStatusApi(id, "confirmed");
-      setBookings((prev) =>
-        prev.map((booking) =>
+      setActiveBookings((prev: Booking[]) =>
+        prev.map((booking: Booking) =>
           booking.id === id
             ? { ...booking, status: "confirmed" as const }
             : booking
@@ -200,8 +222,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const completeBooking = async (id: number) => {
     try {
       await updateBookingStatusApi(id, "completed");
-      setBookings((prev) =>
-        prev.map((booking) =>
+      setActiveBookings((prev: Booking[]) =>
+        prev.map((booking: Booking) =>
           booking.id === id
             ? { ...booking, status: "completed" as const }
             : booking
@@ -218,8 +240,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const updateBooking = async (id: number, data: Partial<Booking>) => {
     try {
       const updatedBooking = await updateBookingApi(id, data);
-      setBookings((prev) =>
-        prev.map((booking) => (booking.id === id ? updatedBooking : booking))
+      setActiveBookings((prev: Booking[]) =>
+        prev.map((booking: Booking) => (booking.id === id ? updatedBooking : booking))
       );
     } catch (err) {
       const message =
@@ -232,8 +254,8 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const updatePaymentStatus = async (id: number, status: PaymentStatus) => {
     try {
       await updateBookingApi(id, { paymentStatus: status } as Partial<Booking>);
-      setBookings((prev) =>
-        prev.map((booking) =>
+      setActiveBookings((prev: Booking[]) =>
+        prev.map((booking: Booking) =>
           booking.id === id ? { ...booking, paymentStatus: status } : booking
         )
       );
@@ -248,13 +270,15 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshBookings = async () => {
-    await loadBookings();
+    await loadActiveBookings();
   };
 
   return (
     <BookingContext.Provider
       value={{
         bookings,
+        activeBookings,
+        historyBookings,
         loading,
         error,
         addBooking,
@@ -267,6 +291,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
         updateBooking,
         updatePaymentStatus,
         refreshBookings,
+        loadHistoryBookings,
       }}
     >
       {children}

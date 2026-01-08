@@ -102,8 +102,10 @@ export const mapBookingDetailToBooking = (
 
   return {
     id: numericId,
+    bookingUuid: response.bookingId, // Preserve original booking UUID for review matching
     userId: response.userId,
     tourId: numericTourId,
+    tourUuid: response.tourId, // Preserve original tour UUID for navigation
     tourTitle: response.tourTitle || "",
     tourPrice:
       (response.totalPrice || 0) / Math.max(response.numAdults || 1, 1),

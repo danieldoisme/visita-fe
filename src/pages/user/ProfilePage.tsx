@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Pagination, usePagination } from "@/components/ui/Pagination";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -65,7 +65,7 @@ const ITEMS_PER_PAGE = 6;
 
 export default function ProfilePage() {
     const { user } = useAuth();
-    const { bookings, cancelBooking } = useBooking();
+    const { activeBookings, historyBookings, cancelBooking, loadHistoryBookings } = useBooking();
     const { } = useTour(); // Keep for potential future use
     const { favorites, toggleFavorite } = useFavorites();
     const { loadAllReviewsByTour, hasReviewedBooking } = useReview();
@@ -97,34 +97,60 @@ export default function ProfilePage() {
         setFavoritesPage(1);
     }, [activeTab]);
 
-    // Filter user's bookings by current user ID
-    const userBookings = useMemo(
-        () => bookings.filter((b) => b.userId === user?.userId),
-        [bookings, user?.userId]
-    );
+    // Use activeBookings directly from context (no filtering needed - API already returns user's bookings)
+    const userBookings = activeBookings;
 
     // State for user's reviews (fetched from completed bookings)
     const [userReviews, setUserReviews] = useState<Review[]>([]);
     const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+    const [historyLoaded, setHistoryLoaded] = useState(false);
+    const [reviewsLoaded, setReviewsLoaded] = useState(false);
 
-    // Load user's reviews when switching to reviews tab
-    // Fetches reviews by tour for each completed booking, then filters by userId
+    // Load history bookings on page load (for reviews count in tab badge)
+    useEffect(() => {
+        if (user && !historyLoaded) {
+            loadHistoryBookings().then(() => setHistoryLoaded(true));
+        }
+    }, [user, historyLoaded, loadHistoryBookings]);
+
+    // Fetch user's reviews once history bookings are loaded
     useEffect(() => {
         const loadUserReviews = async () => {
-            if (activeTab !== "reviews" || !user) return;
+            // Skip if not logged in, history not loaded, or reviews already loaded
+            if (!user || !historyLoaded || reviewsLoaded) return;
 
             setIsLoadingReviews(true);
             try {
+                const completedBookings = historyBookings;
+
+                // Handle case with no completed bookings
+                if (completedBookings.length === 0) {
+                    setUserReviews([]);
+                    setReviewsLoaded(true);
+                    return;
+                }
+
+                // Create a map of tourId/tourUuid to tour title for enrichment
+                const tourTitleMap = new Map<string, string>();
+                completedBookings.forEach(b => {
+                    if (b.tourUuid) tourTitleMap.set(b.tourUuid, b.tourTitle);
+                    tourTitleMap.set(b.tourId.toString(), b.tourTitle);
+                });
+
                 // Get unique tour IDs from completed bookings
-                const completedBookings = userBookings.filter(b => b.status === "completed");
-                const uniqueTourIds = [...new Set(completedBookings.map(b => b.tourId.toString()))];
+                const uniqueTourIds = [...new Set(completedBookings.map(b => b.tourUuid || b.tourId.toString()))];
 
                 // Fetch reviews for each tour and filter by current user
                 const allUserReviews: Review[] = [];
                 for (const tourId of uniqueTourIds) {
                     // Use loadAllReviewsByTour to get all reviews including hidden ones
                     const tourReviews = await loadAllReviewsByTour(tourId, 1, 100);
-                    const myReviews = tourReviews.filter(r => r.userId === user.userId);
+                    const myReviews = tourReviews
+                        .filter(r => r.userId === user.userId)
+                        .map(r => ({
+                            ...r,
+                            tourTitle: tourTitleMap.get(r.tourId) || r.tourTitle || 'Tour'
+                        }));
                     allUserReviews.push(...myReviews);
                 }
 
@@ -134,15 +160,17 @@ export default function ProfilePage() {
                 );
 
                 setUserReviews(allUserReviews);
+                setReviewsLoaded(true);
             } catch (error) {
                 console.error("Failed to load user reviews:", error);
+                setReviewsLoaded(true); // Mark as loaded even on error to prevent retry loop
             } finally {
                 setIsLoadingReviews(false);
             }
         };
 
         loadUserReviews();
-    }, [activeTab, user, userBookings, loadAllReviewsByTour]);
+    }, [user, historyLoaded, reviewsLoaded, historyBookings, loadAllReviewsByTour]);
 
     // Form setup with react-hook-form
     const [isSaving, setIsSaving] = useState(false);
@@ -190,7 +218,23 @@ export default function ProfilePage() {
 
     const closeReviewModal = () => {
         setReviewModal((prev) => ({ ...prev, isOpen: false }));
+        // Reload reviews after closing modal (to reflect newly submitted review)
+        setReviewsLoaded(false);
     };
+
+    // Calculate bookings that need review (completed but not reviewed)
+    const pendingReviewBookings = historyBookings.filter(booking => {
+        // Check if this booking has a review in userReviews
+        const hasReview = userReviews.some(review => {
+            // Match by booking UUID (primary) or tour UUID as fallback
+            // review.bookingId is the UUID string from the backend
+            // booking.bookingUuid is the preserved original UUID
+            return review.bookingId === booking.bookingUuid ||
+                review.bookingId === booking.id.toString() ||
+                (review.tourId === booking.tourUuid && review.tourId === booking.tourUuid);
+        });
+        return !hasReview;
+    });
 
     const form = useForm<ProfileFormData>({
         resolver: zodResolver(profileSchema),
@@ -200,6 +244,7 @@ export default function ProfilePage() {
             phone: user?.phone || "",
             dob: user?.dob ? new Date(user.dob) : null,
             gender: (user?.gender?.toLowerCase() as "male" | "female" | "other") || null,
+            address: user?.address || "",
         },
     });
 
@@ -227,6 +272,7 @@ export default function ProfilePage() {
                 phone: user.phone || "",
                 dob: user.dob ? new Date(user.dob) : null,
                 gender: (user.gender?.toLowerCase() as "male" | "female" | "other") || null,
+                address: user.address || "",
             });
         }
     }, [user, form]);
@@ -252,6 +298,7 @@ export default function ProfilePage() {
             phone: data.phone || undefined,
             gender: data.gender || undefined,
             dob: data.dob ? format(data.dob, "yyyy-MM-dd") : undefined,
+            address: data.address || undefined,
         };
         const result = await updateProfile(updates);
         setIsSaving(false);
@@ -525,15 +572,19 @@ export default function ProfilePage() {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Email</FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                type="email"
-                                                                placeholder="Nhập email"
-                                                                autoComplete="email"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
+                                                        <div className="relative">
+                                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                                            <FormControl>
+                                                                <Input
+                                                                    type="email"
+                                                                    autoComplete="email"
+                                                                    className="pl-10 bg-slate-50 cursor-not-allowed"
+                                                                    disabled
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                        </div>
+                                                        <p className="text-xs text-muted-foreground">Email không thể thay đổi</p>
                                                     </FormItem>
                                                 )}
                                             />
@@ -630,6 +681,29 @@ export default function ProfilePage() {
                                                     )}
                                                 />
                                             </div>
+                                            <FormField
+                                                control={form.control}
+                                                name="address"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel htmlFor="address">Địa chỉ</FormLabel>
+                                                        <div className="relative">
+                                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                                            <FormControl>
+                                                                <Input
+                                                                    id="address"
+                                                                    type="text"
+                                                                    placeholder="Nhập địa chỉ"
+                                                                    autoComplete="street-address"
+                                                                    className="pl-10"
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                        </div>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
 
                                             {/* Save Button */}
                                             <div className="flex items-center gap-4 pt-4 border-t">
@@ -743,7 +817,7 @@ export default function ProfilePage() {
                                                                 <Button
                                                                     variant="outline"
                                                                     size="sm"
-                                                                    onClick={() => navigate(`/tours/${booking.tourId}`)}
+                                                                    onClick={() => navigate(`/tours/${booking.tourUuid || booking.tourId}`)}
                                                                 >
                                                                     <MapPin className="w-4 h-4 mr-1" />
                                                                     Chi tiết
@@ -995,14 +1069,73 @@ export default function ProfilePage() {
                     {/* Reviews Tab */}
                     {activeTab === "reviews" && (
                         <div className="space-y-6">
+                            {/* Header */}
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xl font-semibold text-slate-900">
                                     Đánh giá của tôi
                                 </h2>
                                 <p className="text-sm text-slate-500">
-                                    {userReviews.length} đánh giá
+                                    {userReviews.length} đánh giá • {pendingReviewBookings.length} chờ viết
                                 </p>
                             </div>
+
+                            {/* Pending Reviews Section */}
+                            {pendingReviewBookings.length > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <Pencil className="w-4 h-4 text-amber-500" />
+                                        <h3 className="font-medium text-slate-700">
+                                            Chờ viết đánh giá ({pendingReviewBookings.length})
+                                        </h3>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {pendingReviewBookings.map((booking) => (
+                                            <Card key={booking.id} className="border-amber-200 bg-amber-50/50">
+                                                <CardContent className="p-4">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                        <div className="space-y-1">
+                                                            <h4 className="font-semibold text-slate-900">
+                                                                {booking.tourTitle}
+                                                            </h4>
+                                                            <div className="flex items-center gap-4 text-sm text-slate-500">
+                                                                <span className="flex items-center gap-1">
+                                                                    <CalendarIcon className="w-4 h-4" />
+                                                                    {format(new Date(booking.selectedDate), "dd/MM/yyyy", { locale: vi })}
+                                                                </span>
+                                                                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                                                                    Hoàn thành
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            onClick={() => openReviewModal(booking)}
+                                                            className="shrink-0"
+                                                        >
+                                                            <Star className="w-4 h-4 mr-2" />
+                                                            Viết đánh giá
+                                                        </Button>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Divider if both sections exist */}
+                            {pendingReviewBookings.length > 0 && userReviews.length > 0 && (
+                                <hr className="border-slate-200" />
+                            )}
+
+                            {/* My Reviews Section */}
+                            {userReviews.length > 0 && (
+                                <div className="flex items-center gap-2 mb-4">
+                                    <MessageSquare className="w-4 h-4 text-primary" />
+                                    <h3 className="font-medium text-slate-700">
+                                        Đánh giá đã viết ({userReviews.length})
+                                    </h3>
+                                </div>
+                            )}
 
                             {isLoadingReviews ? (
                                 /* Loading State */
@@ -1012,8 +1145,8 @@ export default function ProfilePage() {
                                         <p className="text-slate-500">Đang tải đánh giá...</p>
                                     </CardContent>
                                 </Card>
-                            ) : userReviews.length === 0 ? (
-                                /* Empty State */
+                            ) : userReviews.length === 0 && pendingReviewBookings.length === 0 ? (
+                                /* Empty State - only show when no reviews AND no pending bookings */
                                 <Card>
                                     <CardContent className="py-16 text-center">
                                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
@@ -1030,7 +1163,7 @@ export default function ProfilePage() {
                                         </Button>
                                     </CardContent>
                                 </Card>
-                            ) : (
+                            ) : userReviews.length > 0 ? (
                                 /* Reviews List */
                                 <>
                                     <div className="space-y-4">
@@ -1061,6 +1194,18 @@ export default function ProfilePage() {
                                                                 </p>
                                                             )}
                                                         </div>
+
+                                                        {/* Actions */}
+                                                        <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => navigate(`/tours/${review.tourId}#reviews`)}
+                                                            >
+                                                                <MessageSquare className="w-4 h-4 mr-1" />
+                                                                Xem đánh giá
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -1074,7 +1219,7 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                 </>
-                            )}
+                            ) : null}
                         </div>
                     )}
                 </div>

@@ -62,6 +62,7 @@ export const profileSchema = z.object({
     .or(z.literal("")),
   dob: z.date().optional().nullable(),
   gender: z.enum(["male", "female", "other"]).optional().nullable(),
+  address: z.string().optional().or(z.literal("")),
 });
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
