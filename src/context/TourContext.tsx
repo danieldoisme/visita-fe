@@ -15,6 +15,8 @@ import {
   updateTourApi,
   deleteTourApi,
   updateTourStatusApi,
+  type TourSearchParams,
+  type PaginatedResult,
 } from "@/api/tourService";
 import { fetchStaffMembers, type StaffMember } from "@/api/staffService";
 import { syncTourImages } from "@/api/imageService";
@@ -74,6 +76,9 @@ export const getCoverImage = (tour: Tour): string => {
 // Re-export StaffMember type for convenience
 export type { StaffMember };
 
+// Re-export search types for use in components
+export type { TourSearchParams, PaginatedResult };
+
 interface TourContextType {
   tours: Tour[];
   staffList: StaffMember[];
@@ -100,6 +105,7 @@ interface TourContextType {
   deleteTour: (id: number) => Promise<void>;
   refreshTours: () => Promise<void>;
   loadStaffs: () => Promise<StaffMember[]>;
+  searchTours: (params: TourSearchParams) => Promise<PaginatedResult<Tour>>;
 }
 
 const TourContext = createContext<TourContextType | undefined>(undefined);
@@ -363,6 +369,11 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
     await loadTours();
   };
 
+  // Search tours with filters (returns paginated result from API)
+  const searchTours = async (params: TourSearchParams): Promise<PaginatedResult<Tour>> => {
+    return await fetchAllTours(params);
+  };
+
   const updateTourStatus = async (id: number, isActive: boolean) => {
     try {
       await updateTourStatusApi(id, isActive);
@@ -399,6 +410,7 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
         deleteTour,
         refreshTours,
         loadStaffs,
+        searchTours,
       }}
     >
       {children}

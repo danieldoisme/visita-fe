@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
-import { Pagination, usePagination } from "@/components/ui/Pagination";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Pagination } from "@/components/ui/Pagination";
 import { useSearchParams } from "react-router-dom";
-import { useTour } from "@/context/TourContext";
+import { useTour, Tour, TourSearchParams } from "@/context/TourContext";
 import { useChat } from "@/context/ChatContext";
-import { matchesDateRange } from "@/utils/dateUtils";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
@@ -18,6 +17,7 @@ import {
 import { VoiceSearchButton } from "@/components/ui/VoiceSearchButton";
 import { AuthRequiredModal } from "@/components/AuthRequiredModal";
 import { TourCard } from "@/components/TourCard";
+import { TourCardSkeleton } from "@/components/TourCardSkeleton";
 import { useAuth } from "@/context/AuthContext";
 import {
   Search,
@@ -30,21 +30,38 @@ import {
   X,
 } from "lucide-react";
 
-const CATEGORIES = [
-  "Phiêu lưu",
-  "Văn hóa",
-  "Thám hiểm",
-  "Thành phố",
-  "Lãng mạn",
-  "Biển",
-];
-const DURATIONS = ["1-3 Ngày", "4-7 Ngày", "8-14 Ngày", "15+ Ngày"];
+// Vietnamese category to backend enum mapping
+const CATEGORY_TO_ENUM: Record<string, TourSearchParams["category"]> = {
+  "Biển đảo": "BEACH",
+  "Thành phố": "CITY",
+  "Văn hóa": "CULTURE",
+  "Phiêu lưu": "EXPLORATION",
+  "Mạo hiểm": "ADVENTURE",
+  "Thiên nhiên": "NATURE",
+  "Ẩm thực": "FOOD",
+};
+
+const CATEGORIES = Object.keys(CATEGORY_TO_ENUM);
 const RATINGS = [5, 4, 3];
 const TOURS_PER_PAGE = 6;
 
+// Sort option to API params mapping
+const SORT_OPTIONS: Record<
+  string,
+  {
+    sortBy?: TourSearchParams["sortBy"];
+    sortDirection?: TourSearchParams["sortDirection"];
+  }
+> = {
+  "Đề xuất": {},
+  "Giá: Thấp đến Cao": { sortBy: "price", sortDirection: "asc" },
+  "Giá: Cao đến Thấp": { sortBy: "price", sortDirection: "desc" },
+  "Đánh giá cao nhất": { sortBy: "rating", sortDirection: "desc" },
+};
+
 export default function ToursPage() {
   const [searchParams] = useSearchParams();
-  const { tours, loading } = useTour();
+  const { tours, searchTours } = useTour();
   const { setWidgetOpen } = useChat();
   const { isAuthenticated } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -55,11 +72,20 @@ export default function ToursPage() {
   });
   const [priceRange, setPriceRange] = useState([0, 100000000]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedDurations, setSelectedDurations] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [minRating, setMinRating] = useState<number>(0);
   const [sortOption, setSortOption] = useState<string>("Đề xuất");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Server-side filtering state
+  const [filteredTours, setFilteredTours] = useState<Tour[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  // Debounce ref for search
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Read location from URL query params on mount
   useEffect(() => {
@@ -74,16 +100,20 @@ export default function ToursPage() {
     localStorage.setItem("visita_tours_view_mode", viewMode);
   }, [viewMode]);
 
-  // Get date filter params from URL
+  // Get filter params from URL
   const startDateParam = searchParams.get("startDate");
   const endDateParam = searchParams.get("endDate");
+  const adultsParam = searchParams.get("adults");
+  const childrenParam = searchParams.get("children");
 
   // State for date range filter - initialize from URL or undefined
   const [dateRange, setDateRange] = useState<DateRange | undefined>(
-    startDateParam ? {
-      from: new Date(startDateParam),
-      to: endDateParam ? new Date(endDateParam) : undefined
-    } : undefined
+    startDateParam
+      ? {
+          from: new Date(startDateParam),
+          to: endDateParam ? new Date(endDateParam) : undefined,
+        }
+      : undefined
   );
 
   // Sync state when URL params change (e.g. navigation from home)
@@ -91,78 +121,134 @@ export default function ToursPage() {
     if (startDateParam) {
       setDateRange({
         from: new Date(startDateParam),
-        to: endDateParam ? new Date(endDateParam) : undefined
+        to: endDateParam ? new Date(endDateParam) : undefined,
       });
     }
   }, [startDateParam, endDateParam]);
 
-  // Helper function to parse duration string to days
-  const parseDurationToDays = (duration: string): number => {
-    const match = duration.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 0;
-  };
+  // Build search params and fetch from API
+  const performSearch = useCallback(async () => {
+    setIsSearching(true);
 
-  // Helper function to check if tour duration matches selected duration filters
-  const matchesDuration = (tourDuration: string): boolean => {
-    if (selectedDurations.length === 0) return true;
-    const days = parseDurationToDays(tourDuration);
-    return selectedDurations.some((dur) => {
-      if (dur === "1-3 Ngày") return days >= 1 && days <= 3;
-      if (dur === "4-7 Ngày") return days >= 4 && days <= 7;
-      if (dur === "8-14 Ngày") return days >= 8 && days <= 14;
-      if (dur === "15+ Ngày") return days >= 15;
-      return false;
-    });
-  };
+    const params: TourSearchParams = {
+      page: currentPage - 1, // API uses 0-based pagination
+      size: TOURS_PER_PAGE,
+    };
 
-  // Helper function to check if tour matches selected categories
-  const matchesCategory = (tourTags: string[] | undefined): boolean => {
-    if (selectedCategories.length === 0) return true;
-    if (!tourTags) return false;
-    return selectedCategories.some((cat) => tourTags.includes(cat));
-  };
+    // Add search term - search by destination (location from homepage)
+    // Also search by title for direct text search
+    if (searchTerm.trim()) {
+      params.destination = searchTerm.trim();
+      params.title = searchTerm.trim();
+    }
 
-  const filteredTours = tours
-    .filter(
-      (tour) =>
-        tour.status === "Hoạt động" &&
-        (tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          tour.location.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        matchesCategory(tour.tags) &&
-        matchesDuration(tour.duration) &&
-        matchesDateRange(
-          tour.startDate,
-          tour.endDate,
-          dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
-          dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined
-        ) &&
-        tour.rating >= minRating &&
-        tour.price >= priceRange[0] &&
-        tour.price <= priceRange[1]
-    )
-    .sort((a, b) => {
-      switch (sortOption) {
-        case "Giá: Thấp đến Cao":
-          return a.price - b.price;
-        case "Giá: Cao đến Thấp":
-          return b.price - a.price;
-        case "Thời gian: Ngắn đến Dài":
-          return parseDurationToDays(a.duration) - parseDurationToDays(b.duration);
-        default:
-          return 0; // "Đề xuất" - keep original order
+    // Add category filter (only single category supported by backend)
+    if (selectedCategory) {
+      params.category = CATEGORY_TO_ENUM[selectedCategory];
+    }
+
+    // Add price range
+    if (priceRange[0] > 0) {
+      params.minPrice = priceRange[0];
+    }
+    if (priceRange[1] < 100000000) {
+      params.maxPrice = priceRange[1];
+    }
+
+    // Add date filter
+    if (dateRange?.from) {
+      params.startDateFrom = format(dateRange.from, "yyyy-MM-dd");
+    }
+    if (dateRange?.to) {
+      params.endDateTo = format(dateRange.to, "yyyy-MM-dd");
+    }
+
+    // Add rating filter
+    if (minRating > 0) {
+      params.minRating = minRating;
+    }
+
+    // Add guest count filters from URL params
+    if (adultsParam) {
+      const numAdults = parseInt(adultsParam, 10);
+      if (!isNaN(numAdults) && numAdults > 0) {
+        params.numAdults = numAdults;
       }
-    });
+    }
+    if (childrenParam) {
+      const numChildren = parseInt(childrenParam, 10);
+      if (!isNaN(numChildren) && numChildren >= 0) {
+        params.numChildren = numChildren;
+      }
+    }
 
-  // Reset to page 1 when filters change
+    // Add sort options
+    const sortConfig = SORT_OPTIONS[sortOption];
+    if (sortConfig.sortBy) {
+      params.sortBy = sortConfig.sortBy;
+      params.sortDirection = sortConfig.sortDirection;
+    }
+
+    try {
+      const result = await searchTours(params);
+      setFilteredTours(result.content);
+      setTotalElements(result.totalElements);
+      setTotalPages(result.totalPages);
+    } catch (error) {
+      console.error("Error searching tours:", error);
+      // Fallback to showing cached tours on error
+      setFilteredTours(tours.filter((t) => t.status === "Hoạt động"));
+    } finally {
+      setIsSearching(false);
+      setInitialLoad(false);
+    }
+  }, [
+    searchTerm,
+    selectedCategory,
+    priceRange,
+    dateRange,
+    minRating,
+    sortOption,
+    currentPage,
+    adultsParam,
+    childrenParam,
+    searchTours,
+    tours,
+  ]);
+
+  // Debounced search effect - triggers when filters change
+  useEffect(() => {
+    // Clear previous debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // Debounce the search (300ms delay)
+    debounceRef.current = setTimeout(() => {
+      performSearch();
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [performSearch]);
+
+  // Reset to page 1 when filters change (not page itself)
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, dateRange, selectedCategories, selectedDurations, minRating, priceRange, sortOption]);
+  }, [
+    searchTerm,
+    dateRange,
+    selectedCategory,
+    minRating,
+    priceRange,
+    sortOption,
+  ]);
 
-  // Pagination
-  const toursPagination = usePagination(filteredTours, TOURS_PER_PAGE);
-  const paginatedTours = toursPagination.getPaginatedItems(currentPage);
-
-  if (loading) {
+  // Show loading on initial load
+  if (initialLoad && isSearching) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-xl">Đang tải danh sách tour...</div>
@@ -225,10 +311,7 @@ export default function ToursPage() {
             className={`
             fixed top-16 bottom-0 left-0 right-0 z-50 bg-white p-6 overflow-y-auto transition-transform duration-300 ease-in-out
             lg:static lg:p-0 lg:bg-transparent lg:w-[280px] lg:block lg:translate-x-0 lg:z-auto
-            ${showMobileFilters
-                ? "translate-x-0"
-                : "-translate-x-full"
-              }
+            ${showMobileFilters ? "translate-x-0" : "-translate-x-full"}
           `}
           >
             <div className="flex items-center justify-between lg:hidden mb-6">
@@ -338,6 +421,20 @@ export default function ToursPage() {
                   Danh mục
                 </h3>
                 <div className="space-y-2">
+                  <label className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-white rounded-lg transition-colors">
+                    <div className="relative flex items-center">
+                      <input
+                        name="category"
+                        type="radio"
+                        checked={selectedCategory === null}
+                        onChange={() => setSelectedCategory(null)}
+                        className="peer h-4 w-4 border-slate-300 text-primary focus:ring-primary"
+                      />
+                    </div>
+                    <span className="text-sm text-slate-600 group-hover:text-slate-900 font-medium">
+                      Tất cả
+                    </span>
+                  </label>
                   {CATEGORIES.map((cat) => (
                     <label
                       key={cat}
@@ -346,52 +443,14 @@ export default function ToursPage() {
                       <div className="relative flex items-center">
                         <input
                           name="category"
-                          type="checkbox"
-                          checked={selectedCategories.includes(cat)}
-                          onChange={() => {
-                            setSelectedCategories((prev) =>
-                              prev.includes(cat)
-                                ? prev.filter((c) => c !== cat)
-                                : [...prev, cat]
-                            );
-                          }}
-                          className="peer h-4 w-4 border-slate-300 rounded text-primary focus:ring-primary"
+                          type="radio"
+                          checked={selectedCategory === cat}
+                          onChange={() => setSelectedCategory(cat)}
+                          className="peer h-4 w-4 border-slate-300 text-primary focus:ring-primary"
                         />
                       </div>
                       <span className="text-sm text-slate-600 group-hover:text-slate-900 font-medium">
                         {cat}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-slate-500">
-                  Thời gian
-                </h3>
-                <div className="space-y-2">
-                  {DURATIONS.map((dur) => (
-                    <label
-                      key={dur}
-                      className="flex items-center gap-3 cursor-pointer group p-2 hover:bg-white rounded-lg transition-colors"
-                    >
-                      <input
-                        name="duration"
-                        type="checkbox"
-                        checked={selectedDurations.includes(dur)}
-                        onChange={() => {
-                          setSelectedDurations((prev) =>
-                            prev.includes(dur)
-                              ? prev.filter((d) => d !== dur)
-                              : [...prev, dur]
-                          );
-                        }}
-                        className="h-4 w-4 border-slate-300 rounded text-primary focus:ring-primary"
-                      />
-                      <span className="text-sm text-slate-600 group-hover:text-slate-900 font-medium">
-                        {dur}
                       </span>
                     </label>
                   ))}
@@ -413,17 +472,20 @@ export default function ToursPage() {
                         name="rating"
                         type="radio"
                         checked={minRating === rating}
-                        onChange={() => setMinRating(minRating === rating ? 0 : rating)}
+                        onChange={() =>
+                          setMinRating(minRating === rating ? 0 : rating)
+                        }
                         className="h-4 w-4 border-slate-300 rounded text-primary focus:ring-primary"
                       />
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-3.5 w-3.5 ${i < rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "fill-slate-200 text-slate-200"
-                              }`}
+                            className={`h-3.5 w-3.5 ${
+                              i < rating
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "fill-slate-200 text-slate-200"
+                            }`}
                           />
                         ))}
                         <span className="text-sm text-slate-600 ml-1">
@@ -443,7 +505,7 @@ export default function ToursPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <p className="text-sm text-muted-foreground font-medium">
                 <span className="text-foreground font-bold">
-                  {filteredTours.length}
+                  {totalElements}
                 </span>{" "}
                 kết quả tìm thấy
               </p>
@@ -451,19 +513,21 @@ export default function ToursPage() {
                 <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm flex-shrink-0">
                   <button
                     onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded-md transition-all ${viewMode === "grid"
-                      ? "bg-slate-100 text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                      }`}
+                    className={`p-2 rounded-md transition-all ${
+                      viewMode === "grid"
+                        ? "bg-slate-100 text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setViewMode("list")}
-                    className={`p-2 rounded-md transition-all ${viewMode === "list"
-                      ? "bg-slate-100 text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                      }`}
+                    className={`p-2 rounded-md transition-all ${
+                      viewMode === "list"
+                        ? "bg-slate-100 text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
                     <List className="h-4 w-4" />
                   </button>
@@ -477,31 +541,39 @@ export default function ToursPage() {
                   <option>Đề xuất</option>
                   <option>Giá: Thấp đến Cao</option>
                   <option>Giá: Cao đến Thấp</option>
-                  <option>Thời gian: Ngắn đến Dài</option>
+                  <option>Đánh giá cao nhất</option>
                 </select>
               </div>
             </div>
             {/* Grid */}
             <div
-              className={`grid gap-6 ${viewMode === "grid"
-                ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                : "grid-cols-1"
-                }`}
+              className={`grid gap-6 ${
+                viewMode === "grid"
+                  ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+                  : "grid-cols-1"
+              }`}
             >
-              {paginatedTours.map((tour) => (
-                <TourCard
-                  key={tour.id}
-                  tour={tour}
-                  layout={viewMode}
-                />
-              ))}
+              {isSearching ? (
+                // Show skeletons while searching
+                Array.from({ length: TOURS_PER_PAGE }).map((_, i) => (
+                  <TourCardSkeleton key={i} />
+                ))
+              ) : filteredTours.length > 0 ? (
+                filteredTours.map((tour) => (
+                  <TourCard key={tour.id} tour={tour} layout={viewMode} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  Không tìm thấy tour phù hợp. Hãy thử điều chỉnh bộ lọc.
+                </div>
+              )}
             </div>
 
             {/* Pagination */}
             <div className="mt-12">
               <Pagination
                 currentPage={currentPage}
-                totalPages={toursPagination.totalPages}
+                totalPages={totalPages || 1}
                 onPageChange={setCurrentPage}
               />
             </div>
@@ -612,6 +684,6 @@ export default function ToursPage() {
         }}
         message="Vui lòng đăng nhập để chat với chuyên gia tư vấn."
       />
-    </div >
+    </div>
   );
 }
