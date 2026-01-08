@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 
 import { Modal } from "@/components/ui/modal";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { CategorySelect, DEFAULT_CATEGORY } from "@/components/ui/category-select";
 import {
   Form,
   FormControl,
@@ -122,7 +123,7 @@ export default function ToursManagementPage() {
       location: "",
       price: 0,
       duration: "",
-      category: "",
+      category: DEFAULT_CATEGORY,
       status: "Nháp",
       images: [],
       image: "",
@@ -156,7 +157,7 @@ export default function ToursManagementPage() {
         location: "",
         price: 0,
         duration: "",
-        category: "",
+        category: DEFAULT_CATEGORY,
         status: "Nháp",
         images: [],
         image: "",
@@ -541,7 +542,10 @@ export default function ToursManagementPage() {
                   <FormItem>
                     <FormLabel>Danh mục</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ví dụ: Biển, Núi, Văn hóa" {...field} />
+                      <CategorySelect
+                        aria-label="Danh mục tour"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

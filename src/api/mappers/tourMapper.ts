@@ -108,7 +108,10 @@ export const mapTourToTourRequest = (
         startDate: tour.startDate,
         endDate: tour.endDate,
         capacity: 50,
-        category: CATEGORY_REVERSE_MAP[tour.category || ""] || "EXPLORATION",
+        category: CATEGORY_REVERSE_MAP[tour.category || ""] ?? (() => {
+            console.error(`Invalid category: ${tour.category}`);
+            throw new Error(`Invalid category: ${tour.category}. Valid categories: ${Object.keys(CATEGORY_REVERSE_MAP).join(", ")}`);
+        })(),
         region: "CENTRAL",
         availability: 50,
         staff_id: staffId,

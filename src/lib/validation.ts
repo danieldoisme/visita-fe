@@ -124,7 +124,7 @@ export const tourSchema = z.object({
     .number()
     .min(0, "Giá phải lớn hơn hoặc bằng 0"),
   duration: z.string().min(1, "Vui lòng nhập thời lượng"),
-  category: z.string().optional(),
+  category: z.string().min(1, "Vui lòng chọn danh mục"),
   status: z.enum(["Hoạt động", "Nháp", "Đã đóng"]),
   images: z.array(tourImageSchema),
   image: z.string().optional(), // Legacy field for backwards compatibility
