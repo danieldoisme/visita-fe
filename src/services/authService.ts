@@ -33,6 +33,10 @@ export interface IntrospectResponse {
     valid: boolean;
 }
 
+interface ApiIntrospectResponse {
+    valid?: string;
+}
+
 // ============================================================================
 // Auth Service
 // ============================================================================
@@ -106,19 +110,21 @@ export const logout = async (request: LogoutRequest): Promise<void> => {
 };
 
 /**
- * Introspect/validate a token
+ * Introspect/validate a token.
+ * Note: API returns `valid` as a string, this function converts it to boolean.
  */
 export const introspect = async (
     request: IntrospectRequest
 ): Promise<IntrospectResponse> => {
     try {
-        const response = await apiClient.post<ApiResponse<IntrospectResponse>>(
+        const response = await apiClient.post<ApiResponse<ApiIntrospectResponse>>(
             "/auth/introspect",
             request
         );
 
         if (response.data.code === 1000 && response.data.result) {
-            return response.data.result;
+            // API returns valid as string ("true"/"false"), convert to boolean
+            return { valid: response.data.result.valid === "true" };
         }
 
         return { valid: false };

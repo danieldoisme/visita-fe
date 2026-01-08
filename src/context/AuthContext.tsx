@@ -58,7 +58,7 @@ interface AuthContextType {
   register: (
     email: string,
     password: string,
-    name: string
+    fullName: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (updates: UserProfileUpdate) => Promise<{ success: boolean; error?: string }>;
@@ -217,13 +217,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (
     email: string,
     password: string,
-    name: string
+    fullName: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       await userService.createUser({
         email,
         password,
-        fullName: name,
+        fullName,
       });
 
       // Registration successful - user should now log in

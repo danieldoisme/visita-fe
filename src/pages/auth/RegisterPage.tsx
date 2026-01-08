@@ -193,7 +193,7 @@ export default function RegisterPage() {
                           <FormControl>
                             <Input
                               type={showPassword ? "text" : "password"}
-                              placeholder="Tối thiểu 6 ký tự"
+                              placeholder="Tối thiểu 8 ký tự"
                               autoComplete="new-password"
                               className="pl-10 pr-10 login-input"
                               {...field}

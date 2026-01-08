@@ -9,7 +9,7 @@ export const loginSchema = z.object({
   password: z
     .string()
     .min(1, "Vui lòng nhập mật khẩu")
-    .min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+    .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -22,7 +22,7 @@ export const internalLoginSchema = z.object({
   password: z
     .string()
     .min(1, "Vui lòng nhập mật khẩu")
-    .min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+    .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
 });
 
 export type InternalLoginFormData = z.infer<typeof internalLoginSchema>;
@@ -38,7 +38,7 @@ export const registerSchema = z
     password: z
       .string()
       .min(1, "Vui lòng nhập mật khẩu")
-      .min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+      .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
     confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -154,7 +154,7 @@ export const changePasswordSchema = z
     newPassword: z
       .string()
       .min(1, "Vui lòng nhập mật khẩu mới")
-      .min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
+      .min(8, "Mật khẩu mới phải có ít nhất 8 ký tự"),
     confirmPassword: z
       .string()
       .min(1, "Vui lòng xác nhận mật khẩu mới"),
