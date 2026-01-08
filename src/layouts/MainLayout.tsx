@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { Compass, Menu, User, Calendar, LogOut, ChevronDown, Shield, Lock, Heart, MessageSquare } from "lucide-react";
+import {
+  Compass,
+  Menu,
+  User,
+  Calendar,
+  LogOut,
+  ChevronDown,
+  Shield,
+  Lock,
+  Heart,
+  MessageSquare,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -46,7 +57,10 @@ export default function MainLayout() {
       {/* Navbar */}
       <header className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity"
+          >
             <Compass className="h-6 w-6" />
             <span>Visita</span>
           </Link>
@@ -54,37 +68,41 @@ export default function MainLayout() {
           <nav className="hidden md:flex items-center md:gap-3 lg:gap-6 text-sm font-medium">
             <Link
               to="/"
-              className={`transition-colors hover:text-foreground/80 ${isActive("/")
-                ? "text-primary font-semibold"
-                : "text-foreground/60"
-                }`}
+              className={`transition-colors hover:text-foreground/80 ${
+                isActive("/")
+                  ? "text-primary font-semibold"
+                  : "text-foreground/60"
+              }`}
             >
               Trang chủ
             </Link>
             <Link
               to="/tours"
-              className={`transition-colors hover:text-foreground/80 ${isActive("/tours")
-                ? "text-primary font-semibold"
-                : "text-foreground/60"
-                }`}
+              className={`transition-colors hover:text-foreground/80 ${
+                isActive("/tours")
+                  ? "text-primary font-semibold"
+                  : "text-foreground/60"
+              }`}
             >
               Tour
             </Link>
             <Link
               to="/about"
-              className={`transition-colors hover:text-foreground/80 ${isActive("/about")
-                ? "text-primary font-semibold"
-                : "text-foreground/60"
-                }`}
+              className={`transition-colors hover:text-foreground/80 ${
+                isActive("/about")
+                  ? "text-primary font-semibold"
+                  : "text-foreground/60"
+              }`}
             >
               Giới thiệu
             </Link>
             <Link
               to="/contact"
-              className={`transition-colors hover:text-foreground/80 ${isActive("/contact")
-                ? "text-primary font-semibold"
-                : "text-foreground/60"
-                }`}
+              className={`transition-colors hover:text-foreground/80 ${
+                isActive("/contact")
+                  ? "text-primary font-semibold"
+                  : "text-foreground/60"
+              }`}
             >
               Liên hệ
             </Link>
@@ -112,7 +130,9 @@ export default function MainLayout() {
                 <PopoverContent className="w-56 p-2" align="end">
                   <div className="px-3 py-2 border-b mb-2">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-slate-900">{user?.fullName}</p>
+                      <p className="text-sm font-medium text-slate-900">
+                        {user?.fullName}
+                      </p>
                       {isAdmin && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
                           <Shield className="w-3 h-3" />
@@ -219,13 +239,24 @@ export default function MainLayout() {
             ) : (
               /* Guest Login Button */
               <Link to="/login">
-                <Button id="login-button" name="login" variant="ghost" size="sm" className="hidden md:flex">
+                <Button
+                  id="login-button"
+                  name="login"
+                  variant="ghost"
+                  size="sm"
+                  className="hidden md:flex"
+                >
                   Đăng nhập
                 </Button>
               </Link>
             )}
             <Link to="/tours">
-              <Button id="book-now-button" name="book-now" size="sm" className="hidden md:flex">
+              <Button
+                id="book-now-button"
+                name="book-now"
+                size="sm"
+                className="hidden md:flex"
+              >
                 Đặt ngay
               </Button>
             </Link>
@@ -237,7 +268,11 @@ export default function MainLayout() {
               className="md:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
@@ -249,32 +284,36 @@ export default function MainLayout() {
               <Link
                 to="/"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/") ? "bg-primary/10 text-primary" : ""
-                  }`}
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${
+                  isActive("/") ? "bg-primary/10 text-primary" : ""
+                }`}
               >
                 Trang chủ
               </Link>
               <Link
                 to="/tours"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/tours") ? "bg-primary/10 text-primary" : ""
-                  }`}
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${
+                  isActive("/tours") ? "bg-primary/10 text-primary" : ""
+                }`}
               >
                 Tour
               </Link>
               <Link
                 to="/about"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/about") ? "bg-primary/10 text-primary" : ""
-                  }`}
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${
+                  isActive("/about") ? "bg-primary/10 text-primary" : ""
+                }`}
               >
                 Giới thiệu
               </Link>
               <Link
                 to="/contact"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${isActive("/contact") ? "bg-primary/10 text-primary" : ""
-                  }`}
+                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-muted ${
+                  isActive("/contact") ? "bg-primary/10 text-primary" : ""
+                }`}
               >
                 Liên hệ
               </Link>
@@ -289,7 +328,9 @@ export default function MainLayout() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-slate-900 truncate">{user?.fullName}</p>
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {user?.fullName}
+                          </p>
                           {isAdmin && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
                               <Shield className="w-3 h-3" />
@@ -303,7 +344,9 @@ export default function MainLayout() {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                        <p className="text-xs text-slate-500 truncate">
+                          {user?.email}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -414,8 +457,8 @@ export default function MainLayout() {
         </div>
       </footer>
 
-      {/* AI Chat Widget */}
-      <ChatWidget />
+      {/* AI Chat Widget - Hidden for admin/staff (they have their own systems) */}
+      {!isAdmin && !isStaff && <ChatWidget />}
     </div>
   );
 }
