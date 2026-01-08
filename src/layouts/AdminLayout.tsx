@@ -1,6 +1,18 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Map, Settings, LogOut, Menu, X, CalendarDays, MessageSquare, Ticket } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  UserCog,
+  Map,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  CalendarDays,
+  MessageSquare,
+  Ticket,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
@@ -8,9 +20,14 @@ const sidebarItems = [
   { icon: LayoutDashboard, label: "Bảng điều khiển", href: "/admin" },
   { icon: Map, label: "Quản lý Tour", href: "/admin/tours" },
   { icon: CalendarDays, label: "Quản lý Booking", href: "/admin/bookings" },
-  { icon: MessageSquare, label: "Quản lý Tương tác", href: "/admin/interactions" },
+  {
+    icon: MessageSquare,
+    label: "Quản lý Tương tác",
+    href: "/admin/interactions",
+  },
   { icon: Ticket, label: "Quản lý Khuyến mãi", href: "/admin/promotions" },
   { icon: Users, label: "Người dùng", href: "/admin/users" },
+  { icon: UserCog, label: "Nhân viên", href: "/admin/staffs" },
   { icon: Settings, label: "Cài đặt", href: "/admin/settings" },
 ];
 

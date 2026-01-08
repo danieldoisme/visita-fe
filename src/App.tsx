@@ -23,6 +23,7 @@ import ProfilePage from "@/pages/user/ProfilePage";
 import DashboardPage from "@/pages/admin/DashboardPage";
 import ToursManagementPage from "@/pages/admin/ToursManagementPage";
 import UsersPage from "@/pages/admin/UsersPage";
+import StaffsPage from "@/pages/admin/StaffsPage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import BookingsManagementPage from "@/pages/admin/BookingsManagementPage";
 import InteractionManagementPage from "@/pages/admin/InteractionManagementPage";
@@ -134,6 +135,7 @@ function App() {
                               element={<ToursManagementPage />}
                             />
                             <Route path="users" element={<UsersPage />} />
+                            <Route path="staffs" element={<StaffsPage />} />
                             <Route
                               path="bookings"
                               element={<BookingsManagementPage />}
