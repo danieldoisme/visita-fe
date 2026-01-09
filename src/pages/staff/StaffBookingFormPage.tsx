@@ -13,13 +13,6 @@ import {
 } from "@/api/staffService";
 import { fetchTourByUuid } from "@/api/tourService";
 
-interface StaffUserLookup {
-  userId: string;
-  fullName: string;
-  email: string;
-  phone?: string;
-}
-
 interface CreateUserData {
   email: string;
   fullName: string;
@@ -28,22 +21,11 @@ interface CreateUserData {
 }
 
 type CreateUserResult =
-  | { success: true; user: StaffUserLookup }
+  | { success: true; userId: string }
   | { success: false; error: string };
 
-/**
- * NOTE: Backend API Limitation
- * There is no staff endpoint to search/lookup users by email.
- * - /admins/users/{id} exists but is admin-only and requires userId (not email)
- * - No /staffs/users/search or similar endpoint exists
- *
- * Until such an endpoint is added, staff cannot look up existing customers.
- * They can only create new customers via POST /staffs/customers.
- */
-const findUserByEmail = (_email: string): StaffUserLookup | null => null;
-
-// Create customer using the staff endpoint
-const createUserForStaff = async (
+// Create customer using the staff endpoint POST /staffs/customers
+const createCustomer = async (
   data: CreateUserData
 ): Promise<CreateUserResult> => {
   try {
@@ -53,15 +35,7 @@ const createUserForStaff = async (
       fullName: data.fullName,
       phone: data.phone,
     });
-    return {
-      success: true,
-      user: {
-        userId: result.userId,
-        fullName: result.fullName,
-        email: result.email,
-        phone: result.phone,
-      },
-    };
+    return { success: true, userId: result.userId };
   } catch (error) {
     const message =
       error instanceof Error
@@ -75,15 +49,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { PromoCodeInput } from "@/components/booking/PromoCodeInput";
 import { AppliedDiscount } from "@/context/PromotionsContext";
 
 import {
   CalendarPlus,
-  Search,
   UserPlus,
-  UserCheck,
   ArrowLeft,
   ArrowRight,
   Loader2,
@@ -91,7 +62,6 @@ import {
   Plus,
   Minus,
   Banknote,
-  Users,
   Mail,
   Phone,
   User,
@@ -105,17 +75,13 @@ import { Calendar } from "@/components/ui/calendar";
 const cn = (...inputs: (string | undefined | null | false)[]) =>
   inputs.filter(Boolean).join(" ");
 
-const baseCustomerSchema = z.object({
+const customerSchema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
   fullName: z.string().min(1, "Vui lòng nhập họ tên"),
   phone: z
     .string()
     .min(1, "Vui lòng nhập số điện thoại")
     .regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ (10-11 số)"),
-  password: z.string().optional(),
-});
-
-const newCustomerSchema = baseCustomerSchema.extend({
   password: z
     .string()
     .min(1, "Vui lòng nhập mật khẩu")
@@ -132,7 +98,7 @@ const bookingSchema = z.object({
   paymentMethod: z.literal("cash"), // Strict to 'cash'
 });
 
-type CustomerFormData = z.infer<typeof newCustomerSchema>;
+type CustomerFormData = z.infer<typeof customerSchema>;
 type BookingFormData = z.infer<typeof bookingSchema>;
 
 type Step = "customer" | "booking" | "confirmation";
@@ -159,15 +125,7 @@ export default function StaffBookingFormPage() {
       }
     }
   }, [tourId, navigate]);
-  const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingUser, setExistingUser] = useState<{
-    userId: string;
-    fullName: string;
-    email: string;
-    phone?: string;
-  } | null>(null);
-  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [customerData, setCustomerData] = useState<CustomerFormData | null>(
     null
   );
@@ -196,11 +154,7 @@ export default function StaffBookingFormPage() {
 
   // Customer form
   const customerForm = useForm<CustomerFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: ((values: any, context: any, options: any) => {
-      const schema = isNewCustomer ? newCustomerSchema : baseCustomerSchema;
-      return zodResolver(schema)(values, context, options);
-    }) as any, // Cast to any to handle schema switching type mismatch
+    resolver: zodResolver(customerSchema),
     defaultValues: {
       email: "",
       fullName: "",
@@ -230,44 +184,7 @@ export default function StaffBookingFormPage() {
     : 0;
   const totalPrice = appliedDiscount ? appliedDiscount.finalPrice : basePrice;
 
-  // Search for existing user by email
-  const handleEmailSearch = async () => {
-    const email = customerForm.getValues("email");
-    if (!email || !z.string().email().safeParse(email).success) {
-      toast.error("Vui lòng nhập email hợp lệ");
-      return;
-    }
 
-    setIsSearching(true);
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const user = findUserByEmail(email);
-
-    if (user) {
-      setExistingUser({
-        userId: user.userId,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-      });
-      setIsNewCustomer(false);
-      customerForm.setValue("fullName", user.fullName);
-      customerForm.setValue("phone", user.phone || "");
-      customerForm.setValue("password", ""); // Clear password if any
-      customerForm.clearErrors();
-      toast.success(`Tìm thấy khách hàng: ${user.fullName}`);
-    } else {
-      setExistingUser(null);
-      setIsNewCustomer(true);
-      // Don't clear email
-      customerForm.setValue("fullName", "");
-      customerForm.setValue("phone", "");
-      customerForm.setValue("password", ""); // Ensure password field is clean
-      toast.info("Khách hàng mới - Vui lòng nhập thông tin tạo tài khoản");
-    }
-    setIsSearching(false);
-  };
 
   // Handle customer step submit
   const handleCustomerSubmit = (data: CustomerFormData) => {
@@ -286,29 +203,27 @@ export default function StaffBookingFormPage() {
 
     setIsSubmitting(true);
     try {
-      let userId = existingUser?.userId;
+      // Create new customer account
+      const result = await createCustomer({
+        email: customerData.email,
+        fullName: customerData.fullName,
+        phone: customerData.phone,
+        password: customerData.password,
+      });
 
-      // Create new user if needed
-      if (isNewCustomer) {
-        const result = await createUserForStaff({
-          email: customerData.email,
-          fullName: customerData.fullName,
-          phone: customerData.phone,
-          password: customerData.password || "123456", // Fallback shouldn't happen due to validation
-        });
-
-        if (!result.success) {
-          toast.error(result.error || "Không thể tạo tài khoản khách hàng");
-          setIsSubmitting(false);
-          return;
-        }
-        userId = result.user.userId;
-        toast.success("Đã tạo tài khoản cho khách hàng");
+      if (!result.success) {
+        toast.error(result.error || "Không thể tạo tài khoản khách hàng");
+        setIsSubmitting(false);
+        return;
       }
+
+      const userId = result.userId;
+      toast.success("Đã tạo tài khoản cho khách hàng");
 
       const bookingData = bookingForm.getValues();
 
       // Create booking with confirmed status
+
       await addStaffBooking(
         {
           userId,
@@ -329,7 +244,7 @@ export default function StaffBookingFormPage() {
           specialRequest: bookingData.specialRequest,
           ...(appliedDiscount && { promoCode: appliedDiscount.code }),
         },
-        user.userId
+        userId // Pass customer's userId, not staff's user.userId
       );
 
       toast.success("Đặt tour thành công!");
@@ -345,8 +260,6 @@ export default function StaffBookingFormPage() {
   // Reset when tour changes
   useEffect(() => {
     setCurrentStep("customer");
-    setExistingUser(null);
-    setIsNewCustomer(false);
     setCustomerData(null);
     customerForm.reset();
     bookingForm.reset();
@@ -464,34 +377,27 @@ export default function StaffBookingFormPage() {
                 Thông tin khách hàng
               </h3>
 
-              {/* Email Search */}
-              <div className="space-y-2 mb-6">
+              {/* New Customer Info */}
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-blue-600" />
+                <span className="text-sm text-blue-700">
+                  Tạo tài khoản mới cho khách hàng
+                </span>
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2 mb-4">
                 <Label htmlFor="customer-email">Email khách hàng</Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="customer-email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="email@example.com"
-                      className="pl-9"
-                      {...customerForm.register("email")}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleEmailSearch}
-                    disabled={isSearching}
-                  >
-                    {isSearching ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                    <span className="ml-1 hidden sm:inline">Tìm kiếm</span>
-                  </Button>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="customer-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="email@example.com"
+                    className="pl-9"
+                    {...customerForm.register("email")}
+                  />
                 </div>
                 {customerForm.formState.errors.email && (
                   <p className="text-sm text-destructive">
@@ -499,23 +405,6 @@ export default function StaffBookingFormPage() {
                   </p>
                 )}
               </div>
-
-              {/* Customer Status Badge */}
-              {(existingUser || isNewCustomer) && (
-                <div className="mb-4">
-                  {existingUser ? (
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                      <UserCheck className="h-3 w-3 mr-1" />
-                      Khách hàng hiện tại
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-                      <UserPlus className="h-3 w-3 mr-1" />
-                      Khách hàng mới
-                    </Badge>
-                  )}
-                </div>
-              )}
 
               {/* Customer Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -528,7 +417,6 @@ export default function StaffBookingFormPage() {
                       autoComplete="name"
                       placeholder="Nguyễn Văn A"
                       className="pl-9"
-                      disabled={!isNewCustomer}
                       {...customerForm.register("fullName")}
                     />
                   </div>
@@ -547,7 +435,6 @@ export default function StaffBookingFormPage() {
                       autoComplete="tel"
                       placeholder="0901234567"
                       className="pl-9"
-                      disabled={!isNewCustomer}
                       {...customerForm.register("phone")}
                     />
                   </div>
@@ -557,40 +444,29 @@ export default function StaffBookingFormPage() {
                     </p>
                   )}
                 </div>
-                {isNewCustomer && (
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="customer-password">
-                      Mật khẩu (Tạo mới)
-                    </Label>
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground flex items-center justify-center">
-                        ***
-                      </div>
-                      <Input
-                        id="customer-password"
-                        type="text"
-                        autoComplete="new-password"
-                        placeholder="Nhập mật khẩu cho khách..."
-                        className="pl-9"
-                        {...customerForm.register("password")}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      * Yêu cầu khách hàng ghi nhớ mật khẩu này để đăng nhập sau
-                      này.
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="customer-password">Mật khẩu</Label>
+                  <Input
+                    id="customer-password"
+                    type="text"
+                    autoComplete="new-password"
+                    placeholder="Nhập mật khẩu cho khách (tối thiểu 8 ký tự)"
+                    {...customerForm.register("password")}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Yêu cầu khách hàng ghi nhớ mật khẩu này để đăng nhập.
+                  </p>
+                  {customerForm.formState.errors.password && (
+                    <p className="text-sm text-destructive">
+                      {customerForm.formState.errors.password.message}
                     </p>
-                    {customerForm.formState.errors.password && (
-                      <p className="text-sm text-destructive">
-                        {customerForm.formState.errors.password.message}
-                      </p>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={!existingUser && !isNewCustomer}>
+              <Button type="submit">
                 Tiếp tục
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
@@ -821,11 +697,9 @@ export default function StaffBookingFormPage() {
                 <p className="text-sm text-muted-foreground">
                   {customerData.phone}
                 </p>
-                {isNewCustomer && (
-                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs">
-                    Sẽ tạo tài khoản mới
-                  </Badge>
-                )}
+                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                  Tạo tài khoản mới
+                </span>
               </div>
 
               {/* Booking Info */}
@@ -840,8 +714,7 @@ export default function StaffBookingFormPage() {
                     locale: vi,
                   })}
                 </p>
-                <p className="text-sm flex items-center gap-1">
-                  <Users className="h-3 w-3" />
+                <p className="text-sm">
                   {adults} người lớn
                   {children > 0 ? ` + ${children} trẻ em` : ""}
                 </p>

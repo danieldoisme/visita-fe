@@ -226,24 +226,24 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
     icon?: typeof Banknote;
     imageUrl?: string;
   }[] = [
-    {
-      id: "cash" as PaymentMethod,
-      label: "Thanh toán khi nhận tour",
-      icon: Banknote,
-    },
-    {
-      id: "momo" as PaymentMethod,
-      label: "Ví MoMo",
-      imageUrl:
-        "https://upload.wikimedia.org/wikipedia/commons/a/a0/MoMo_Logo_App.svg",
-    },
-    {
-      id: "paypal" as PaymentMethod,
-      label: "PayPal",
-      imageUrl:
-        "https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg",
-    },
-  ];
+      {
+        id: "cash" as PaymentMethod,
+        label: "Thanh toán khi nhận tour",
+        icon: Banknote,
+      },
+      {
+        id: "momo" as PaymentMethod,
+        label: "Ví MoMo",
+        imageUrl:
+          "https://upload.wikimedia.org/wikipedia/commons/a/a0/MoMo_Logo_App.svg",
+      },
+      {
+        id: "paypal" as PaymentMethod,
+        label: "PayPal",
+        imageUrl:
+          "https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg",
+      },
+    ];
 
   // Block admin users from booking
   if (isAdmin) {
@@ -307,7 +307,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
             </Button>
             <Button
               onClick={() =>
-                (window.location.href = `/staff/booking/${tour.id}`)
+                (window.location.href = `/staff/booking/${tour.tourUuid}`)
               }
               className="w-full"
             >
@@ -335,9 +335,7 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
             Cảm ơn bạn đã đặt tour!
           </h3>
           <p className="text-gray-600 mb-4">
-            Chúng tôi đã nhận được yêu cầu đặt tour của bạn. Thông tin chi tiết
-            sẽ được gửi đến email{" "}
-            <span className="font-medium">{watch("email")}</span>.
+            Chúng tôi đã nhận được yêu cầu đặt tour của bạn.
           </p>
           <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
             <p className="text-sm text-gray-600 mb-1">
@@ -610,19 +608,17 @@ export function BookingModal({ isOpen, onClose, tour }: BookingModalProps) {
                       key={method.id}
                       type="button"
                       onClick={() => field.onChange(method.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                        field.value === method.id
-                          ? "border-primary bg-primary/5"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${field.value === method.id
+                        ? "border-primary bg-primary/5"
+                        : "border-gray-200 hover:border-gray-300"
+                        }`}
                     >
                       {method.icon ? (
                         <method.icon
-                          className={`w-5 h-5 ${
-                            field.value === method.id
-                              ? "text-primary"
-                              : "text-gray-500"
-                          }`}
+                          className={`w-5 h-5 ${field.value === method.id
+                            ? "text-primary"
+                            : "text-gray-500"
+                            }`}
                         />
                       ) : method.imageUrl ? (
                         <img
