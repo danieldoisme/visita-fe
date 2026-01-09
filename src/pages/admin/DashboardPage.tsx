@@ -115,21 +115,19 @@ function ChartControls({
       <div className="flex rounded-lg border bg-muted p-0.5">
         <button
           onClick={() => onViewModeChange("daily")}
-          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-            viewMode === "daily"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${viewMode === "daily"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           Ngày
         </button>
         <button
           onClick={() => onViewModeChange("monthly")}
-          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-            viewMode === "monthly"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${viewMode === "monthly"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           Tháng
         </button>
@@ -354,33 +352,30 @@ export default function DashboardPage() {
   const handleExportAll = () => {
     const summaryData = stats
       ? [
-          {
-            metric: "Tổng doanh thu",
-            value: formatVND(stats.totalRevenue),
-            growth: `${
-              stats.revenueGrowth >= 0 ? "+" : ""
+        {
+          metric: "Tổng doanh thu",
+          value: formatVND(stats.totalRevenue),
+          growth: `${stats.revenueGrowth >= 0 ? "+" : ""
             }${stats.revenueGrowth.toFixed(1)}%`,
-          },
-          {
-            metric: "Người dùng mới",
-            value: stats.newUsers.toLocaleString("vi-VN"),
-            growth: `${
-              stats.userGrowth >= 0 ? "+" : ""
+        },
+        {
+          metric: "Người dùng mới",
+          value: stats.newUsers.toLocaleString("vi-VN"),
+          growth: `${stats.userGrowth >= 0 ? "+" : ""
             }${stats.userGrowth.toFixed(1)}%`,
-          },
-          {
-            metric: "Tổng đặt tour",
-            value: stats.totalBookings.toLocaleString("vi-VN"),
-            growth: `${
-              stats.bookingGrowth >= 0 ? "+" : ""
+        },
+        {
+          metric: "Tổng đặt tour",
+          value: stats.totalBookings.toLocaleString("vi-VN"),
+          growth: `${stats.bookingGrowth >= 0 ? "+" : ""
             }${stats.bookingGrowth.toFixed(1)}%`,
-          },
-          {
-            metric: "Người dùng hoạt động",
-            value: stats.activeUsers.toLocaleString("vi-VN"),
-            growth: "-",
-          },
-        ]
+        },
+        {
+          metric: "Người dùng hoạt động",
+          value: stats.activeUsers.toLocaleString("vi-VN"),
+          growth: "-",
+        },
+      ]
       : [];
 
     const summaryColumns: ExportColumn<{
@@ -388,10 +383,10 @@ export default function DashboardPage() {
       value: string;
       growth: string;
     }>[] = [
-      { header: "Chỉ số", key: "metric", width: 25 },
-      { header: "Giá trị", key: "value", width: 20 },
-      { header: "Tăng trưởng", key: "growth", width: 15 },
-    ];
+        { header: "Chỉ số", key: "metric", width: 25 },
+        { header: "Giá trị", key: "value", width: 20 },
+        { header: "Tăng trưởng", key: "growth", width: 15 },
+      ];
 
     exportMultiSheet(
       `bao_cao_dashboard_${new Date().toISOString().split("T")[0]}`,
@@ -554,10 +549,10 @@ export default function DashboardPage() {
               description={formatGrowth(stats.bookingGrowth)}
             />
             <Card
-              title="Đang hoạt động"
+              title="Tất cả người dùng"
               value={`+${stats.activeUsers.toLocaleString("vi-VN")}`}
               icon={Activity}
-              description="Người dùng hoạt động"
+              description="Tăng trưởng"
             />
           </>
         ) : null}

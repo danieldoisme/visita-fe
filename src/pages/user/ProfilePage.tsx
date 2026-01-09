@@ -76,7 +76,7 @@ export default function ProfilePage() {
     cancelBooking,
     loadHistoryBookings,
   } = useBooking();
-  const {} = useTour(); // Keep for potential future use
+  const { } = useTour(); // Keep for potential future use
   const { favorites, toggleFavorite } = useFavorites();
   const { loadAllReviewsByTour, hasReviewedBooking } = useReview();
   const navigate = useNavigate();
@@ -372,8 +372,20 @@ export default function ProfilePage() {
 
   // Handle cancel booking
   const handleCancelBooking = async (bookingId: number) => {
-    await cancelBooking(bookingId);
-    toast.success("Đã hủy đặt chỗ thành công!");
+    const booking = userBookings.find((b) => b.id === bookingId);
+
+    if (booking && booking.status !== "pending") {
+      toast.error(
+        "Không thể hủy đặt tour, hãy liên hệ với nhân viên để được giải quyết"
+      );
+      return;
+    }
+
+    try {
+      await cancelBooking(bookingId);
+      toast.success("Đã hủy đặt chỗ thành công!");
+    } catch (error) {
+    }
   };
 
   // Favorites are now full Tour objects from context
@@ -413,9 +425,8 @@ export default function ProfilePage() {
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-4 w-4 ${
-            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-          }`}
+          className={`h-4 w-4 ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+            }`}
         />
       ))}
     </div>
@@ -460,11 +471,10 @@ export default function ProfilePage() {
             <nav className="flex gap-4 md:gap-8 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setActiveTab("personal")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "personal"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 hover:text-slate-700"
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "personal"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4" />
@@ -474,11 +484,10 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab("bookings")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "bookings"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 hover:text-slate-700"
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "bookings"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4" />
@@ -493,11 +502,10 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab("reviews")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "reviews"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 hover:text-slate-700"
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "reviews"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
@@ -512,11 +520,10 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab("favorites")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "favorites"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 hover:text-slate-700"
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "favorites"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <Heart className="w-4 h-4" />
@@ -530,11 +537,10 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab("security")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "security"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 hover:text-slate-700"
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === "security"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <Lock className="w-4 h-4" />
@@ -876,8 +882,7 @@ export default function ProfilePage() {
                                   size="sm"
                                   onClick={() =>
                                     navigate(
-                                      `/tours/${
-                                        booking.tourUuid || booking.tourId
+                                      `/tours/${booking.tourUuid || booking.tourId
                                       }`
                                     )
                                   }

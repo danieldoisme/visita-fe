@@ -33,6 +33,14 @@ export type UserResponse = {
     updatedAt?: string;
 };
 
+export type ApiResponseVoid = {
+    code?: number;
+    message?: string;
+    result?: {
+        [key: string]: unknown;
+    };
+};
+
 export type TourImageRequest = {
     imageUrl: string;
     description?: string;
@@ -383,14 +391,6 @@ export type LogoutRequest = {
     token?: string;
 };
 
-export type ApiResponseVoid = {
-    code?: number;
-    message?: string;
-    result?: {
-        [key: string]: unknown;
-    };
-};
-
 export type AuthenticationRequest = {
     email?: string;
     username?: string;
@@ -427,7 +427,7 @@ export type MoMoIpnRequest = {
     signature?: string;
 };
 
-export type ApiResponsePageTourEntity = {
+export type ApiResponsePageTourResponse = {
     code?: number;
     message?: string;
     result?: PageObject;
@@ -436,36 +436,60 @@ export type ApiResponsePageTourEntity = {
 export type PageObject = {
     totalElements?: number;
     totalPages?: number;
+    pageable?: PageableObject;
     first?: boolean;
     last?: boolean;
     numberOfElements?: number;
-    pageable?: PageableObject;
     size?: number;
-    content?: Array<TourEntity>;
+    content?: Array<TourResponse>;
     number?: number;
     sort?: SortObject;
     empty?: boolean;
 };
 
 export type PageableObject = {
-    unpaged?: boolean;
     paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
+    unpaged?: boolean;
     offset?: number;
     sort?: SortObject;
 };
 
 export type SortObject = {
-    unsorted?: boolean;
     sorted?: boolean;
+    unsorted?: boolean;
     empty?: boolean;
 };
 
-export type ApiResponsePageTourResponse = {
+export type TourResponse = {
+    tourId?: string;
+    title?: string;
+    description?: string;
+    itinerary?: string;
+    priceAdult?: number;
+    priceChild?: number;
+    duration?: string;
+    destination?: string;
+    startDate?: string;
+    endDate?: string;
+    capacity?: number;
+    isActive?: boolean;
+    category?: 'BEACH' | 'CITY' | 'CULTURE' | 'EXPLORATION' | 'ADVENTURE' | 'NATURE' | 'FOOD';
+    region?: 'NORTH' | 'CENTRAL' | 'SOUTH';
+    availability?: number;
+    images?: Array<string>;
+    averageRating?: number;
+    reviewCount?: number;
+    staffId?: string;
+    staffName?: string;
+    reviews?: Array<ReviewResponse>;
+};
+
+export type ApiResponseTourResponse = {
     code?: number;
     message?: string;
-    result?: PageObject;
+    result?: TourResponse;
 };
 
 export type ApiResponsePageBookingDetailResponse = {
@@ -586,6 +610,24 @@ export type UpdateUserResponses = {
 };
 
 export type UpdateUserResponse = UpdateUserResponses[keyof UpdateUserResponses];
+
+export type CancelBookingData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/bookings/{id}/cancel';
+};
+
+export type CancelBookingResponses = {
+    /**
+     * OK
+     */
+    200: ApiResponseVoid;
+};
+
+export type CancelBookingResponse = CancelBookingResponses[keyof CancelBookingResponses];
 
 export type DeleteUserData = {
     body?: never;
@@ -1312,7 +1354,7 @@ export type GetAllActiveToursResponses = {
     /**
      * OK
      */
-    200: ApiResponsePageTourEntity;
+    200: ApiResponsePageTourResponse;
 };
 
 export type GetAllActiveToursResponse = GetAllActiveToursResponses[keyof GetAllActiveToursResponses];
@@ -1330,7 +1372,7 @@ export type GetTourByIdResponses = {
     /**
      * OK
      */
-    200: ApiResponseTourEntity;
+    200: ApiResponseTourResponse;
 };
 
 export type GetTourByIdResponse = GetTourByIdResponses[keyof GetTourByIdResponses];

@@ -15,6 +15,7 @@ import {
   PaginationControls,
   StatusBadge,
   userStatusConfig,
+  ITEMS_PER_PAGE,
   type BulkAction,
 } from "@/components/admin";
 import { Button } from "@/components/ui/button";
@@ -39,19 +40,15 @@ import {
 } from "lucide-react";
 
 import {
-  fetchStaffs,
+  fetchAllStaffs,
   createStaffApi,
   updateStaffById,
   updateStaffStatusApi,
   deleteStaffApi,
   type Staff,
-  type PaginatedStaffs,
   type StaffCreateData,
   type StaffUpdateData,
 } from "@/api/services/adminStaffService";
-
-// Page size for pagination
-const PAGE_SIZE = 10;
 
 // Confirmation dialog keys
 const LOCK_STAFF_KEY = "lock_staff";
@@ -69,7 +66,6 @@ export default function StaffsPage() {
   const [staffToEdit, setStaffToEdit] = useState<Staff | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Sorting state
@@ -117,14 +113,12 @@ export default function StaffsPage() {
     variant: "default",
   });
 
-  // Fetch staffs from API
-  const loadStaffs = useCallback(async (page: number) => {
+  // Fetch all staffs from API (for client-side pagination)
+  const loadStaffs = useCallback(async () => {
     setLoading(true);
     try {
-      const data: PaginatedStaffs = await fetchStaffs(page, PAGE_SIZE);
-      setStaffs(data.staffs);
-      setTotalPages(data.totalPages);
-      setCurrentPage(data.currentPage);
+      const data = await fetchAllStaffs();
+      setStaffs(data);
     } catch {
       toast.error("Không thể tải danh sách nhân viên");
     } finally {
@@ -134,7 +128,7 @@ export default function StaffsPage() {
 
   // Initial load
   useEffect(() => {
-    loadStaffs(1);
+    loadStaffs();
   }, [loadStaffs]);
 
   // Filter and sort staffs (client-side search on loaded data)
@@ -148,10 +142,17 @@ export default function StaffsPage() {
     return sortData(filtered);
   }, [staffs, searchTerm, sortData]);
 
-  // Get IDs of selectable staffs
+  // Pagination calculations (client-side)
+  const totalPages = Math.ceil(filteredStaffs.length / ITEMS_PER_PAGE);
+  const paginatedStaffs = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredStaffs.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredStaffs, currentPage]);
+
+  // Get IDs of selectable staffs on current page
   const selectableStaffIds = useMemo(
-    () => filteredStaffs.map((s) => s.id),
-    [filteredStaffs]
+    () => paginatedStaffs.map((s) => s.id),
+    [paginatedStaffs]
   );
 
   // Count selected staffs by status for disabling bulk actions
@@ -403,11 +404,12 @@ export default function StaffsPage() {
   // Clear search filter
   const handleClearFilters = () => {
     setSearchTerm("");
+    setCurrentPage(1);
   };
 
-  // Handle page change
+  // Handle page change (client-side)
   const handlePageChange = (page: number) => {
-    loadStaffs(page);
+    setCurrentPage(page);
     clearSelection();
   };
 
@@ -545,7 +547,7 @@ export default function StaffsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStaffs.map((staff) => (
+                {paginatedStaffs.map((staff) => (
                   <TableRow
                     key={staff.id}
                     className={isSelected(staff.id) ? "bg-muted/50" : ""}
@@ -653,16 +655,16 @@ export default function StaffsPage() {
         user={
           selectedStaff
             ? {
-                id: selectedStaff.id,
-                email: selectedStaff.email,
-                name: selectedStaff.fullName,
-                phone: selectedStaff.phone,
-                dob: selectedStaff.dob,
-                gender: selectedStaff.gender,
-                address: selectedStaff.address,
-                role: "staff",
-                status: selectedStaff.isActive ? "active" : "locked",
-              }
+              id: selectedStaff.id,
+              email: selectedStaff.email,
+              name: selectedStaff.fullName,
+              phone: selectedStaff.phone,
+              dob: selectedStaff.dob,
+              gender: selectedStaff.gender,
+              address: selectedStaff.address,
+              role: "staff",
+              status: selectedStaff.isActive ? "active" : "locked",
+            }
             : null
         }
         isOpen={isDetailsModalOpen}
@@ -676,16 +678,16 @@ export default function StaffsPage() {
         user={
           staffToEdit
             ? {
-                id: staffToEdit.id,
-                email: staffToEdit.email,
-                fullName: staffToEdit.fullName,
-                phone: staffToEdit.phone,
-                dob: staffToEdit.dob,
-                gender: staffToEdit.gender,
-                address: staffToEdit.address,
-                role: "staff",
-                isActive: staffToEdit.isActive,
-              }
+              id: staffToEdit.id,
+              email: staffToEdit.email,
+              fullName: staffToEdit.fullName,
+              phone: staffToEdit.phone,
+              dob: staffToEdit.dob,
+              gender: staffToEdit.gender,
+              address: staffToEdit.address,
+              role: "staff",
+              isActive: staffToEdit.isActive,
+            }
             : null
         }
         onSave={handleSaveStaff}

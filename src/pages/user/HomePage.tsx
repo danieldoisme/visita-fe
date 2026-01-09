@@ -51,7 +51,7 @@ const DESTINATION_IMAGES: Record<string, string> = {
     "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2070&auto=format&fit=crop",
   "Hà Nội":
     "https://images.unsplash.com/photo-1576513500959-4f29b3fed28f?q=80&w=2070&auto=format&fit=crop",
-  "Hồ Chí Minh":
+  "TP. Hồ Chí Minh":
     "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop",
   Sapa: "https://images.unsplash.com/photo-1570366583862-f91883984fde?q=80&w=2070&auto=format&fit=crop",
   "Phú Quốc":

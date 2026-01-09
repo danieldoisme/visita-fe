@@ -57,17 +57,9 @@ export default function TourDetailsPage() {
     fetchReviews();
   }, [tour, loadReviewsByTour]);
 
-  // Calculate average rating from valid reviews
-  const averageRating =
-    reviews.length > 0
-      ? Number(
-          (
-            reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
-          ).toFixed(1)
-        )
-      : tour?.rating || 0;
-
-  const reviewCount = reviews.length > 0 ? reviews.length : tour?.reviews || 0;
+  // Use stats from tour object directly (pre-calculated by backend to be objective)
+  const averageRating = tour?.rating || 0;
+  const reviewCount = tour?.reviews || 0;
 
   const handleBookNow = () => {
     if (user) {
@@ -309,11 +301,10 @@ export default function TourDetailsPage() {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`h-6 w-6 ${
-                      star <= Math.round(averageRating)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "fill-gray-200 text-gray-200"
-                    }`}
+                    className={`h-6 w-6 ${star <= Math.round(averageRating)
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "fill-gray-200 text-gray-200"
+                      }`}
                   />
                 ))}
               </div>
@@ -347,11 +338,10 @@ export default function TourDetailsPage() {
                           {[1, 2, 3, 4, 5].map((star) => (
                             <Star
                               key={star}
-                              className={`h-4 w-4 ${
-                                star <= review.rating
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "fill-gray-200 text-gray-200"
-                              }`}
+                              className={`h-4 w-4 ${star <= review.rating
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "fill-gray-200 text-gray-200"
+                                }`}
                             />
                           ))}
                         </div>

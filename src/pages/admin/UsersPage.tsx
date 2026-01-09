@@ -14,6 +14,7 @@ import {
   PaginationControls,
   StatusBadge,
   userStatusConfig,
+  ITEMS_PER_PAGE,
   type BulkAction,
 } from "@/components/admin";
 import { Button } from "@/components/ui/button";
@@ -30,17 +31,13 @@ import {
 import { Search, Lock, Unlock, Eye, Users, Pencil, Trash2 } from "lucide-react";
 
 import {
-  fetchUsers,
+  fetchAllUsers,
   updateUserStatusApi,
   updateUserById,
   deleteUserApi,
   type User,
-  type PaginatedUsers,
   type UserUpdateData,
 } from "@/api/services/adminUserService";
-
-// Page size for pagination
-const PAGE_SIZE = 10;
 
 // Confirmation dialog keys
 const LOCK_USER_KEY = "lock_user";
@@ -75,7 +72,6 @@ export default function UsersPage() {
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Sorting state
@@ -125,14 +121,12 @@ export default function UsersPage() {
     variant: "default",
   });
 
-  // Fetch users from API
-  const loadUsers = useCallback(async (page: number) => {
+  // Fetch all users from API (for client-side pagination)
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data: PaginatedUsers = await fetchUsers(page, PAGE_SIZE);
-      setUsers(data.users);
-      setTotalPages(data.totalPages);
-      setCurrentPage(data.currentPage);
+      const data = await fetchAllUsers();
+      setUsers(data);
     } catch {
       toast.error("Không thể tải danh sách người dùng");
     } finally {
@@ -142,7 +136,7 @@ export default function UsersPage() {
 
   // Initial load
   useEffect(() => {
-    loadUsers(1);
+    loadUsers();
   }, [loadUsers]);
 
   // Filter and sort users (client-side search on loaded data)
@@ -155,10 +149,17 @@ export default function UsersPage() {
     return sortData(filtered);
   }, [users, searchTerm, sortData]);
 
-  // Get IDs of selectable users (exclude admins)
+  // Pagination calculations (client-side)
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  // Get IDs of selectable users on current page (exclude admins)
   const selectableUserIds = useMemo(
-    () => filteredUsers.filter((u) => u.role !== "admin").map((u) => u.id),
-    [filteredUsers]
+    () => paginatedUsers.filter((u) => u.role !== "admin").map((u) => u.id),
+    [paginatedUsers]
   );
 
   // Count selected users by status for disabling bulk actions
@@ -399,11 +400,12 @@ export default function UsersPage() {
   // Clear search filter
   const handleClearFilters = () => {
     setSearchTerm("");
+    setCurrentPage(1);
   };
 
-  // Handle page change
+  // Handle page change (client-side)
   const handlePageChange = (page: number) => {
-    loadUsers(page);
+    setCurrentPage(page);
     clearSelection();
   };
 
@@ -537,7 +539,7 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => {
+                {paginatedUsers.map((user) => {
                   const roleDisplay = getRoleDisplay(user.role);
                   return (
                     <TableRow
@@ -649,16 +651,16 @@ export default function UsersPage() {
         user={
           selectedUser
             ? {
-                id: selectedUser.id,
-                email: selectedUser.email,
-                name: selectedUser.fullName,
-                phone: selectedUser.phone,
-                dob: selectedUser.dob,
-                gender: selectedUser.gender,
-                address: selectedUser.address,
-                role: selectedUser.role,
-                status: selectedUser.isActive ? "active" : "locked",
-              }
+              id: selectedUser.id,
+              email: selectedUser.email,
+              name: selectedUser.fullName,
+              phone: selectedUser.phone,
+              dob: selectedUser.dob,
+              gender: selectedUser.gender,
+              address: selectedUser.address,
+              role: selectedUser.role,
+              status: selectedUser.isActive ? "active" : "locked",
+            }
             : null
         }
         isOpen={isDetailsModalOpen}

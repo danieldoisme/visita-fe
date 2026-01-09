@@ -326,6 +326,19 @@ export const updateBookingStatusApi = async (
 };
 
 /**
+ * Cancel booking (user endpoint)
+ * PUT /bookings/{id}/cancel
+ */
+export const cancelBookingApi = async (id: number): Promise<void> => {
+  const uuid = getBookingUuid(id);
+  if (!uuid) {
+    throw new ApiError(1021, "Booking không tồn tại");
+  }
+
+  await apiClient.put(`/bookings/${uuid}/cancel`);
+};
+
+/**
  * Search bookings by keyword (admin endpoint)
  * GET /admins/bookings/search
  * Note: Backend uses 1-based pagination

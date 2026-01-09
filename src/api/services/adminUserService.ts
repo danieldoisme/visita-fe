@@ -106,6 +106,24 @@ export const fetchUsers = async (
 };
 
 // ============================================================================
+// ADMIN: FETCH ALL USERS (FOR CLIENT-SIDE PAGINATION)
+// ============================================================================
+
+export const fetchAllUsers = async (): Promise<User[]> => {
+    // Fetch all users with a large page size
+    const response = await listUsers({
+        query: { page: 1, size: 1000 },
+    });
+
+    if (response.data?.result) {
+        const pageData = response.data.result as PageObject & { content?: UserResponse[] };
+        return (pageData.content ?? []).map(mapUserResponse);
+    }
+
+    throw new Error("Failed to fetch users");
+};
+
+// ============================================================================
 // ADMIN: GET USER BY ID
 // ============================================================================
 

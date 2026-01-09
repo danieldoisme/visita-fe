@@ -115,6 +115,26 @@ export const fetchStaffs = async (
 };
 
 // ============================================================================
+// ADMIN: FETCH ALL STAFFS (FOR CLIENT-SIDE PAGINATION)
+// ============================================================================
+
+export const fetchAllStaffs = async (): Promise<Staff[]> => {
+  // Fetch all staffs with a large page size
+  const response = await listStaffs({
+    query: { page: 1, size: 1000 },
+  });
+
+  if (response.data?.result) {
+    const pageData = response.data.result as PageObject & {
+      content?: UserResponse[];
+    };
+    return (pageData.content ?? []).map(mapStaffResponse);
+  }
+
+  throw new Error("Failed to fetch staffs");
+};
+
+// ============================================================================
 // ADMIN: CREATE STAFF
 // ============================================================================
 

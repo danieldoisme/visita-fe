@@ -41,11 +41,11 @@ export const REGION_MAP: Record<string, string> = {
  * Vietnamese region to backend enum
  */
 export const REGION_REVERSE_MAP: Record<string, "NORTH" | "CENTRAL" | "SOUTH"> =
-  {
-    "Miền Bắc": "NORTH",
-    "Miền Trung": "CENTRAL",
-    "Miền Nam": "SOUTH",
-  };
+{
+  "Miền Bắc": "NORTH",
+  "Miền Trung": "CENTRAL",
+  "Miền Nam": "SOUTH",
+};
 
 /**
  * Store original tourId for API calls (UUID string)
@@ -70,14 +70,29 @@ export const clearTourIdMap = (): void => {
 /**
  * Map backend TourEntity to frontend Tour interface
  */
-export const mapTourEntityToTour = (entity: TourEntity): Tour => {
-  const images: TourImage[] = (entity.images || []).map((img, index) => ({
-    id: img.imageId || `img-${entity.tourId}-${index}`,
-    url: img.imageUrl || "",
-    isPrimary: index === 0,
-    order: index,
-    caption: img.description,
-  }));
+export const mapTourEntityToTour = (entity: TourEntity | any): Tour => {
+  // Handle images which can be TourImageEntity[] or string[] (URLs)
+  let images: TourImage[] = [];
+  if (entity.images) {
+    if (typeof entity.images[0] === "string") {
+      // Handle string array (from TourResponse DTO)
+      images = (entity.images as string[]).map((url, index) => ({
+        id: `img-${entity.tourId}-${index}`,
+        url: url,
+        isPrimary: index === 0,
+        order: index,
+      }));
+    } else {
+      // Handle TourImageEntity array (from TourEntity)
+      images = (entity.images as any[]).map((img, index) => ({
+        id: img.imageId || `img-${entity.tourId}-${index}`,
+        url: img.imageUrl || "",
+        isPrimary: index === 0,
+        order: index,
+        caption: img.description,
+      }));
+    }
+  }
 
   const numericId = hashStringToNumber(entity.tourId || "");
 
@@ -85,13 +100,30 @@ export const mapTourEntityToTour = (entity: TourEntity): Tour => {
     storeTourIdMapping(numericId, entity.tourId);
   }
 
-  const reviews = entity.reviews || [];
-  const visibleReviews = reviews.filter((r) => r.isVisible);
-  const avgRating =
-    visibleReviews.length > 0
-      ? visibleReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+  // Use pre-calculated stats from backend if available (TourResponse DTO)
+  let rating = 0;
+  let reviewCount = 0;
+
+  if (
+    typeof entity.averageRating === "number" &&
+    typeof entity.reviewCount === "number"
+  ) {
+    rating = entity.averageRating;
+    reviewCount = entity.reviewCount;
+  } else {
+    // Fallback: Calculate from reviews list (for TourEntity or if DTO missing fields)
+    const reviews = entity.reviews || [];
+    // Note: This matches legacy logic of filtering visible reviews only.
+    // If Admin needs total stats, this might need adjustment, but sticking to existing logic for Entity case.
+    const visibleReviews = reviews.filter((r: any) => r.isVisible);
+    const avgRating =
+      visibleReviews.length > 0
+        ? visibleReviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
         visibleReviews.length
-      : 0;
+        : 0;
+    rating = avgRating;
+    reviewCount = visibleReviews.length;
+  }
 
   return {
     id: numericId,
@@ -103,8 +135,8 @@ export const mapTourEntityToTour = (entity: TourEntity): Tour => {
     duration: entity.duration || "",
     images,
     image: images[0]?.url || "",
-    rating: Math.round(avgRating * 10) / 10,
-    reviews: visibleReviews.length,
+    rating: Math.round(rating * 10) / 10,
+    reviews: reviewCount,
     category: CATEGORY_MAP[entity.category || ""] || entity.category,
     region: REGION_MAP[entity.region || ""] || entity.region,
     capacity: entity.capacity,
@@ -114,7 +146,7 @@ export const mapTourEntityToTour = (entity: TourEntity): Tour => {
     itinerary: entity.itinerary,
     startDate: entity.startDate,
     endDate: entity.endDate,
-    staffId: entity.staff?.userId,
+    staffId: entity.staff?.userId || entity.staffId, // Handle both object (Entity) and ID (DTO)
   };
 };
 

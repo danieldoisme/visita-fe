@@ -16,6 +16,7 @@ import {
   fetchAllBookingsAdmin,
   updateBookingApi,
   updateBookingStatusApi,
+  cancelBookingApi,
 } from "@/api/bookingService";
 import { ApiError } from "@/api/apiClient";
 
@@ -187,7 +188,11 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
 
   const cancelBooking = async (id: number) => {
     try {
-      await updateBookingStatusApi(id, "cancelled");
+      if (isAdmin) {
+        await updateBookingStatusApi(id, "cancelled");
+      } else {
+        await cancelBookingApi(id);
+      }
       setActiveBookings((prev: Booking[]) =>
         prev.map((booking: Booking) =>
           booking.id === id
